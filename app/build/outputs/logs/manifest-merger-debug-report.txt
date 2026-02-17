@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-31:12
-INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-31:12
-INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-31:12
-INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-31:12
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
+INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
+INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
+INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
 MERGED from [com.google.accompanist:accompanist-permissions:0.34.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b760d3a75225a44228d129511da99397\transformed\accompanist-permissions-0.34.0\AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62417317ffb2289b7a81ad7f4cbed039\transformed\material3-release\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.compose.material:material-ripple-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\eeb4b04abe0b8c426ead7f07f8c90bfa\transformed\material-ripple-release\AndroidManifest.xml:2:1-7:12
@@ -80,13 +80,17 @@ MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.g
 	android:name
 		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:5:22-76
 uses-permission#android.permission.ACCESS_COARSE_LOCATION
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:6:5-81
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:7:5-81
 MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:14:5-81
 MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:14:5-81
 	android:name
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:6:22-78
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:7:22-78
+uses-permission#android.permission.VIBRATE
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:8:5-66
+	android:name
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:8:22-63
 application
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:8:5-29:19
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:10:5-31:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:22:5-26:19
@@ -114,47 +118,47 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b9ada463e6cb8b8b3b6e569d02327ece\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b9ada463e6cb8b8b3b6e569d02327ece\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
 	android:extractNativeLibs
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:11:9-41
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:13:9-41
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:16:9-35
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:18:9-35
 	android:label
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:14:9-41
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:16:9-41
 	android:fullBackupContent
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:12:9-54
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:14:9-54
 	android:roundIcon
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:15:9-54
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:17:9-54
 	tools:targetApi
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:18:9-29
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:20:9-29
 	android:icon
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:13:9-43
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:15:9-43
 	android:allowBackup
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:9:9-35
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:11:9-35
 	android:theme
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:17:9-51
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:19:9-51
 	android:dataExtractionRules
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:10:9-65
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:12:9-65
 activity#com.janak.location.alarm.MainActivity
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:19:9-28:20
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:21:9-30:20
 	android:label
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:22:13-45
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:24:13-45
 	android:exported
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:21:13-36
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:23:13-36
 	android:theme
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:23:13-55
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:25:13-55
 	android:name
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:20:13-41
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:22:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:24:13-27:29
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:26:13-29:29
 action#android.intent.action.MAIN
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:25:17-69
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:27:17-69
 	android:name
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:25:25-66
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:27:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:26:17-77
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:28:17-77
 	android:name
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:26:27-74
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:28:27-74
 uses-sdk
 INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml

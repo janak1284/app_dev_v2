@@ -224,6 +224,7 @@ drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable ic_location_pin
 drawable maplibre_compass_icon
 drawable maplibre_info_bg_selector
 drawable maplibre_info_icon_default
