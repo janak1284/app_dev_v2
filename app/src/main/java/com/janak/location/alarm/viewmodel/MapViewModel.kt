@@ -9,14 +9,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 import com.janak.location.alarm.alarm.AlarmHandler
+import com.janak.location.alarm.alarm.AlarmScheduler
 import org.maplibre.android.geometry.LatLng
 import kotlin.math.roundToInt
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
-    private val alarmHandler: AlarmHandler
+    private val alarmHandler: AlarmHandler,
+    private val alarmScheduler: AlarmScheduler
 ) : ViewModel() {
 
     private val _userLocation = MutableStateFlow<Location?>(null)
@@ -31,7 +35,22 @@ class MapViewModel(
     private val _distanceToDestination = MutableStateFlow<String?>(null)
     val distanceToDestination: StateFlow<String?> = _distanceToDestination.asStateFlow()
 
-    private val ALARM_RADIUS_METERS = 500
+    private val _alarmSettings = MutableStateFlow(com.janak.location.alarm.model.AlarmSettings())
+    val alarmSettings: StateFlow<com.janak.location.alarm.model.AlarmSettings> = _alarmSettings.asStateFlow()
+
+    fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
+        _alarmSettings.value = settings
+        
+        // 1. Schedule the exact Time-Based Backup Alarm via Android System
+        alarmScheduler.scheduleBackupAlarm(settings)
+        
+        // 2. Mark the alarm as active
+        _isAlarmSet.value = true
+        _userLocation.value?.let { checkDistance(it) }
+        
+        // 3. Start Location Tracking logic for distance threshold
+        startLocationUpdates()
+    }
 
     fun startLocationUpdates() {
         android.util.Log.d("MapViewModel", "startLocationUpdates: Called")
@@ -59,6 +78,7 @@ class MapViewModel(
             if (_destination.value != null) {
                 _isAlarmSet.value = true
                 _userLocation.value?.let { checkDistance(it) }
+                startLocationUpdates()
             }
         }
     }
@@ -66,6 +86,7 @@ class MapViewModel(
     private fun stopAlarm() {
         _isAlarmSet.value = false
         _distanceToDestination.value = null
+        alarmScheduler.cancelAlarm()
         alarmHandler.stopAlarm()
     }
 
@@ -84,8 +105,8 @@ class MapViewModel(
 
         if (_isAlarmSet.value) {
             _distanceToDestination.value = "${distance.roundToInt()}m"
-            if (distance <= ALARM_RADIUS_METERS) {
-                alarmHandler.startAlarm()
+            if (distance <= _alarmSettings.value.distanceMeters) {
+                alarmHandler.startAlarm(true) // Sound enabled by default for now
             }
         } else {
             _distanceToDestination.value = null
@@ -100,12 +121,13 @@ class MapViewModel(
 
 class MapViewModelFactory(
     private val locationTrackingManager: LocationTrackingManager,
-    private val alarmHandler: AlarmHandler
+    private val alarmHandler: AlarmHandler,
+    private val alarmScheduler: AlarmScheduler
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MapViewModel(locationTrackingManager, alarmHandler) as T
+            return MapViewModel(locationTrackingManager, alarmHandler, alarmScheduler) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,6 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import java.util.Calendar
+import android.app.TimePickerDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,25 +52,22 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import com.janak.location.alarm.ui.alarm.IntegratedAlarmBottomSheet
 
 @Composable
-fun MapScreen() {
+fun MapScreen(viewModel: MapViewModel) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    // Dependencies
-    val alarmHandler = remember { AlarmHandler(context) }
-    val locationTrackingManager = remember { LocationTrackingManager(context) }
-    val viewModel: MapViewModel = viewModel(
-        factory = MapViewModelFactory(locationTrackingManager, alarmHandler)
-    )
-
     val userLocation by viewModel.userLocation.collectAsState()
 
 
     val destination by viewModel.destination.collectAsState()
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
+    val alarmSettings by viewModel.alarmSettings.collectAsState()
+
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     var hasLocationPermission by remember { 
         mutableStateOf(
@@ -337,14 +338,26 @@ fun MapScreen() {
                              style = MaterialTheme.typography.titleMedium
                          )
                          Spacer(modifier = Modifier.height(16.dp))
+                         // Open integrated bottom sheet
                          Button(
-                             onClick = { viewModel.toggleAlarm() }
+                             onClick = { showBottomSheet = true }
                          ) {
-                             Text("Set Alarm (500m)")
+                             Text("Configure Alarm")
                          }
                      }
                  }
              }
+         }
+         
+         if (showBottomSheet) {
+             IntegratedAlarmBottomSheet(
+                 initialSettings = alarmSettings,
+                 onDismissRequest = { showBottomSheet = false },
+                 onSaveSettings = { newSettings ->
+                     viewModel.updateAlarmSettings(newSettings)
+                     showBottomSheet = false
+                 }
+             )
          }
     }
 }

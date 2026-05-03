@@ -10,7 +10,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.janak.location.alarm.alarm.AlarmHandler
+import com.janak.location.alarm.alarm.AlarmSchedulerImpl
+import com.janak.location.alarm.location.LocationTrackingManager
+import com.janak.location.alarm.viewmodel.MapViewModel
+import com.janak.location.alarm.viewmodel.MapViewModelFactory
 import com.janak.location.alarm.ui.theme.LocationAlarmTheme
+import com.janak.location.alarm.ui.map.MapScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +33,15 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    com.janak.location.alarm.ui.map.MapScreen()
+                    val context = LocalContext.current
+                    val alarmHandler = remember { AlarmHandler(context) }
+                    val alarmScheduler = remember { AlarmSchedulerImpl(context) }
+                    val locationTrackingManager = remember { LocationTrackingManager(context) }
+                    val viewModel: MapViewModel = viewModel(
+                        factory = MapViewModelFactory(locationTrackingManager, alarmHandler, alarmScheduler)
+                    )
+
+                    MapScreen(viewModel = viewModel)
                 }
             }
         }

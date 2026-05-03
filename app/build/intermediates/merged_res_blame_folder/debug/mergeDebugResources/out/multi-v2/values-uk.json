@@ -1,78 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.janak.location.alarm.app-mergeDebugResources-50:/values-uk/values-uk.xml",
+            "outputFile": "com.janak.location.alarm.app-mergeDebugResources-55:/values-uk/values-uk.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\cba0a79ce42a9243c25178fe9768c016\\transformed\\ui-release\\res\\values-uk\\values-uk.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,198,282,384,485,569,651,740,828,910,980,1051,1136,1224,1296,1376,1446",
-                        "endColumns": "92,83,101,100,83,81,88,87,81,69,70,84,87,71,79,69,122",
-                        "endOffsets": "193,277,379,480,564,646,735,823,905,975,1046,1131,1219,1291,1371,1441,1564"
-                    },
-                    "to": {
-                        "startLines": "9,10,29,30,31,32,33,97,98,99,100,101,102,103,105,106,107",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "832,925,3235,3337,3438,3522,3604,10793,10881,10963,11033,11104,11189,11277,11450,11530,11600",
-                        "endColumns": "92,83,101,100,83,81,88,87,81,69,70,84,87,71,79,69,122",
-                        "endOffsets": "920,1004,3332,3433,3517,3599,3688,10876,10958,11028,11099,11184,11272,11344,11525,11595,11718"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\642b472c1a5617870e736ae2ddbcb0cd\\transformed\\android-sdk-12.3.1\\res\\values-uk\\values-uk.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8",
-                        "startColumns": "4,4,4,4,4,4,4",
-                        "startOffsets": "55,191,269,401,515,698,827",
-                        "endColumns": "135,77,131,113,182,128,146",
-                        "endOffsets": "186,264,396,510,693,822,969"
-                    },
-                    "to": {
-                        "startLines": "90,91,92,93,94,95,96",
-                        "startColumns": "4,4,4,4,4,4,4",
-                        "startOffsets": "9874,10010,10088,10220,10334,10517,10646",
-                        "endColumns": "135,77,131,113,182,128,146",
-                        "endOffsets": "10005,10083,10215,10329,10512,10641,10788"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\92a08e4eacbcc4076db70ae7856931cc\\transformed\\play-services-basement-18.1.0\\res\\values-uk\\values.xml",
-                    "from": {
-                        "startLines": "4",
-                        "startColumns": "0",
-                        "startOffsets": "195",
-                        "endColumns": "141",
-                        "endOffsets": "336"
-                    },
-                    "to": {
-                        "startLines": "19",
-                        "startColumns": "4",
-                        "startOffsets": "2020",
-                        "endColumns": "145",
-                        "endOffsets": "2161"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\52d6de83f616654dcdd67593ba6b83e1\\transformed\\core-1.13.1\\res\\values-uk\\values-uk.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,155,257,358,459,564,669,782",
-                        "endColumns": "99,101,100,100,104,104,112,100",
-                        "endOffsets": "150,252,353,454,559,664,777,878"
-                    },
-                    "to": {
-                        "startLines": "2,3,4,5,6,7,8,104",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,205,307,408,509,614,719,11349",
-                        "endColumns": "99,101,100,100,104,104,112,100",
-                        "endOffsets": "200,302,403,504,609,714,827,11445"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\3272270741c65f8b2c848e602bfc419d\\transformed\\foundation-release\\res\\values-uk\\values-uk.xml",
+                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\3f3621642583f6dc017baaf9c4889416\\transformed\\foundation-release\\res\\values-uk\\values-uk.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -89,7 +21,24 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\62417317ffb2289b7a81ad7f4cbed039\\transformed\\material3-release\\res\\values-uk\\values-uk.xml",
+                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\b40fdb464a0297d31be7a9be7c70be8b\\transformed\\play-services-basement-18.1.0\\res\\values-uk\\values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "195",
+                        "endColumns": "141",
+                        "endOffsets": "336"
+                    },
+                    "to": {
+                        "startLines": "19",
+                        "startColumns": "4",
+                        "startOffsets": "2020",
+                        "endColumns": "145",
+                        "endOffsets": "2161"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\b8594828f65df287abc98076ecc85acc\\transformed\\material3-release\\res\\values-uk\\values-uk.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -106,7 +55,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\97d4139dff5a8e9c243c89c50e021212\\transformed\\play-services-base-18.1.0\\res\\values-uk\\values.xml",
+                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\3e68f4c398e3a1b76ed785dc65aee948\\transformed\\play-services-base-18.1.0\\res\\values-uk\\values.xml",
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
                         "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
@@ -120,6 +69,57 @@
                         "startOffsets": "1009,1117,1280,1407,1517,1671,1800,1915,2166,2334,2440,2602,2727,2874,3016,3086,3147",
                         "endColumns": "107,162,126,109,153,128,114,104,167,105,161,124,146,141,69,60,87",
                         "endOffsets": "1112,1275,1402,1512,1666,1795,1910,2015,2329,2435,2597,2722,2869,3011,3081,3142,3230"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\4d8e32b0d164dab13b598f548582cc38\\transformed\\core-1.13.1\\res\\values-uk\\values-uk.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,155,257,358,459,564,669,782",
+                        "endColumns": "99,101,100,100,104,104,112,100",
+                        "endOffsets": "150,252,353,454,559,664,777,878"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,104",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,205,307,408,509,614,719,11349",
+                        "endColumns": "99,101,100,100,104,104,112,100",
+                        "endOffsets": "200,302,403,504,609,714,827,11445"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\c8293fab439204964639a64910e3f2f7\\transformed\\android-sdk-12.3.1\\res\\values-uk\\values-uk.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8",
+                        "startColumns": "4,4,4,4,4,4,4",
+                        "startOffsets": "55,191,269,401,515,698,827",
+                        "endColumns": "135,77,131,113,182,128,146",
+                        "endOffsets": "186,264,396,510,693,822,969"
+                    },
+                    "to": {
+                        "startLines": "90,91,92,93,94,95,96",
+                        "startColumns": "4,4,4,4,4,4,4",
+                        "startOffsets": "9874,10010,10088,10220,10334,10517,10646",
+                        "endColumns": "135,77,131,113,182,128,146",
+                        "endOffsets": "10005,10083,10215,10329,10512,10641,10788"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\HP ELITEBOOK 840 G5\\.gradle\\caches\\9.0-milestone-1\\transforms\\5e5020d0ec4ec8b78b56eb0f5f24f408\\transformed\\ui-release\\res\\values-uk\\values-uk.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,198,282,384,485,569,651,740,828,910,980,1051,1136,1224,1296,1376,1446",
+                        "endColumns": "92,83,101,100,83,81,88,87,81,69,70,84,87,71,79,69,122",
+                        "endOffsets": "193,277,379,480,564,646,735,823,905,975,1046,1131,1219,1291,1371,1441,1564"
+                    },
+                    "to": {
+                        "startLines": "9,10,29,30,31,32,33,97,98,99,100,101,102,103,105,106,107",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "832,925,3235,3337,3438,3522,3604,10793,10881,10963,11033,11104,11189,11277,11450,11530,11600",
+                        "endColumns": "92,83,101,100,83,81,88,87,81,69,70,84,87,71,79,69,122",
+                        "endOffsets": "920,1004,3332,3433,3517,3599,3688,10876,10958,11028,11099,11184,11272,11344,11525,11595,11718"
                     }
                 }
             ]

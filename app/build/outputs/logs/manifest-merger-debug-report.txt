@@ -1,68 +1,73 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
-INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
-INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
-INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-33:12
-MERGED from [com.google.accompanist:accompanist-permissions:0.34.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b760d3a75225a44228d129511da99397\transformed\accompanist-permissions-0.34.0\AndroidManifest.xml:17:1-23:12
-MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62417317ffb2289b7a81ad7f4cbed039\transformed\material3-release\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.compose.material:material-ripple-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\eeb4b04abe0b8c426ead7f07f8c90bfa\transformed\material-ripple-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\56dadcd9f57c264840c4db52388a57e2\transformed\material-icons-core-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f09057b3b8a77fbea91e3d0d97f25cc8\transformed\material-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.animation:animation-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5510ada832f995bfa30c7fe8d92f78a8\transformed\animation-core-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.animation:animation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a97a73ed5a41f4cdfe57537050470f83\transformed\animation-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.foundation:foundation-layout-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\406baac29f71b31e9ba959a9daa5b635\transformed\foundation-layout-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.foundation:foundation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3272270741c65f8b2c848e602bfc419d\transformed\foundation-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-tooling-data-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3abad0ae4abe492a3059926bf6c5a9d4\transformed\ui-tooling-data-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-unit-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a735c339381f7e7e1fd0dbfe50bfbf8d\transformed\ui-unit-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-geometry-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\028926290c7a0162e05cd40dd5e5c415\transformed\ui-geometry-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-util-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a6cb9e302107b89ac94e28de5c05a13f\transformed\ui-util-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-text-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\e22c38ca7f0801beea677e9bcc6ed46f\transformed\ui-text-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\68158a9d8eaf2206b6f58ce9e64cbf5d\transformed\ui-tooling-preview-release\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:17:1-28:12
-MERGED from [androidx.compose.ui:ui-graphics-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\36347cc040004530053bf38a18d30f10\transformed\ui-graphics-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cba0a79ce42a9243c25178fe9768c016\transformed\ui-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:17:1-28:12
-MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:2:1-17:12
-MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\088bfb96eb37e601591fcfb8b37e7f61\transformed\play-services-location-21.1.0\AndroidManifest.xml:2:1-9:12
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:16:1-24:12
-MERGED from [androidx.loader:loader:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c55178211acbadf4538bf0c289472d71\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:17:1-35:12
-MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:17:1-35:12
-MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7a71007cee56dac139f24a7972590471\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fe79b338e3b971548cf9cb4862991b90\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7dbb87a63d1b93665bfef17571c3bbf7\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cb68e7e1e7afb83ba8af2d9092022e27\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\04825108c771aa670e5d1e301ebb4b02\transformed\savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b8b43b0fd732570646cdf0cfd4e7692\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\916c73107c037451656f11e5dd371388\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.runtime:runtime-saveable-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8a1cab2e909f9b572f54141e4fc04774\transformed\runtime-saveable-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.runtime:runtime-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9df21fda12003dc52d2629da8fb56084\transformed\runtime-release\AndroidManifest.xml:2:1-7:12
-MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b71da09493bd18b358715e4caa33a265\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:2:1-6:12
-MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:16:1-26:12
-MERGED from [androidx.fragment:fragment:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\2779ccf78cd694cf04e5ffaed2e79f21\transformed\fragment-1.8.2\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.activity:activity:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\874941bdfe4f6687891d2ea3651b5224\transformed\activity-1.8.2\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1400f42a1218adbfbf93ba0eb8af1cc9\transformed\activity-ktx-1.8.2\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.activity:activity-compose:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1be79e5a0bfc33e8847cdf3ca7345f1e\transformed\activity-compose-1.8.2\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d14752bf38e18b4a5850e649684c152c\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cf396fa77c78a6ab154ff997904812fc\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [org.maplibre.gl:maplibre-android-gestures:0.0.4] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\903ca10d96c9f3aebb0b3dbd862bbc6f\transformed\maplibre-android-gestures-0.0.4\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1479599d18bec40650f8b0b7ca95d191\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
-MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b252b269828be792c5e94b5141e6ac76\transformed\core-ktx-1.13.1\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9e1b835cd2272c001e9105bdd827e02a\transformed\autofill-1.0.0\AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3d853ebcc6d3c463cae54d064648a0c7\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:17:1-30:12
-MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f8b502368c4acea15715b6d444655086\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fec13de734453c2572ad53facc154a04\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f44e96db51b1738b4cd63fd7e75d6b39\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:17:1-22:12
-MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\141741d621706181fca4c475b003dfb5\transformed\timber-5.0.1\AndroidManifest.xml:2:1-9:12
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\13177ec1e8c34b7ae0dfc0ef58529c12\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bcdd3bc204a4e1df6f3987ad8f23833c\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:17:1-55:12
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\372453af3eb70fa49ddea815514e641c\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
-MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\28066d95bb3232112c01ff1b2a19fab9\transformed\tracing-1.0.0\AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b9ada463e6cb8b8b3b6e569d02327ece\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
-MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\56fa724c58eac6ddbb5008e599da366e\transformed\annotation-experimental-1.4.0\AndroidManifest.xml:2:1-7:12
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-37:12
+INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-37:12
+INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-37:12
+INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:1-37:12
+MERGED from [androidx.navigation:navigation-common:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\32a997834151b1f865b3a8f169e4b497\transformed\navigation-common-2.7.7\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.navigation:navigation-runtime:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4dcfacc5b81bffcb0693a88f39162aa2\transformed\navigation-runtime-2.7.7\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.navigation:navigation-common-ktx:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c16b0d82006f37a12744c5c5d821e3af\transformed\navigation-common-ktx-2.7.7\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b7d3940f0a03efa4f018a6e777ffaf0e\transformed\navigation-runtime-ktx-2.7.7\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.navigation:navigation-compose:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ff3b162204460605414935024680421d\transformed\navigation-compose-2.7.7\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.accompanist:accompanist-permissions:0.34.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\585459605832b553c46040735a30e1ad\transformed\accompanist-permissions-0.34.0\AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b8594828f65df287abc98076ecc85acc\transformed\material3-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.material:material-ripple-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3c27399c895d58e548f91e513449b2bf\transformed\material-ripple-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4ba1d48516af3160d691e6beeaa30bac\transformed\material-icons-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8b96657bd2098fe6e514f76668416ac0\transformed\material-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\146a90c244296082ae1cad17aa57994f\transformed\animation-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\e34a002c98b17bbbf6ef99661bd98a90\transformed\animation-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\40053d971d723bd4eeafd5b1787e8a08\transformed\foundation-layout-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3f3621642583f6dc017baaf9c4889416\transformed\foundation-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5a3cb6c748235ea3aed1542ed17885ac\transformed\ui-tooling-data-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-unit-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b179b1637d704f55df6ad14a4dc06d81\transformed\ui-unit-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-geometry-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f1a30e7eca8385069208fe7c6ddc2db4\transformed\ui-geometry-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-util-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7787da3775f8ecb3eff538a40b16df28\transformed\ui-util-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-text-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ec15f009a2ff9f758a39e9355207b9a5\transformed\ui-text-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\28f1b4563bda781d8984055737b36af5\transformed\ui-tooling-preview-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:17:1-28:12
+MERGED from [androidx.compose.ui:ui-graphics-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\6a61290e799bcba1c38a7cc00503c3fa\transformed\ui-graphics-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5e5020d0ec4ec8b78b56eb0f5f24f408\transformed\ui-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:17:1-28:12
+MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:2:1-17:12
+MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ae8f1109d9a87b4008f18c4b7a10d955\transformed\play-services-location-21.1.0\AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:16:1-24:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c17fb8551431b57c420d63c9522e83b\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a1ca58ea4615bf59593723f797fa2bd5\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7c51a48f0a259d5ae0b0460d2bf321a6\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9bc78ff950dc2765fba4667dcd9b8175\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b36083905086216973cf3ba6a11eca6d\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\0602566daaab33fff7b11b912052b428\transformed\savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9b579b608ac4956a9bbeb087d7e9d8b7\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\faadd65cc6b661381156f53b562c2d14\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\709788d3a5b5daf8da2f4f716aea76e7\transformed\runtime-saveable-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8cc17c10a4cbd026103a89f1bcb68fcf\transformed\runtime-release\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\12d5fccfb3d09607f8697491f2a93fe4\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:2:1-6:12
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:16:1-26:12
+MERGED from [androidx.fragment:fragment:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\31b9e00cfed1a4f8afe4ac89e9c46c47\transformed\fragment-1.8.2\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\32c5ab8dc3dfd9dc37525e72664bf6f6\transformed\activity-1.8.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9c2947562bd820285b2a574fa1c5ac5a\transformed\activity-ktx-1.8.2\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity-compose:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b2f4a4db4b748d38a55f4565a76a3ddc\transformed\activity-compose-1.8.2\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1fcc48763151caa587abb8f467b53acf\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8f2813af1585a20f635d48eab03f931\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [org.maplibre.gl:maplibre-android-gestures:0.0.4] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\266735dc4f352b67dca0b8aa50b312c8\transformed\maplibre-android-gestures-0.0.4\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\09b3d28ccd0adc53aea959e645479069\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fc48547aa5f6eb0934b23ea040a2aeb6\transformed\core-ktx-1.13.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f9d562b986579bd9baffb80a20d6ca1b\transformed\autofill-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\495d15db131065ef7d78e5866059e787\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\30bc80c8b8cb1951f08fbab86e96eda8\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\08c341d853cf15b5fbdc83bc42e52306\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8ac196b459f9aeb6c2a4c5a58ae61b51\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d6c7bf0a2f2b7b0c760db6b4b3878cce\transformed\timber-5.0.1\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cbf5893dfbb3d7eec813c24ac18d2199\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\14281e5d0748fe0b18021be93dec917c\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\089438a9eed397f779b55ebcfe752eb7\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fe410fc436c5c0043fa8b2c6397b6a77\transformed\tracing-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b57da8635a6a092390523d4ede2f5bb\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c4ddeffd3aed89cce9286a9507596a58\transformed\annotation-experimental-1.4.0\AndroidManifest.xml:2:1-7:12
 	package
 		INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml
 	android:versionName
@@ -75,347 +80,369 @@ MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\HP ELIT
 		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:2:11-69
 uses-permission#android.permission.ACCESS_FINE_LOCATION
 ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:5:5-79
-MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:15:5-79
-MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:15:5-79
+MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:15:5-79
+MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:15:5-79
 	android:name
 		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:5:22-76
 uses-permission#android.permission.ACCESS_COARSE_LOCATION
 ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:7:5-81
-MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:14:5-81
-MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:14:5-81
+MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:14:5-81
+MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:14:5-81
 	android:name
 		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:7:22-78
 uses-permission#android.permission.VIBRATE
 ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:8:5-66
 	android:name
 		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:8:22-63
+uses-permission#android.permission.USE_EXACT_ALARM
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:9:5-74
+	android:name
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:9:22-71
+uses-permission#android.permission.SCHEDULE_EXACT_ALARM
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:10:5-79
+	android:name
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:10:22-76
 application
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:10:5-31:19
-MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
-MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
-MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:22:5-26:19
-MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:22:5-26:19
-MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\088bfb96eb37e601591fcfb8b37e7f61\transformed\play-services-location-21.1.0\AndroidManifest.xml:7:5-20
-MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\088bfb96eb37e601591fcfb8b37e7f61\transformed\play-services-location-21.1.0\AndroidManifest.xml:7:5-20
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
-MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b71da09493bd18b358715e4caa33a265\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:5:5-20
-MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b71da09493bd18b358715e4caa33a265\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:5:5-20
-MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:20:5-24:19
-MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:20:5-24:19
-MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
-MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
-MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\141741d621706181fca4c475b003dfb5\transformed\timber-5.0.1\AndroidManifest.xml:7:5-20
-MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\141741d621706181fca4c475b003dfb5\transformed\timber-5.0.1\AndroidManifest.xml:7:5-20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\372453af3eb70fa49ddea815514e641c\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\372453af3eb70fa49ddea815514e641c\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b9ada463e6cb8b8b3b6e569d02327ece\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b9ada463e6cb8b8b3b6e569d02327ece\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:12:5-35:19
+MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:22:5-26:19
+MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ae8f1109d9a87b4008f18c4b7a10d955\transformed\play-services-location-21.1.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ae8f1109d9a87b4008f18c4b7a10d955\transformed\play-services-location-21.1.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\12d5fccfb3d09607f8697491f2a93fe4\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:5:5-20
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\12d5fccfb3d09607f8697491f2a93fe4\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:5:5-20
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:20:5-24:19
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:20:5-24:19
+MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
+MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d6c7bf0a2f2b7b0c760db6b4b3878cce\transformed\timber-5.0.1\AndroidManifest.xml:7:5-20
+MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d6c7bf0a2f2b7b0c760db6b4b3878cce\transformed\timber-5.0.1\AndroidManifest.xml:7:5-20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\089438a9eed397f779b55ebcfe752eb7\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\089438a9eed397f779b55ebcfe752eb7\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b57da8635a6a092390523d4ede2f5bb\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b57da8635a6a092390523d4ede2f5bb\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
 	android:extractNativeLibs
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:13:9-41
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:15:9-41
 	android:appComponentFactory
-		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:18:9-35
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:20:9-35
 	android:label
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:16:9-41
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:18:9-41
 	android:fullBackupContent
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:14:9-54
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:16:9-54
 	android:roundIcon
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:17:9-54
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:19:9-54
 	tools:targetApi
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:20:9-29
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:22:9-29
 	android:icon
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:15:9-43
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:17:9-43
 	android:allowBackup
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:11:9-35
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:13:9-35
 	android:theme
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:19:9-51
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:21:9-51
 	android:dataExtractionRules
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:12:9-65
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:14:9-65
 activity#com.janak.location.alarm.MainActivity
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:21:9-30:20
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:23:9-32:20
 	android:label
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:24:13-45
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:26:13-45
 	android:exported
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:23:13-36
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:25:13-36
 	android:theme
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:25:13-55
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:27:13-55
 	android:name
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:22:13-41
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:24:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:26:13-29:29
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:28:13-31:29
 action#android.intent.action.MAIN
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:27:17-69
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:29:17-69
 	android:name
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:27:25-66
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:29:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:28:17-77
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:30:17-77
 	android:name
-		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:28:27-74
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:30:27-74
+receiver#com.janak.location.alarm.alarm.AlarmReceiver
+ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:34:9-57
+	android:name
+		ADDED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml:34:19-54
 uses-sdk
 INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml
 INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml
-MERGED from [com.google.accompanist:accompanist-permissions:0.34.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b760d3a75225a44228d129511da99397\transformed\accompanist-permissions-0.34.0\AndroidManifest.xml:21:5-44
-MERGED from [com.google.accompanist:accompanist-permissions:0.34.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b760d3a75225a44228d129511da99397\transformed\accompanist-permissions-0.34.0\AndroidManifest.xml:21:5-44
-MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62417317ffb2289b7a81ad7f4cbed039\transformed\material3-release\AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62417317ffb2289b7a81ad7f4cbed039\transformed\material3-release\AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.material:material-ripple-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\eeb4b04abe0b8c426ead7f07f8c90bfa\transformed\material-ripple-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-ripple-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\eeb4b04abe0b8c426ead7f07f8c90bfa\transformed\material-ripple-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\56dadcd9f57c264840c4db52388a57e2\transformed\material-icons-core-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\56dadcd9f57c264840c4db52388a57e2\transformed\material-icons-core-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f09057b3b8a77fbea91e3d0d97f25cc8\transformed\material-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f09057b3b8a77fbea91e3d0d97f25cc8\transformed\material-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5510ada832f995bfa30c7fe8d92f78a8\transformed\animation-core-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5510ada832f995bfa30c7fe8d92f78a8\transformed\animation-core-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a97a73ed5a41f4cdfe57537050470f83\transformed\animation-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a97a73ed5a41f4cdfe57537050470f83\transformed\animation-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-layout-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\406baac29f71b31e9ba959a9daa5b635\transformed\foundation-layout-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-layout-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\406baac29f71b31e9ba959a9daa5b635\transformed\foundation-layout-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3272270741c65f8b2c848e602bfc419d\transformed\foundation-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3272270741c65f8b2c848e602bfc419d\transformed\foundation-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-tooling-data-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3abad0ae4abe492a3059926bf6c5a9d4\transformed\ui-tooling-data-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-tooling-data-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3abad0ae4abe492a3059926bf6c5a9d4\transformed\ui-tooling-data-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-unit-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a735c339381f7e7e1fd0dbfe50bfbf8d\transformed\ui-unit-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-unit-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a735c339381f7e7e1fd0dbfe50bfbf8d\transformed\ui-unit-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-geometry-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\028926290c7a0162e05cd40dd5e5c415\transformed\ui-geometry-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-geometry-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\028926290c7a0162e05cd40dd5e5c415\transformed\ui-geometry-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-util-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a6cb9e302107b89ac94e28de5c05a13f\transformed\ui-util-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-util-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a6cb9e302107b89ac94e28de5c05a13f\transformed\ui-util-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-text-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\e22c38ca7f0801beea677e9bcc6ed46f\transformed\ui-text-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-text-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\e22c38ca7f0801beea677e9bcc6ed46f\transformed\ui-text-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\68158a9d8eaf2206b6f58ce9e64cbf5d\transformed\ui-tooling-preview-release\AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\68158a9d8eaf2206b6f58ce9e64cbf5d\transformed\ui-tooling-preview-release\AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-graphics-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\36347cc040004530053bf38a18d30f10\transformed\ui-graphics-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-graphics-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\36347cc040004530053bf38a18d30f10\transformed\ui-graphics-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cba0a79ce42a9243c25178fe9768c016\transformed\ui-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cba0a79ce42a9243c25178fe9768c016\transformed\ui-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:20:5-44
-MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:5:5-44
-MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:5:5-44
-MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\088bfb96eb37e601591fcfb8b37e7f61\transformed\play-services-location-21.1.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\088bfb96eb37e601591fcfb8b37e7f61\transformed\play-services-location-21.1.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
-MERGED from [androidx.loader:loader:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c55178211acbadf4538bf0c289472d71\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.loader:loader:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c55178211acbadf4538bf0c289472d71\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
-MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
-MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7a71007cee56dac139f24a7972590471\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7a71007cee56dac139f24a7972590471\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fe79b338e3b971548cf9cb4862991b90\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fe79b338e3b971548cf9cb4862991b90\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7dbb87a63d1b93665bfef17571c3bbf7\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7dbb87a63d1b93665bfef17571c3bbf7\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cb68e7e1e7afb83ba8af2d9092022e27\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cb68e7e1e7afb83ba8af2d9092022e27\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\04825108c771aa670e5d1e301ebb4b02\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\04825108c771aa670e5d1e301ebb4b02\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b8b43b0fd732570646cdf0cfd4e7692\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b8b43b0fd732570646cdf0cfd4e7692\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\916c73107c037451656f11e5dd371388\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\916c73107c037451656f11e5dd371388\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-saveable-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8a1cab2e909f9b572f54141e4fc04774\transformed\runtime-saveable-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-saveable-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8a1cab2e909f9b572f54141e4fc04774\transformed\runtime-saveable-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9df21fda12003dc52d2629da8fb56084\transformed\runtime-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9df21fda12003dc52d2629da8fb56084\transformed\runtime-release\AndroidManifest.xml:5:5-44
-MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b71da09493bd18b358715e4caa33a265\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:4:5-43
-MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b71da09493bd18b358715e4caa33a265\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:4:5-43
-MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:18:5-43
-MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:18:5-43
-MERGED from [androidx.fragment:fragment:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\2779ccf78cd694cf04e5ffaed2e79f21\transformed\fragment-1.8.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.fragment:fragment:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\2779ccf78cd694cf04e5ffaed2e79f21\transformed\fragment-1.8.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\874941bdfe4f6687891d2ea3651b5224\transformed\activity-1.8.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.activity:activity:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\874941bdfe4f6687891d2ea3651b5224\transformed\activity-1.8.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1400f42a1218adbfbf93ba0eb8af1cc9\transformed\activity-ktx-1.8.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1400f42a1218adbfbf93ba0eb8af1cc9\transformed\activity-ktx-1.8.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity-compose:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1be79e5a0bfc33e8847cdf3ca7345f1e\transformed\activity-compose-1.8.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity-compose:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1be79e5a0bfc33e8847cdf3ca7345f1e\transformed\activity-compose-1.8.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d14752bf38e18b4a5850e649684c152c\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d14752bf38e18b4a5850e649684c152c\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cf396fa77c78a6ab154ff997904812fc\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cf396fa77c78a6ab154ff997904812fc\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [org.maplibre.gl:maplibre-android-gestures:0.0.4] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\903ca10d96c9f3aebb0b3dbd862bbc6f\transformed\maplibre-android-gestures-0.0.4\AndroidManifest.xml:5:5-44
-MERGED from [org.maplibre.gl:maplibre-android-gestures:0.0.4] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\903ca10d96c9f3aebb0b3dbd862bbc6f\transformed\maplibre-android-gestures-0.0.4\AndroidManifest.xml:5:5-44
-MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1479599d18bec40650f8b0b7ca95d191\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
-MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1479599d18bec40650f8b0b7ca95d191\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
-MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b252b269828be792c5e94b5141e6ac76\transformed\core-ktx-1.13.1\AndroidManifest.xml:5:5-44
-MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b252b269828be792c5e94b5141e6ac76\transformed\core-ktx-1.13.1\AndroidManifest.xml:5:5-44
-MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9e1b835cd2272c001e9105bdd827e02a\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9e1b835cd2272c001e9105bdd827e02a\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3d853ebcc6d3c463cae54d064648a0c7\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3d853ebcc6d3c463cae54d064648a0c7\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f8b502368c4acea15715b6d444655086\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f8b502368c4acea15715b6d444655086\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fec13de734453c2572ad53facc154a04\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fec13de734453c2572ad53facc154a04\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f44e96db51b1738b4cd63fd7e75d6b39\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f44e96db51b1738b4cd63fd7e75d6b39\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
-MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\141741d621706181fca4c475b003dfb5\transformed\timber-5.0.1\AndroidManifest.xml:5:5-44
-MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\141741d621706181fca4c475b003dfb5\transformed\timber-5.0.1\AndroidManifest.xml:5:5-44
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\13177ec1e8c34b7ae0dfc0ef58529c12\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\13177ec1e8c34b7ae0dfc0ef58529c12\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bcdd3bc204a4e1df6f3987ad8f23833c\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bcdd3bc204a4e1df6f3987ad8f23833c\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\372453af3eb70fa49ddea815514e641c\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\372453af3eb70fa49ddea815514e641c\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
-MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\28066d95bb3232112c01ff1b2a19fab9\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\28066d95bb3232112c01ff1b2a19fab9\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b9ada463e6cb8b8b3b6e569d02327ece\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b9ada463e6cb8b8b3b6e569d02327ece\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\56fa724c58eac6ddbb5008e599da366e\transformed\annotation-experimental-1.4.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\56fa724c58eac6ddbb5008e599da366e\transformed\annotation-experimental-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-common:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\32a997834151b1f865b3a8f169e4b497\transformed\navigation-common-2.7.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-common:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\32a997834151b1f865b3a8f169e4b497\transformed\navigation-common-2.7.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-runtime:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4dcfacc5b81bffcb0693a88f39162aa2\transformed\navigation-runtime-2.7.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-runtime:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4dcfacc5b81bffcb0693a88f39162aa2\transformed\navigation-runtime-2.7.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-common-ktx:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c16b0d82006f37a12744c5c5d821e3af\transformed\navigation-common-ktx-2.7.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-common-ktx:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c16b0d82006f37a12744c5c5d821e3af\transformed\navigation-common-ktx-2.7.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b7d3940f0a03efa4f018a6e777ffaf0e\transformed\navigation-runtime-ktx-2.7.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b7d3940f0a03efa4f018a6e777ffaf0e\transformed\navigation-runtime-ktx-2.7.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-compose:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ff3b162204460605414935024680421d\transformed\navigation-compose-2.7.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-compose:2.7.7] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ff3b162204460605414935024680421d\transformed\navigation-compose-2.7.7\AndroidManifest.xml:5:5-44
+MERGED from [com.google.accompanist:accompanist-permissions:0.34.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\585459605832b553c46040735a30e1ad\transformed\accompanist-permissions-0.34.0\AndroidManifest.xml:21:5-44
+MERGED from [com.google.accompanist:accompanist-permissions:0.34.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\585459605832b553c46040735a30e1ad\transformed\accompanist-permissions-0.34.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b8594828f65df287abc98076ecc85acc\transformed\material3-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b8594828f65df287abc98076ecc85acc\transformed\material3-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3c27399c895d58e548f91e513449b2bf\transformed\material-ripple-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3c27399c895d58e548f91e513449b2bf\transformed\material-ripple-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4ba1d48516af3160d691e6beeaa30bac\transformed\material-icons-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4ba1d48516af3160d691e6beeaa30bac\transformed\material-icons-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8b96657bd2098fe6e514f76668416ac0\transformed\material-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8b96657bd2098fe6e514f76668416ac0\transformed\material-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\146a90c244296082ae1cad17aa57994f\transformed\animation-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\146a90c244296082ae1cad17aa57994f\transformed\animation-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\e34a002c98b17bbbf6ef99661bd98a90\transformed\animation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\e34a002c98b17bbbf6ef99661bd98a90\transformed\animation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\40053d971d723bd4eeafd5b1787e8a08\transformed\foundation-layout-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\40053d971d723bd4eeafd5b1787e8a08\transformed\foundation-layout-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3f3621642583f6dc017baaf9c4889416\transformed\foundation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3f3621642583f6dc017baaf9c4889416\transformed\foundation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5a3cb6c748235ea3aed1542ed17885ac\transformed\ui-tooling-data-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5a3cb6c748235ea3aed1542ed17885ac\transformed\ui-tooling-data-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b179b1637d704f55df6ad14a4dc06d81\transformed\ui-unit-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b179b1637d704f55df6ad14a4dc06d81\transformed\ui-unit-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f1a30e7eca8385069208fe7c6ddc2db4\transformed\ui-geometry-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f1a30e7eca8385069208fe7c6ddc2db4\transformed\ui-geometry-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7787da3775f8ecb3eff538a40b16df28\transformed\ui-util-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7787da3775f8ecb3eff538a40b16df28\transformed\ui-util-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ec15f009a2ff9f758a39e9355207b9a5\transformed\ui-text-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ec15f009a2ff9f758a39e9355207b9a5\transformed\ui-text-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\28f1b4563bda781d8984055737b36af5\transformed\ui-tooling-preview-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\28f1b4563bda781d8984055737b36af5\transformed\ui-tooling-preview-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\6a61290e799bcba1c38a7cc00503c3fa\transformed\ui-graphics-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\6a61290e799bcba1c38a7cc00503c3fa\transformed\ui-graphics-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5e5020d0ec4ec8b78b56eb0f5f24f408\transformed\ui-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5e5020d0ec4ec8b78b56eb0f5f24f408\transformed\ui-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:5:5-44
+MERGED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ae8f1109d9a87b4008f18c4b7a10d955\transformed\play-services-location-21.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-location:21.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\ae8f1109d9a87b4008f18c4b7a10d955\transformed\play-services-location-21.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c17fb8551431b57c420d63c9522e83b\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c17fb8551431b57c420d63c9522e83b\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a1ca58ea4615bf59593723f797fa2bd5\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\a1ca58ea4615bf59593723f797fa2bd5\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7c51a48f0a259d5ae0b0460d2bf321a6\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\7c51a48f0a259d5ae0b0460d2bf321a6\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9bc78ff950dc2765fba4667dcd9b8175\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9bc78ff950dc2765fba4667dcd9b8175\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b36083905086216973cf3ba6a11eca6d\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b36083905086216973cf3ba6a11eca6d\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\0602566daaab33fff7b11b912052b428\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\0602566daaab33fff7b11b912052b428\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9b579b608ac4956a9bbeb087d7e9d8b7\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9b579b608ac4956a9bbeb087d7e9d8b7\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\faadd65cc6b661381156f53b562c2d14\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\faadd65cc6b661381156f53b562c2d14\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\709788d3a5b5daf8da2f4f716aea76e7\transformed\runtime-saveable-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\709788d3a5b5daf8da2f4f716aea76e7\transformed\runtime-saveable-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8cc17c10a4cbd026103a89f1bcb68fcf\transformed\runtime-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8cc17c10a4cbd026103a89f1bcb68fcf\transformed\runtime-release\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\12d5fccfb3d09607f8697491f2a93fe4\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:4:5-43
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\12d5fccfb3d09607f8697491f2a93fe4\transformed\play-services-tasks-18.0.2\AndroidManifest.xml:4:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:18:5-43
+MERGED from [androidx.fragment:fragment:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\31b9e00cfed1a4f8afe4ac89e9c46c47\transformed\fragment-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\31b9e00cfed1a4f8afe4ac89e9c46c47\transformed\fragment-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\32c5ab8dc3dfd9dc37525e72664bf6f6\transformed\activity-1.8.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\32c5ab8dc3dfd9dc37525e72664bf6f6\transformed\activity-1.8.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9c2947562bd820285b2a574fa1c5ac5a\transformed\activity-ktx-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\9c2947562bd820285b2a574fa1c5ac5a\transformed\activity-ktx-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-compose:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b2f4a4db4b748d38a55f4565a76a3ddc\transformed\activity-compose-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-compose:1.8.2] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b2f4a4db4b748d38a55f4565a76a3ddc\transformed\activity-compose-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1fcc48763151caa587abb8f467b53acf\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\1fcc48763151caa587abb8f467b53acf\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8f2813af1585a20f635d48eab03f931\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8f2813af1585a20f635d48eab03f931\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [org.maplibre.gl:maplibre-android-gestures:0.0.4] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\266735dc4f352b67dca0b8aa50b312c8\transformed\maplibre-android-gestures-0.0.4\AndroidManifest.xml:5:5-44
+MERGED from [org.maplibre.gl:maplibre-android-gestures:0.0.4] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\266735dc4f352b67dca0b8aa50b312c8\transformed\maplibre-android-gestures-0.0.4\AndroidManifest.xml:5:5-44
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\09b3d28ccd0adc53aea959e645479069\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\09b3d28ccd0adc53aea959e645479069\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fc48547aa5f6eb0934b23ea040a2aeb6\transformed\core-ktx-1.13.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fc48547aa5f6eb0934b23ea040a2aeb6\transformed\core-ktx-1.13.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f9d562b986579bd9baffb80a20d6ca1b\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\f9d562b986579bd9baffb80a20d6ca1b\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\495d15db131065ef7d78e5866059e787\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\495d15db131065ef7d78e5866059e787\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\30bc80c8b8cb1951f08fbab86e96eda8\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\30bc80c8b8cb1951f08fbab86e96eda8\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\08c341d853cf15b5fbdc83bc42e52306\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\08c341d853cf15b5fbdc83bc42e52306\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8ac196b459f9aeb6c2a4c5a58ae61b51\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8ac196b459f9aeb6c2a4c5a58ae61b51\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d6c7bf0a2f2b7b0c760db6b4b3878cce\transformed\timber-5.0.1\AndroidManifest.xml:5:5-44
+MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\d6c7bf0a2f2b7b0c760db6b4b3878cce\transformed\timber-5.0.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cbf5893dfbb3d7eec813c24ac18d2199\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\cbf5893dfbb3d7eec813c24ac18d2199\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\14281e5d0748fe0b18021be93dec917c\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\14281e5d0748fe0b18021be93dec917c\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\089438a9eed397f779b55ebcfe752eb7\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\089438a9eed397f779b55ebcfe752eb7\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fe410fc436c5c0043fa8b2c6397b6a77\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\fe410fc436c5c0043fa8b2c6397b6a77\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b57da8635a6a092390523d4ede2f5bb\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3b57da8635a6a092390523d4ede2f5bb\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c4ddeffd3aed89cce9286a9507596a58\transformed\annotation-experimental-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c4ddeffd3aed89cce9286a9507596a58\transformed\annotation-experimental-1.4.0\AndroidManifest.xml:5:5-44
 	android:targetSdkVersion
 		INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from C:\janak\projects\location_alarm_app_V2\app\src\main\AndroidManifest.xml
 activity#androidx.compose.ui.tooling.PreviewActivity
-ADDED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:23:9-25:39
+ADDED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:23:9-25:39
 	android:exported
-		ADDED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:25:13-36
+		ADDED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:25:13-36
 	android:name
-		ADDED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\62ed9ccb9e207d2ccfff191d3ef0cf31\transformed\ui-tooling-release\AndroidManifest.xml:24:13-71
+		ADDED from [androidx.compose.ui:ui-tooling-android:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\5782af2f945995c90074141c549c8ee2\transformed\ui-tooling-release\AndroidManifest.xml:24:13-71
 activity#androidx.activity.ComponentActivity
-ADDED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:23:9-25:39
+ADDED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:23:9-25:39
 	android:exported
-		ADDED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:25:13-36
+		ADDED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:25:13-36
 	android:name
-		ADDED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3cd3d662817f2573c654bce652e48d03\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:24:13-63
+		ADDED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\024a127f7dd65f672a00a9564f306dc6\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:24:13-63
 uses-feature#android.hardware.wifi
-ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:7:5-9:36
+ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:7:5-9:36
 	android:required
-		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:9:9-33
+		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:9:9-33
 	android:name
-		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:8:9-45
+		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:8:9-45
 uses-permission#android.permission.INTERNET
-ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:11:5-67
+ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:11:5-67
 	android:name
-		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:11:22-64
+		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:11:22-64
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:12:5-79
+ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:12:5-79
 	android:name
-		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:12:22-76
+		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:12:22-76
 uses-permission#android.permission.ACCESS_WIFI_STATE
-ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:13:5-76
+ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:13:5-76
 	android:name
-		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\642b472c1a5617870e736ae2ddbcb0cd\transformed\android-sdk-12.3.1\AndroidManifest.xml:13:22-73
+		ADDED from [org.maplibre.gl:android-sdk:12.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c8293fab439204964639a64910e3f2f7\transformed\android-sdk-12.3.1\AndroidManifest.xml:13:22-73
 activity#com.google.android.gms.common.api.GoogleApiActivity
-ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:20:9-22:45
+ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:20:9-22:45
 	android:exported
-		ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:22:19-43
+		ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:22:19-43
 	android:theme
-		ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:21:19-78
+		ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:21:19-78
 	android:name
-		ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\97d4139dff5a8e9c243c89c50e021212\transformed\play-services-base-18.1.0\AndroidManifest.xml:20:19-85
+		ADDED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\3e68f4c398e3a1b76ed785dc65aee948\transformed\play-services-base-18.1.0\AndroidManifest.xml:20:19-85
 provider#androidx.startup.InitializationProvider
-ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\372453af3eb70fa49ddea815514e641c\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\372453af3eb70fa49ddea815514e641c\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\089438a9eed397f779b55ebcfe752eb7\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\089438a9eed397f779b55ebcfe752eb7\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
 	tools:node
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:28:13-31
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:28:13-31
 	android:authorities
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
 	android:exported
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
 	android:name
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
 meta-data#androidx.emoji2.text.EmojiCompatInitializer
-ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
 	android:value
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
 	android:name
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\35a29dfef7fc3681514547e45e03c867\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\168b63a6c2fe04eb003adadbb2ddb076\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
 meta-data#androidx.lifecycle.ProcessLifecycleInitializer
-ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
 	android:value
-		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
 	android:name
-		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\c0813d3504973040a01ac09c88d9eeaa\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\bdf47fb4175d1d1fe4f43d63ebb1e836\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
 meta-data#com.google.android.gms.version
-ADDED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:21:9-23:69
+ADDED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:21:9-23:69
 	android:value
-		ADDED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:23:13-66
+		ADDED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:23:13-66
 	android:name
-		ADDED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\92a08e4eacbcc4076db70ae7856931cc\transformed\play-services-basement-18.1.0\AndroidManifest.xml:22:13-58
+		ADDED from [com.google.android.gms:play-services-basement:18.1.0] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\b40fdb464a0297d31be7a9be7c70be8b\transformed\play-services-basement-18.1.0\AndroidManifest.xml:22:13-58
 permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
-		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
 	android:name
-		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
 permission#com.janak.location.alarm.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
-		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
 	android:name
-		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
 uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
-		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
 uses-permission#com.janak.location.alarm.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
-		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\52d6de83f616654dcdd67593ba6b83e1\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+		ADDED from [androidx.core:core:1.13.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\4d8e32b0d164dab13b598f548582cc38\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
 meta-data#androidx.profileinstaller.ProfileInstallerInitializer
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
 	android:value
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
 receiver#androidx.profileinstaller.ProfileInstallReceiver
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
 	android:enabled
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
 	android:exported
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
 	android:permission
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
 	android:directBootAware
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
 intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
 action#androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
 intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
 action#androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
 intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
 action#androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
 intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
 action#androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\96a04d71953a4b5d9b689315e8fcb2ea\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\HP ELITEBOOK 840 G5\.gradle\caches\9.0-milestone-1\transforms\8c3495c5e70f7489700ef327ec8cbbd2\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92

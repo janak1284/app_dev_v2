@@ -26,8 +26,8 @@ class AlarmHandler(private val context: Context) {
         }
     }
 
-    fun startAlarm() {
-        if (ringtone?.isPlaying == false) {
+    fun startAlarm(isSoundEnabled: Boolean = true) {
+        if (isSoundEnabled && ringtone?.isPlaying == false) {
             ringtone?.play()
         }
 

@@ -67,4 +67,5 @@ dependencies {
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.androidx.navigation.compose)
 }
