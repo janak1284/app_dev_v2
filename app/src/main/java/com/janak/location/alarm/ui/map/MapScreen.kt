@@ -52,7 +52,15 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
-import com.janak.location.alarm.ui.alarm.IntegratedAlarmBottomSheet
+import com.janak.location.alarm.ui.alarm.ModernConfigurationSheet
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun MapScreen(viewModel: MapViewModel) {
@@ -82,7 +90,6 @@ fun MapScreen(viewModel: MapViewModel) {
     ) { permissions ->
         val fineLocation = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
         val coarseLocation = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        android.util.Log.d("MapScreen", "PermissionCallback: fine=$fineLocation, coarse=$coarseLocation")
         
         if (fineLocation || coarseLocation) {
             hasLocationPermission = true
@@ -91,9 +98,7 @@ fun MapScreen(viewModel: MapViewModel) {
     }
 
     LaunchedEffect(Unit) {
-        android.util.Log.d("MapScreen", "LaunchedEffect: Checking initial permissions. hasPermission=$hasLocationPermission")
         if (!hasLocationPermission) {
-            android.util.Log.d("MapScreen", "LaunchedEffect: Requesting permissions...")
             permissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -101,7 +106,6 @@ fun MapScreen(viewModel: MapViewModel) {
                 )
             )
         } else {
-            android.util.Log.d("MapScreen", "LaunchedEffect: Already has permissions, starting updates")
             viewModel.startLocationUpdates()
         }
     }
@@ -148,14 +152,11 @@ fun MapScreen(viewModel: MapViewModel) {
     // Reactive Location Component Activation
     LaunchedEffect(mapInstance, hasLocationPermission) {
         val map = mapInstance
-        android.util.Log.d("MapScreen", "LaunchedEffect(LocComp): map=${map != null}, hasPermission=$hasLocationPermission")
         if (map != null && hasLocationPermission) {
             map.getStyle { style ->
-                android.util.Log.d("MapScreen", "LaunchedEffect(LocComp): Style loaded")
                 val locationComponent = map.locationComponent
                 if (!locationComponent.isLocationComponentActivated) {
                     try {
-                        android.util.Log.d("MapScreen", "LaunchedEffect(LocComp): Activating component")
                         locationComponent.activateLocationComponent(
                             LocationComponentActivationOptions.builder(context, style).build()
                         )
@@ -164,7 +165,6 @@ fun MapScreen(viewModel: MapViewModel) {
                     }
                 }
                 if (locationComponent.isLocationComponentActivated) {
-                    android.util.Log.d("MapScreen", "LaunchedEffect(LocComp): Component activated, enabling...")
                     locationComponent.isLocationComponentEnabled = true
                     locationComponent.cameraMode = CameraMode.TRACKING
                     locationComponent.renderMode = RenderMode.COMPASS
@@ -185,7 +185,6 @@ fun MapScreen(viewModel: MapViewModel) {
             val imageId = "destination-marker"
 
             if (style.getImage(imageId) == null) {
-                // Add icon
                 val drawable = androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin)
                 drawable?.let {
                     style.addImage(imageId, it)
@@ -208,9 +207,7 @@ fun MapScreen(viewModel: MapViewModel) {
 
             if (dest != null) {
                 val point = org.maplibre.geojson.Point.fromLngLat(dest.longitude, dest.latitude)
-                source?.setGeoJson(point) // Update directly
-            } else {
-                 // Clear if null (optional, though logic usually keeps it once set for now)
+                source?.setGeoJson(point)
             }
         }
     }
@@ -222,7 +219,6 @@ fun MapScreen(viewModel: MapViewModel) {
         val loc = userLocation
         val map = mapInstance
         if (loc != null && map != null && !hasZoomedToUser) {
-            android.util.Log.d("MapScreen", "Auto-zooming to ${loc.latitude}, ${loc.longitude}")
             map.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(loc.latitude, loc.longitude),
@@ -239,7 +235,7 @@ fun MapScreen(viewModel: MapViewModel) {
             modifier = Modifier.fillMaxSize(),
             update = { map ->
                 map.getMapAsync { mapLibreMap ->
-                    mapInstance = mapLibreMap // Save instance
+                    mapInstance = mapLibreMap
                     
                     if (mapLibreMap.style == null) {
                         val osmStyle = """
@@ -270,7 +266,32 @@ fun MapScreen(viewModel: MapViewModel) {
             }
         )
         
-        // UI Overlay
+        // --- STEP 1: Top Search Card ---
+        Card(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp)
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Search destination...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        
+        // UI Overlay for Permissions
         if (!hasLocationPermission) {
             Button(
                 onClick = {
@@ -285,72 +306,80 @@ fun MapScreen(viewModel: MapViewModel) {
             ) {
                 Text(text = "Grant Location Permission")
             }
-        } else if (userLocation == null) {
-            // Show waiting for location
-             Card(
-                 modifier = Modifier
-                     .align(Alignment.TopCenter)
-                     .padding(16.dp)
-             ) {
-                 Text(
-                     text = "Waiting for location...",
-                     modifier = Modifier.padding(8.dp),
-                     style = MaterialTheme.typography.bodyMedium
-                 )
-             }
         }
         
-        // Alarm Control UI
-         if (destination != null) {
-             Card(
-                 modifier = Modifier
-                     .align(Alignment.BottomCenter)
-                     .padding(16.dp)
-                     .fillMaxWidth()
-             ) {
-                 Column(
-                     modifier = Modifier.padding(16.dp),
-                     horizontalAlignment = Alignment.CenterHorizontally
-                 ) {
-                     if (isAlarmSet) {
-                         Text(
-                             text = "Alarm Active!", 
-                             style = MaterialTheme.typography.titleLarge,
-                             color = MaterialTheme.colorScheme.primary
-                         )
-                         Spacer(modifier = Modifier.height(8.dp))
-                         Text(
-                             text = "Distance: ${distanceToDestination ?: "Calculating..."}",
-                             style = MaterialTheme.typography.bodyLarge
-                         )
-                         Spacer(modifier = Modifier.height(16.dp))
-                         Button(
-                             onClick = { viewModel.toggleAlarm() },
-                             colors = ButtonDefaults.buttonColors(
-                                 containerColor = MaterialTheme.colorScheme.error
-                             )
-                         ) {
-                             Text("Stop Alarm")
-                         }
-                     } else {
-                         Text(
-                             text = "Destination Selected",
-                             style = MaterialTheme.typography.titleMedium
-                         )
-                         Spacer(modifier = Modifier.height(16.dp))
-                         // Open integrated bottom sheet
-                         Button(
-                             onClick = { showBottomSheet = true }
-                         ) {
-                             Text("Configure Alarm")
-                         }
-                     }
-                 }
-             }
-         }
+        // --- STEP 2: Animated Status Card ---
+        AnimatedVisibility(
+            visible = destination != null,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isAlarmSet) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                ),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (isAlarmSet) {
+                        StatusHeader(
+                            title = "GUARDIAN ACTIVE",
+                            icon = Icons.Default.Lock,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = distanceToDestination ?: "Calculating...",
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "DISTANCE TO TARGET",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = { viewModel.toggleAlarm() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Icon(Icons.Default.Stop, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("DEACTIVATE")
+                        }
+                    } else {
+                        StatusHeader(
+                            title = "DESTINATION SET",
+                            icon = Icons.Default.Route,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = { showBottomSheet = true },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Icon(Icons.Default.Shield, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("ARM GUARDIAN")
+                        }
+                    }
+                }
+            }
+        }
          
          if (showBottomSheet) {
-             IntegratedAlarmBottomSheet(
+             ModernConfigurationSheet(
                  initialSettings = alarmSettings,
                  onDismissRequest = { showBottomSheet = false },
                  onSaveSettings = { newSettings ->
@@ -361,3 +390,18 @@ fun MapScreen(viewModel: MapViewModel) {
          }
     }
 }
+
+@Composable
+fun StatusHeader(title: String, icon: ImageVector, color: androidx.compose.ui.graphics.Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = color)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = color,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
