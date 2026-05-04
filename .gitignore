@@ -1,12 +1,12 @@
 # Build artifacts
-build/
-bin/
-gen/
-out/
-*.apk
-*.aar
-*.ap_
-*.dex
+**/build/
+**/bin/
+**/gen/
+**/out/
+**/*.apk
+**/*.aar
+**/*.ap_
+**/*.dex
 
 # Gradle
 .gradle/
@@ -65,7 +65,7 @@ google-services.json
 *~
 
 # Misc
-agent_docs/
+#agent_docs/
 .navigation/
 lint/reports/
 lint/intermediate/
