@@ -12,15 +12,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
-import com.janak.location.alarm.alarm.AlarmHandler
+import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.alarm.AlarmScheduler
+import com.janak.location.alarm.api.PhotonApiService
+import com.janak.location.alarm.model.PhotonFeature
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import org.maplibre.android.geometry.LatLng
 import kotlin.math.roundToInt
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
-    private val alarmHandler: AlarmHandler,
-    private val alarmScheduler: AlarmScheduler
+    private val alarmEngine: AlarmEngine,
+    private val alarmScheduler: AlarmScheduler,
+    private val photonApiService: PhotonApiService
 ) : ViewModel() {
 
     private val _userLocation = MutableStateFlow<Location?>(null)
@@ -32,11 +39,75 @@ class MapViewModel(
     private val _isAlarmSet = MutableStateFlow(false)
     val isAlarmSet: StateFlow<Boolean> = _isAlarmSet.asStateFlow()
 
+    private val _isAlarmActive = MutableStateFlow(false)
+    val isAlarmActive: StateFlow<Boolean> = _isAlarmActive.asStateFlow()
+
     private val _distanceToDestination = MutableStateFlow<String?>(null)
     val distanceToDestination: StateFlow<String?> = _distanceToDestination.asStateFlow()
 
     private val _alarmSettings = MutableStateFlow(com.janak.location.alarm.model.AlarmSettings())
     val alarmSettings: StateFlow<com.janak.location.alarm.model.AlarmSettings> = _alarmSettings.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _searchResults = MutableStateFlow<List<PhotonFeature>>(emptyList())
+    val searchResults: StateFlow<List<PhotonFeature>> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    init {
+        observeSearchQuery()
+    }
+
+    @OptIn(FlowPreview::class)
+    private fun observeSearchQuery() {
+        viewModelScope.launch {
+            _searchQuery
+                .debounce(500L)
+                .filter { it.isNotBlank() && it.length >= 3 }
+                .distinctUntilChanged()
+                .collect { query ->
+                    performSearch(query)
+                }
+        }
+    }
+
+    fun onSearchQueryChange(newQuery: String) {
+        _searchQuery.value = newQuery
+        if (newQuery.isBlank()) {
+            _searchResults.value = emptyList()
+        }
+    }
+
+    private suspend fun performSearch(query: String) {
+        _isSearching.value = true
+        try {
+            val response = photonApiService.getSuggestions(
+                query = query,
+                lat = _userLocation.value?.latitude,
+                lon = _userLocation.value?.longitude
+            )
+            _searchResults.value = response.features
+        } catch (e: Exception) {
+            android.util.Log.e("MapViewModel", "Search failed", e)
+            _searchResults.value = emptyList()
+        } finally {
+            _isSearching.value = false
+        }
+    }
+
+    fun selectSuggestion(feature: PhotonFeature) {
+        val coords = feature.geometry.coordinates
+        if (coords.size >= 2) {
+            // Photon returns [lon, lat]
+            val latLng = LatLng(coords[1], coords[0])
+            setDestination(latLng)
+            _searchQuery.value = feature.properties.displayName
+            _searchResults.value = emptyList()
+        }
+    }
 
     fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
         _alarmSettings.value = settings
@@ -83,11 +154,13 @@ class MapViewModel(
         }
     }
 
-    private fun stopAlarm() {
+    fun stopAlarm() {
         _isAlarmSet.value = false
+        _isAlarmActive.value = false
+        _destination.value = null
         _distanceToDestination.value = null
         alarmScheduler.cancelAlarm()
-        alarmHandler.stopAlarm()
+        alarmEngine.stop()
     }
 
     private fun checkDistance(currentLocation: Location) {
@@ -106,7 +179,10 @@ class MapViewModel(
         if (_isAlarmSet.value) {
             _distanceToDestination.value = "${distance.roundToInt()}m"
             if (distance <= _alarmSettings.value.distanceMeters) {
-                alarmHandler.startAlarm(true) // Sound enabled by default for now
+                if (!_isAlarmActive.value) {
+                    _isAlarmActive.value = true
+                    alarmEngine.start(shouldVibrate = _alarmSettings.value.isVibrateEnabled)
+                }
             }
         } else {
             _distanceToDestination.value = null
@@ -115,19 +191,20 @@ class MapViewModel(
     
     override fun onCleared() {
         super.onCleared()
-        alarmHandler.stopAlarm()
+        alarmEngine.stop()
     }
 }
 
 class MapViewModelFactory(
     private val locationTrackingManager: LocationTrackingManager,
-    private val alarmHandler: AlarmHandler,
-    private val alarmScheduler: AlarmScheduler
+    private val alarmEngine: AlarmEngine,
+    private val alarmScheduler: AlarmScheduler,
+    private val photonApiService: PhotonApiService
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MapViewModel(locationTrackingManager, alarmHandler, alarmScheduler) as T
+            return MapViewModel(locationTrackingManager, alarmEngine, alarmScheduler, photonApiService) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -15,8 +15,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.janak.location.alarm.alarm.AlarmHandler
+import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.alarm.AlarmSchedulerImpl
+import com.janak.location.alarm.api.RetrofitClient
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.viewmodel.MapViewModel
 import com.janak.location.alarm.viewmodel.MapViewModelFactory
@@ -34,11 +35,17 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val context = LocalContext.current
-                    val alarmHandler = remember { AlarmHandler(context) }
+                    val alarmEngine = remember { AlarmEngine(context) }
                     val alarmScheduler = remember { AlarmSchedulerImpl(context) }
                     val locationTrackingManager = remember { LocationTrackingManager(context) }
+                    val photonApiService = remember { RetrofitClient.photonApiService }
                     val viewModel: MapViewModel = viewModel(
-                        factory = MapViewModelFactory(locationTrackingManager, alarmHandler, alarmScheduler)
+                        factory = MapViewModelFactory(
+                            locationTrackingManager, 
+                            alarmEngine, 
+                            alarmScheduler,
+                            photonApiService
+                        )
                     )
 
                     MapScreen(viewModel = viewModel)

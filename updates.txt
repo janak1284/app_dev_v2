@@ -1,0 +1,22 @@
+# Project Updates - Location Alarm MVP
+
+## Features Implemented
+- **Destination Search:** Integrated the Photon API (OpenStreetMap) for real-time location auto-suggestions.
+- **Networking Foundation:** Setup Retrofit, OkHttp, and Kotlinx Serialization for client-side API communication.
+- **Search Logic:** Implemented 500ms debouncing and location-biasing in the ViewModel to prioritize local search results.
+- **Search UI:** Created a modern `DestinationSearchField` component with loading indicators and animated suggestion lists.
+- **Map Integration:**
+    - **Camera Animation:** The map now smoothly flys to the selected destination.
+    - **Destination Markers:** Visual markers are placed at the selected coordinates.
+    - **Style Safety:** Implemented listeners to ensure markers persist across map style reloads.
+- **Alarm Engine:**
+    - Created `AlarmEngine.kt` to handle hardware interactions (Sound & Haptics).
+    - Integrated `AlarmEngine` into `MapViewModel` and `MainActivity`.
+    - Connected distance-trigger logic to start the alarm hardware.
+    - Added vibration preference support, allowing users to toggle haptics on/off from the UI.
+
+## Technical Fixes
+- **Compilation:** Resolved "Unresolved reference" errors by correctly targeting the `MapView` for style load listeners.
+- **Structural Integrity:** Fixed structural issues in `MapScreen.kt` to ensure correct function scoping and reactive logic.
+- **Memory Management:** Used `DisposableEffect` for style listeners to prevent potential memory leaks.
+- **Architecture Cleanup:** Replaced deprecated `AlarmHandler` with the more robust `AlarmEngine`.
