@@ -76,9 +76,9 @@ Load when needed:
 
 ## Current State (Update During Development)
 
-**Last Updated:** Feb 2026
-**Working On:** **Alarm Logic** (Phase 1 Refinement)
-**Recently Completed:** Location Tracking & Permissions, Map & UI
+**Last Updated:** May 2026
+**Working On:** **Phase 2 — Background Reliability** (Process death & battery optimization)
+**Recently Completed:** Foreground Service, Persistent Notification
 **Blocked By:** None
 
 ---
@@ -89,15 +89,15 @@ Load when needed:
 
 * [x] Initialize Android project
 * [x] Setup MapLibre map
-* [ ] Implement location updates (foreground) - BLOCKED
-* [ ] Implement distance calculation
-* [ ] Implement alarm engine
+* [x] Implement location updates (foreground)
+* [x] Implement distance calculation
+* [x] Implement alarm engine
 * [ ] Manual ride testing
 
 ### Phase 2 — Background Reliability
 
-* [ ] Add foreground service
-* [ ] Persistent notification
+* [x] Add foreground service
+* [x] Persistent notification
 * [ ] Restore state after process death
 * [ ] Battery optimization handling
 * [ ] Field testing

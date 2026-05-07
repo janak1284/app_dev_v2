@@ -27,12 +27,13 @@ fun InfiniteWheelPicker(
     visibleItemsCount: Int = 3, // Use an odd number for a clear center
     itemHeight: Dp = 48.dp,
     modifier: Modifier = Modifier,
+    textStyle: androidx.compose.ui.text.TextStyle = androidx.compose.material3.MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
     onItemSelected: (index: Int, item: String) -> Unit
 ) {
     if (items.isEmpty()) return
 
     val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % items.size) + initialIndex - (visibleItemsCount / 2)
+        initialFirstVisibleItemIndex = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % items.size) + initialIndex
     )
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val itemHeightPx = with(LocalDensity.current) { itemHeight.toPx() }
@@ -54,12 +55,11 @@ fun InfiniteWheelPicker(
     Box(
         modifier = modifier
             .height(itemHeight * visibleItemsCount)
-            .fillMaxWidth()
     ) {
         LazyColumn(
             state = listState,
             flingBehavior = flingBehavior,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(vertical = itemHeight * (visibleItemsCount / 2))
         ) {
@@ -112,10 +112,13 @@ fun InfiniteWheelPicker(
                 ) {
                     Text(
                         text = item,
-                        modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
-                        color = if (isCenter) Color.White else Color.DarkGray, // Center white, adjacent DarkGray
-                        fontSize = 24.sp,
+                        color = if (isCenter) Color.White else Color.DarkGray,
+                        style = textStyle.copy(
+                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        ),
                         fontWeight = if (isCenter) FontWeight.Bold else FontWeight.Normal
                     )
                 }

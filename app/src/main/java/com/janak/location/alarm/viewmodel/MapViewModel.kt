@@ -9,19 +9,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 
 import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.alarm.AlarmScheduler
 import com.janak.location.alarm.api.PhotonApiService
 import com.janak.location.alarm.model.PhotonFeature
-import kotlinx.coroutines.FlowPreview
+import org.maplibre.android.geometry.LatLng
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import org.maplibre.android.geometry.LatLng
-import kotlin.math.roundToInt
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
@@ -39,15 +36,13 @@ class MapViewModel(
     private val _isAlarmSet = MutableStateFlow(false)
     val isAlarmSet: StateFlow<Boolean> = _isAlarmSet.asStateFlow()
 
-    private val _isAlarmActive = MutableStateFlow(false)
-    val isAlarmActive: StateFlow<Boolean> = _isAlarmActive.asStateFlow()
-
     private val _distanceToDestination = MutableStateFlow<String?>(null)
     val distanceToDestination: StateFlow<String?> = _distanceToDestination.asStateFlow()
 
     private val _alarmSettings = MutableStateFlow(com.janak.location.alarm.model.AlarmSettings())
     val alarmSettings: StateFlow<com.janak.location.alarm.model.AlarmSettings> = _alarmSettings.asStateFlow()
 
+    // --- Search State ---
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -58,26 +53,18 @@ class MapViewModel(
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
     init {
-        observeSearchQuery()
+        setupSearchDebounce()
     }
 
-    @OptIn(FlowPreview::class)
-    private fun observeSearchQuery() {
+    private fun setupSearchDebounce() {
         viewModelScope.launch {
             _searchQuery
-                .debounce(500L)
-                .filter { it.isNotBlank() && it.length >= 3 }
+                .debounce(500)
                 .distinctUntilChanged()
+                .filter { it.length >= 3 }
                 .collect { query ->
                     performSearch(query)
                 }
-        }
-    }
-
-    fun onSearchQueryChange(newQuery: String) {
-        _searchQuery.value = newQuery
-        if (newQuery.isBlank()) {
-            _searchResults.value = emptyList()
         }
     }
 
@@ -98,13 +85,9 @@ class MapViewModel(
         }
     }
 
-    fun selectSuggestion(feature: PhotonFeature) {
-        val coords = feature.geometry.coordinates
-        if (coords.size >= 2) {
-            // Photon returns [lon, lat]
-            val latLng = LatLng(coords[1], coords[0])
-            setDestination(latLng)
-            _searchQuery.value = feature.properties.displayName
+    fun onSearchQueryChange(newQuery: String) {
+        _searchQuery.value = newQuery
+        if (newQuery.isEmpty()) {
             _searchResults.value = emptyList()
         }
     }
@@ -142,6 +125,14 @@ class MapViewModel(
         }
     }
 
+    fun selectSearchResult(feature: PhotonFeature) {
+        val coords = feature.geometry.coordinates
+        val latLng = LatLng(coords[1], coords[0])
+        setDestination(latLng)
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
+    }
+
     fun toggleAlarm() {
         if (_isAlarmSet.value) {
             stopAlarm()
@@ -154,10 +145,8 @@ class MapViewModel(
         }
     }
 
-    fun stopAlarm() {
+    private fun stopAlarm() {
         _isAlarmSet.value = false
-        _isAlarmActive.value = false
-        _destination.value = null
         _distanceToDestination.value = null
         alarmScheduler.cancelAlarm()
         alarmEngine.stop()
@@ -179,10 +168,7 @@ class MapViewModel(
         if (_isAlarmSet.value) {
             _distanceToDestination.value = "${distance.roundToInt()}m"
             if (distance <= _alarmSettings.value.distanceMeters) {
-                if (!_isAlarmActive.value) {
-                    _isAlarmActive.value = true
-                    alarmEngine.start(shouldVibrate = _alarmSettings.value.isVibrateEnabled)
-                }
+                alarmEngine.start(shouldVibrate = _alarmSettings.value.isVibrateEnabled)
             }
         } else {
             _distanceToDestination.value = null

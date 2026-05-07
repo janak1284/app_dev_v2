@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -24,18 +25,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import java.util.Calendar
+import android.app.TimePickerDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.viewmodel.MapViewModel
+import com.janak.location.alarm.viewmodel.MapViewModelFactory
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.geojson.Point
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -58,14 +66,12 @@ fun MapScreen(viewModel: MapViewModel) {
     val lifecycleOwner = LocalLifecycleOwner.current
     
     val userLocation by viewModel.userLocation.collectAsState()
+
+
     val destination by viewModel.destination.collectAsState()
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
-    val isAlarmActive by viewModel.isAlarmActive.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val alarmSettings by viewModel.alarmSettings.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val searchResults by viewModel.searchResults.collectAsState()
-    val isSearching by viewModel.isSearching.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -165,34 +171,42 @@ fun MapScreen(viewModel: MapViewModel) {
         }
     }
 
-    // Update Destination Marker & Camera
+    // Update Destination Marker
     LaunchedEffect(mapInstance, destination) {
         val map = mapInstance ?: return@LaunchedEffect
-        val dest = destination ?: return@LaunchedEffect
+        val dest = destination
+        
+        if (map.style?.isFullyLoaded == true) {
+            val style = map.style!!
+            val sourceId = "destination-source"
+            val layerId = "destination-layer"
+            val imageId = "destination-marker"
 
-        // 1. Animate Camera to new destination
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(dest, 14.0))
-
-        // 2. Setup/Update Marker (Symbol Layer)
-        map.getStyle { style ->
-            setupDestinationMarker(style, context, dest)
-        }
-    }
-
-    // Safety: Re-apply marker if style reloads (Option B)
-    DisposableEffect(mapInstance) {
-        val map = mapInstance ?: return@DisposableEffect onDispose {}
-        val listener = MapView.OnDidFinishLoadingStyleListener {
-            val dest = destination
-            if (dest != null) {
-                map.getStyle { style ->
-                    setupDestinationMarker(style, context, dest)
+            if (style.getImage(imageId) == null) {
+                val drawable = androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin)
+                drawable?.let {
+                    style.addImage(imageId, it)
                 }
             }
-        }
-        mapView.addOnDidFinishLoadingStyleListener(listener)
-        onDispose {
-            mapView.removeOnDidFinishLoadingStyleListener(listener)
+
+            var source = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(sourceId)
+            if (source == null) {
+                source = org.maplibre.android.style.sources.GeoJsonSource(sourceId)
+                style.addSource(source)
+                
+                val layer = org.maplibre.android.style.layers.SymbolLayer(layerId, sourceId)
+                layer.setProperties(
+                    org.maplibre.android.style.layers.PropertyFactory.iconImage(imageId),
+                    org.maplibre.android.style.layers.PropertyFactory.iconSize(1.5f),
+                    org.maplibre.android.style.layers.PropertyFactory.iconAnchor(org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM)
+                )
+                style.addLayer(layer)
+            }
+
+            if (dest != null) {
+                val point = org.maplibre.geojson.Point.fromLngLat(dest.longitude, dest.latitude)
+                source?.setGeoJson(point)
+            }
         }
     }
 
@@ -250,18 +264,30 @@ fun MapScreen(viewModel: MapViewModel) {
             }
         )
         
-        // --- STEP 1: Top Search Field ---
-        com.janak.location.alarm.ui.components.DestinationSearchField(
-            query = searchQuery,
-            onQueryChange = { viewModel.onSearchQueryChange(it) },
-            results = searchResults,
-            onResultClick = { viewModel.selectSuggestion(it) },
-            isSearching = isSearching,
+        // --- STEP 1: Top Search Card ---
+        Card(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
-                .fillMaxWidth()
-        )
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Search destination...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         
         // UI Overlay for Permissions
         if (!hasLocationPermission) {
@@ -293,11 +319,7 @@ fun MapScreen(viewModel: MapViewModel) {
                     .fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = when {
-                        isAlarmActive -> MaterialTheme.colorScheme.errorContainer
-                        isAlarmSet -> MaterialTheme.colorScheme.primaryContainer
-                        else -> MaterialTheme.colorScheme.surface
-                    }
+                    containerColor = if (isAlarmSet) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                 ),
                 shape = RoundedCornerShape(28.dp)
             ) {
@@ -307,9 +329,9 @@ fun MapScreen(viewModel: MapViewModel) {
                 ) {
                     if (isAlarmSet) {
                         StatusHeader(
-                            title = if (isAlarmActive) "ALARM RINGING" else "GUARDIAN ACTIVE",
-                            icon = if (isAlarmActive) Icons.Default.NotificationsActive else Icons.Default.Lock,
-                            color = if (isAlarmActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                            title = "GUARDIAN ACTIVE",
+                            icon = Icons.Default.Lock,
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
@@ -324,14 +346,14 @@ fun MapScreen(viewModel: MapViewModel) {
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
-                            onClick = { viewModel.stopAlarm() },
+                            onClick = { viewModel.toggleAlarm() },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Icon(Icons.Default.Stop, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (isAlarmActive) "STOP ALARM" else "DEACTIVATE")
+                            Text("DEACTIVATE")
                         }
                     } else {
                         StatusHeader(
@@ -381,29 +403,3 @@ fun StatusHeader(title: String, icon: ImageVector, color: androidx.compose.ui.gr
     }
 }
 
-// Helper for marker management
-private fun setupDestinationMarker(style: org.maplibre.android.maps.Style, context: android.content.Context, dest: org.maplibre.android.geometry.LatLng) {
-    val sourceId = "destination-source"
-    val layerId = "destination-layer"
-    val imageId = "destination-marker"
-
-    if (style.getImage(imageId) == null) {
-        androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin)?.let {
-            style.addImage(imageId, it)
-        }
-    }
-
-    var source = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(sourceId)
-    if (source == null) {
-        source = org.maplibre.android.style.sources.GeoJsonSource(sourceId)
-        style.addSource(source)
-        style.addLayer(
-            org.maplibre.android.style.layers.SymbolLayer(layerId, sourceId).withProperties(
-                org.maplibre.android.style.layers.PropertyFactory.iconImage(imageId),
-                org.maplibre.android.style.layers.PropertyFactory.iconSize(1.5f),
-                org.maplibre.android.style.layers.PropertyFactory.iconAnchor(org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM)
-            )
-        )
-    }
-    source.setGeoJson(org.maplibre.geojson.Point.fromLngLat(dest.longitude, dest.latitude))
-}

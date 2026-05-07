@@ -10,6 +10,10 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -33,11 +37,16 @@
         </activity>
 
         <receiver android:name=".alarm.AlarmReceiver" android:exported="false" />
-        <activity 
+        <activity
             android:name=".RingingActivity" 
             android:exported="false"
             android:showOnLockScreen="true"
             android:theme="@style/Theme.LocationAlarm" />
+
+        <service 
+            android:name=".service.LocationAlarmService" 
+            android:foregroundServiceType="location" 
+            android:exported="false" />
     </application>
 
 </manifest>

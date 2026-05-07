@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -60,7 +61,12 @@ fun ModernConfigurationSheet(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val uri: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            }
             selectedRingtoneUri = uri
             if (uri != null) {
                 val ringtone = RingtoneManager.getRingtone(context, uri)
@@ -83,30 +89,33 @@ fun ModernConfigurationSheet(
         ringtonePickerLauncher.launch(intent)
     }
 
-    LaunchedEffect(showTimePicker) {
-        if (showTimePicker) {
-            scope.launch {
-                delay(200) // Wait for animation
-                scrollState.animateScrollTo(scrollState.maxValue)
-            }
-        }
-    }
+    /* Removed manual scroll logic to prevent jumping - animateContentSize handles the balloon effect */
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        tonalElevation = 0.dp
+        tonalElevation = 0.dp,
+        windowInsets = WindowInsets(0, 0, 0, 0) // Critical: Let the Column handle the nav bar lock
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .wrapContentHeight() // Snug fit for the "balloon"
+                .navigationBarsPadding() // Locks the bottom just above nav buttons
+                .padding(bottom = 20.dp) // Professional spacing
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 8.dp)
+                    .verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
             Text(
                 text = "Guard Configuration",
                 style = MaterialTheme.typography.headlineSmall,
@@ -257,66 +266,89 @@ fun ModernConfigurationSheet(
                                     modifier = Modifier
                                         .padding(top = 16.dp)
                                         .fillMaxWidth()
+                                        .height(160.dp) // Adjusted for 3 items at 50dp height
                                         .background(
                                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                                             RoundedCornerShape(16.dp)
-                                        )
-                                        .padding(vertical = 12.dp),
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        InfiniteWheelPicker(
-                                            items = (0..23).map { it.toString().padStart(2, '0') },
-                                            initialIndex = backupHour,
-                                            onItemSelected = { _, item -> backupHour = item.toInt() },
-                                            modifier = Modifier.width(70.dp),
-                                            itemHeight = 44.dp
-                                        )
-                                        Text(":", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(horizontal = 8.dp))
-                                        InfiniteWheelPicker(
-                                            items = (0..59).map { it.toString().padStart(2, '0') },
-                                            initialIndex = backupMinute,
-                                            onItemSelected = { _, item -> backupMinute = item.toInt() },
-                                            modifier = Modifier.width(70.dp),
-                                            itemHeight = 44.dp
-                                        )
+                                    val timeStyle = MaterialTheme.typography.displayMedium.copy(
+                                        fontSize = 36.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        lineHeight = 36.sp,
+                                        color = Color.White
+                                    )
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.fillMaxHeight()
+                                    ) {
+                                            InfiniteWheelPicker(
+                                                items = (0..23).map { it.toString().padStart(2, '0') },
+                                                initialIndex = backupHour,
+                                                onItemSelected = { _, item -> backupHour = item.toInt() },
+                                                modifier = Modifier.width(72.dp),
+                                                itemHeight = 50.dp,
+                                                textStyle = timeStyle
+                                            )
+                                            Text(
+                                                text = ":",
+                                                style = timeStyle,
+                                                modifier = Modifier.padding(horizontal = 4.dp).offset(y = (-2).dp)
+                                            )
+                                            InfiniteWheelPicker(
+                                                items = (0..59).map { it.toString().padStart(2, '0') },
+                                                initialIndex = backupMinute,
+                                                onItemSelected = { _, item -> backupMinute = item.toInt() },
+                                                modifier = Modifier.width(72.dp),
+                                                itemHeight = 50.dp,
+                                                textStyle = timeStyle
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
-
             // --- Primary Action ---
-            Button(
-                onClick = {
-                    onSaveSettings(
-                        AlarmSettings(
-                            distanceMeters = distanceMeters.toInt(),
-                            backupHour = if (timerEnabled) backupHour else 0,
-                            backupMinute = if (timerEnabled) backupMinute else 0,
-                            isVibrateEnabled = vibrateEnabled,
-                            ringtoneUri = selectedRingtoneUri
-                        )
-                    )
-                },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
-                    .padding(bottom = 8.dp),
-                shape = RoundedCornerShape(20.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 16.dp)
             ) {
-                Icon(Icons.Default.Shield, contentDescription = null)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "ACTIVATE GUARD",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Button(
+                    onClick = {
+                        onSaveSettings(
+                            AlarmSettings(
+                                distanceMeters = distanceMeters.toInt(),
+                                backupHour = if (timerEnabled) backupHour else 0,
+                                backupMinute = if (timerEnabled) backupMinute else 0,
+                                isVibrateEnabled = vibrateEnabled,
+                                ringtoneUri = selectedRingtoneUri
+                            )
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Icon(Icons.Default.Shield, contentDescription = null)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "ACTIVATE GUARD",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -394,8 +426,4 @@ private fun formatDistance(meters: Int): String {
 
 private fun formatTime(hour: Int, minute: Int): String {
     return String.format("%02d:%02d", hour, minute)
-}
-
-private suspend fun delay(timeMillis: Long) {
-    kotlinx.coroutines.delay(timeMillis)
 }
