@@ -19,16 +19,21 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
-    private val photonApiService: PhotonApiService
+    private val photonApiService: PhotonApiService,
+    context: android.content.Context
 ) : ViewModel() {
 
-    private val _userLocation = MutableStateFlow<Location?>(null)
-    val userLocation: StateFlow<Location?> = _userLocation.asStateFlow()
+    private val sharedPrefs = context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+
+    private val _userLocation = MutableStateFlow<android.location.Location?>(null)
+    val userLocation: StateFlow<android.location.Location?> = _userLocation.asStateFlow()
 
     private val _destination = MutableStateFlow<LatLng?>(null)
     val destination: StateFlow<LatLng?> = _destination.asStateFlow()
@@ -52,8 +57,36 @@ class MapViewModel(
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
+    // --- Theme State ---
+    // 0 = System, 1 = Light, 2 = Dark
+    private val _themeMode = MutableStateFlow(sharedPrefs.getInt("theme_mode", 0))
+    val themeMode: StateFlow<Int> = _themeMode.asStateFlow()
+
+    // --- Search History ---
+    private val _searchHistory = MutableStateFlow<List<PhotonFeature>>(loadSearchHistory())
+    val searchHistory: StateFlow<List<PhotonFeature>> = _searchHistory.asStateFlow()
+
     init {
         setupSearchDebounce()
+    }
+
+    private fun loadSearchHistory(): List<PhotonFeature> {
+        val historyJson = sharedPrefs.getString("search_history", null) ?: return emptyList()
+        return try {
+            Json.decodeFromString<List<PhotonFeature>>(historyJson)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun saveSearchHistory(history: List<PhotonFeature>) {
+        val historyJson = Json.encodeToString(history)
+        sharedPrefs.edit().putString("search_history", historyJson).apply()
+    }
+
+    fun setThemeMode(mode: Int) {
+        _themeMode.value = mode
+        sharedPrefs.edit().putInt("theme_mode", mode).apply()
     }
 
     private fun setupSearchDebounce() {
@@ -61,9 +94,12 @@ class MapViewModel(
             _searchQuery
                 .debounce(500)
                 .distinctUntilChanged()
-                .filter { it.length >= 3 }
                 .collect { query ->
-                    performSearch(query)
+                    if (query.length >= 3) {
+                        performSearch(query)
+                    } else if (query.isEmpty()) {
+                        _searchResults.value = emptyList()
+                    }
                 }
         }
     }
@@ -71,15 +107,34 @@ class MapViewModel(
     private suspend fun performSearch(query: String) {
         _isSearching.value = true
         try {
+            // 1. Get remote results
             val response = photonApiService.getSuggestions(
                 query = query,
                 lat = _userLocation.value?.latitude,
                 lon = _userLocation.value?.longitude
             )
-            _searchResults.value = response.features
+            
+            // 2. Find local matches from history
+            val historyMatches = _searchHistory.value.filter { feature ->
+                val name = feature.properties.name ?: ""
+                val street = feature.properties.street ?: ""
+                name.contains(query, ignoreCase = true) || street.contains(query, ignoreCase = true)
+            }
+
+            // 3. Merge: Prioritize history, then remote results, removing duplicates
+            val combined = (historyMatches + response.features).distinctBy { 
+                "${it.geometry.coordinates[0]},${it.geometry.coordinates[1]}"
+            }
+
+            _searchResults.value = combined
         } catch (e: Exception) {
             android.util.Log.e("MapViewModel", "Search failed", e)
-            _searchResults.value = emptyList()
+            // Fallback to history only if network fails
+            _searchResults.value = _searchHistory.value.filter { feature ->
+                val name = feature.properties.name ?: ""
+                val street = feature.properties.street ?: ""
+                name.contains(query, ignoreCase = true) || street.contains(query, ignoreCase = true)
+            }
         } finally {
             _isSearching.value = false
         }
@@ -87,9 +142,6 @@ class MapViewModel(
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
-        if (newQuery.isEmpty()) {
-            _searchResults.value = emptyList()
-        }
     }
 
     fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
@@ -106,15 +158,22 @@ class MapViewModel(
         startLocationUpdates()
     }
 
+    private var locationJob: kotlinx.coroutines.Job? = null
+
     fun startLocationUpdates() {
         android.util.Log.d("MapViewModel", "startLocationUpdates: Called")
-        viewModelScope.launch {
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
             locationTrackingManager.getLocationUpdates().collect { location ->
                 android.util.Log.d("MapViewModel", "startLocationUpdates: Received location $location")
                 _userLocation.value = location
                 checkDistance(location)
             }
         }
+    }
+
+    fun refreshLocation() {
+        startLocationUpdates()
     }
 
     fun setDestination(latLng: LatLng) {
@@ -126,6 +185,16 @@ class MapViewModel(
     }
 
     fun selectSearchResult(feature: PhotonFeature) {
+        // Add to history
+        val currentHistory = _searchHistory.value.toMutableList()
+        currentHistory.removeAll { 
+            it.geometry.coordinates == feature.geometry.coordinates 
+        }
+        currentHistory.add(0, feature)
+        val updatedHistory = currentHistory.take(10) // Keep last 10
+        _searchHistory.value = updatedHistory
+        saveSearchHistory(updatedHistory)
+
         val coords = feature.geometry.coordinates
         val latLng = LatLng(coords[1], coords[0])
         setDestination(latLng)
@@ -185,12 +254,13 @@ class MapViewModelFactory(
     private val locationTrackingManager: LocationTrackingManager,
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
-    private val photonApiService: PhotonApiService
+    private val photonApiService: PhotonApiService,
+    private val context: android.content.Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MapViewModel(locationTrackingManager, alarmEngine, alarmScheduler, photonApiService) as T
+            return MapViewModel(locationTrackingManager, alarmEngine, alarmScheduler, photonApiService, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

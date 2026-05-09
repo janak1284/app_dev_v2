@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -26,10 +28,15 @@ fun DestinationSearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     results: List<PhotonFeature>,
+    history: List<PhotonFeature>,
     onResultClick: (PhotonFeature) -> Unit,
     isSearching: Boolean,
+    onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val displayResults = if (query.isEmpty()) history else results
+    val isShowingHistory = query.isEmpty() && history.isNotEmpty()
+
     Column(modifier = modifier) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -57,6 +64,9 @@ fun DestinationSearchField(
                                 Icon(Icons.Default.Clear, contentDescription = "Clear")
                             }
                         }
+                        IconButton(onClick = onMenuClick) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Settings")
+                        }
                     }
                 },
                 colors = TextFieldDefaults.colors(
@@ -71,7 +81,7 @@ fun DestinationSearchField(
         }
 
         AnimatedVisibility(
-            visible = results.isNotEmpty(),
+            visible = displayResults.isNotEmpty(),
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut()
         ) {
@@ -85,7 +95,18 @@ fun DestinationSearchField(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 LazyColumn {
-                    items(results) { feature ->
+                    if (isShowingHistory) {
+                        item {
+                            Text(
+                                text = "Recent Searches",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                    items(displayResults) { feature ->
+                        val isFromHistory = history.any { it.geometry.coordinates == feature.geometry.coordinates }
                         ListItem(
                             headlineContent = {
                                 Text(
@@ -104,14 +125,14 @@ fun DestinationSearchField(
                             },
                             leadingContent = {
                                 Icon(
-                                    Icons.Default.LocationOn,
+                                    imageVector = if (isFromHistory) Icons.Default.History else Icons.Default.LocationOn,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = if (isFromHistory) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
                                 )
                             },
                             modifier = Modifier.clickable { onResultClick(feature) }
                         )
-                        if (feature != results.last()) {
+                        if (feature != displayResults.last()) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
                                 thickness = 0.5.dp,

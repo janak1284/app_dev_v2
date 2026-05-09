@@ -51,8 +51,11 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import com.janak.location.alarm.ui.alarm.ModernConfigurationSheet
+import com.janak.location.alarm.ui.components.DestinationSearchField
+import com.janak.location.alarm.ui.settings.SettingsScreen
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -62,6 +65,20 @@ import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun MapScreen(viewModel: MapViewModel) {
+    var showSettings by remember { mutableStateOf(false) }
+
+    if (showSettings) {
+        SettingsScreen(
+            viewModel = viewModel,
+            onBackClick = { showSettings = false }
+        )
+    } else {
+        MapContent(viewModel = viewModel, onOpenSettings = { showSettings = true })
+    }
+}
+
+@Composable
+fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
@@ -72,6 +89,11 @@ fun MapScreen(viewModel: MapViewModel) {
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val alarmSettings by viewModel.alarmSettings.collectAsState()
+
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+    val searchHistory by viewModel.searchHistory.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -227,6 +249,20 @@ fun MapScreen(viewModel: MapViewModel) {
         }
     }
 
+    // Zoom to destination when it changes
+    LaunchedEffect(destination, mapInstance) {
+        val dest = destination
+        val map = mapInstance
+        if (dest != null && map != null) {
+            map.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(dest.latitude, dest.longitude),
+                    15.0
+                )
+            )
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             factory = { mapView },
@@ -264,28 +300,53 @@ fun MapScreen(viewModel: MapViewModel) {
             }
         )
         
-        // --- STEP 1: Top Search Card ---
-        Card(
+        // --- STEP 1: Top Search Bar ---
+        DestinationSearchField(
+            query = searchQuery,
+            onQueryChange = { viewModel.onSearchQueryChange(it) },
+            results = searchResults,
+            history = searchHistory,
+            onResultClick = { viewModel.selectSearchResult(it) },
+            isSearching = isSearching,
+            onMenuClick = onOpenSettings,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
-                .fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            shape = RoundedCornerShape(28.dp)
+                .fillMaxWidth()
+        )
+
+        // --- STEP 1.5: Floating Buttons ---
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = if (destination != null) 320.dp else 32.dp, end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+            SmallFloatingActionButton(
+                onClick = { 
+                    userLocation?.let { loc ->
+                        mapInstance?.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(loc.latitude, loc.longitude),
+                                15.0
+                            )
+                        )
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                shape = CircleShape
             ) {
-                Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Search destination...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Icon(Icons.Default.MyLocation, contentDescription = "Focus on User")
+            }
+
+            SmallFloatingActionButton(
+                onClick = { viewModel.refreshLocation() },
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                shape = CircleShape
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = "Refresh Location")
             }
         }
         
