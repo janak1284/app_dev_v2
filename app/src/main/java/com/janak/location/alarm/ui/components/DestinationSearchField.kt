@@ -1,5 +1,6 @@
 package com.janak.location.alarm.ui.components
 
+import android.location.Location
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,13 +8,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,6 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.model.PhotonFeature
+import java.util.Locale
+import kotlin.math.roundToInt
+
+enum class SortOrder {
+    NEAREST, FURTHEST
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,10 +40,34 @@ fun DestinationSearchField(
     onResultClick: (PhotonFeature) -> Unit,
     isSearching: Boolean,
     onMenuClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userLocation: Location? = null
 ) {
-    val displayResults = if (query.isEmpty()) history else results
+    var sortOrder by remember { mutableStateOf(SortOrder.NEAREST) }
+
+    val displayResults = remember(query, results, history, userLocation, sortOrder) {
+        val baseResults = if (query.isEmpty()) history else results
+        if (userLocation != null) {
+            val withDistance = baseResults.map { feature ->
+                val featureLoc = Location("").apply {
+                    latitude = feature.geometry.coordinates[1]
+                    longitude = feature.geometry.coordinates[0]
+                }
+                val distance = userLocation.distanceTo(featureLoc)
+                feature to distance
+            }
+            if (sortOrder == SortOrder.NEAREST) {
+                withDistance.sortedBy { it.second }
+            } else {
+                withDistance.sortedByDescending { it.second }
+            }
+        } else {
+            baseResults.map { it to null }
+        }
+    }
+
     val isShowingHistory = query.isEmpty() && history.isNotEmpty()
+    val showSortButton = query.isNotEmpty() && results.size > 1 && userLocation != null
 
     Column(modifier = modifier) {
         Card(
@@ -58,6 +90,25 @@ fun DestinationSearchField(
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        AnimatedVisibility(visible = showSortButton) {
+                            TextButton(
+                                onClick = {
+                                    sortOrder = if (sortOrder == SortOrder.NEAREST) SortOrder.FURTHEST else SortOrder.NEAREST
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Sort,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (sortOrder == SortOrder.NEAREST) "Nearest" else "Furthest",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         }
                         if (query.isNotEmpty()) {
                             IconButton(onClick = { onQueryChange("") }) {
@@ -105,7 +156,7 @@ fun DestinationSearchField(
                             )
                         }
                     }
-                    items(displayResults) { feature ->
+                    items(displayResults) { (feature, distance) ->
                         val isFromHistory = history.any { it.geometry.coordinates == feature.geometry.coordinates }
                         ListItem(
                             headlineContent = {
@@ -130,9 +181,18 @@ fun DestinationSearchField(
                                     tint = if (isFromHistory) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
                                 )
                             },
+                            trailingContent = {
+                                if (distance != null) {
+                                    Text(
+                                        text = formatDistance(distance),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
                             modifier = Modifier.clickable { onResultClick(feature) }
                         )
-                        if (feature != displayResults.last()) {
+                        if (feature != displayResults.last().first) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
                                 thickness = 0.5.dp,
@@ -143,5 +203,13 @@ fun DestinationSearchField(
                 }
             }
         }
+    }
+}
+
+private fun formatDistance(meters: Float): String {
+    return if (meters >= 1000) {
+        String.format(Locale.getDefault(), "%.1fkm", meters / 1000f)
+    } else {
+        "${meters.roundToInt()}m"
     }
 }
