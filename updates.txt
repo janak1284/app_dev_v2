@@ -1,6 +1,21 @@
 # Project Updates - Location Alarm MVP
 
 ## Features Implemented
+- **Search History & Local Bias (New):**
+    - Search now persists the last 10 selected destinations using `SharedPreferences`.
+    - Local history matches are prioritized and merged with remote Photon API results for faster access.
+    - Integrated history-specific iconography (History vs. Location) in the search dropdown.
+- **Theme Customization & UI Modernization (New):**
+    - Created a dedicated **Settings Screen** accessible from the search bar.
+    - Full support for **Light, Dark, and System Default** theme modes.
+    - Implemented "Deep Dark" color palette for improved battery efficiency on OLED screens.
+- **Enhanced Map Interaction (New):**
+    - **One-Tap Refocus:** Added a dedicated floating button to instantly center the map on the user's current GPS position.
+    - **Active Refresh:** Manual refresh button to restart location tracking collectors.
+    - **Smart Camera:** The map now automatically pans and zooms to the destination upon selection.
+- **Background Readiness (Phase 2):**
+    - Fully implemented `LocationAlarmService` as a Foreground Service with persistent notifications.
+    - Established `RingingActivity` for high-priority wake-up states that survive background execution.
 - **Destination Search:** Integrated the Photon API (OpenStreetMap) for real-time location auto-suggestions.
 - **Networking Foundation:** Setup Retrofit, OkHttp, and Kotlinx Serialization for client-side API communication.
 - **Search Logic:** Implemented 500ms debouncing and location-biasing in the ViewModel to prioritize local search results.
@@ -14,9 +29,22 @@
     - Integrated `AlarmEngine` into `MapViewModel` and `MainActivity`.
     - Connected distance-trigger logic to start the alarm hardware.
     - Added vibration preference support, allowing users to toggle haptics on/off from the UI.
+- **Enhanced Map Controls:**
+    - **Refocus Button:** Added a floating button to instantly center the map on the user's current location.
+    - **Manual Refresh:** Added a refresh button to manually restart location tracking and update the user position.
+- **Persistence & Personalization:**
+    - **Search History:** Implemented local storage for recently selected destinations, integrated into the search suggestions for faster access.
+    - **Theme Management:** Added support for Light, Dark, and System theme modes with persistent storage of user preference.
+- **Advanced Configuration (Modern Configuration Sheet):**
+    - **Backup Time-Based Alarm:** Integrated a secondary backup alarm using `AlarmManager` for specific arrival times.
+    - **Custom Ringtones:** Added a system ringtone picker allowing users to select their preferred alert sound.
+    - **Infinite Wheel Picker:** Implemented a custom scrollable wheel for intuitive time selection.
+- **Phase 2 - Background Readiness:**
+    - Configured `AndroidManifest.xml` with Foreground Service declarations and necessary permissions (`FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `SCHEDULE_EXACT_ALARM`).
+    - Established architecture for `LocationAlarmService` to handle tracking in the background.
 
 ## Technical Fixes
-- **Compilation:** Resolved "Unresolved reference" errors by correctly targeting the `MapView` for style load listeners.
-- **Structural Integrity:** Fixed structural issues in `MapScreen.kt` to ensure correct function scoping and reactive logic.
-- **Memory Management:** Used `DisposableEffect` for style listeners to prevent potential memory leaks.
-- **Architecture Cleanup:** Replaced deprecated `AlarmHandler` with the more robust `AlarmEngine`.
+- **Location Collector Stability:** Resolved a race condition where multiple location collectors could be launched simultaneously; implemented job cancellation to ensure only one active tracking session.
+- **State Management:** Refactored `MapViewModel` to use `SharedPreference` for persisting history and theme settings.
+- **UI Logic:** Optimized the "Guardian" status card with better animations and clearer state transitions.
+- **Architecture Cleanup:** Introduced `AlarmScheduler` to decouple time-based alarm logic from the proximity engine.
