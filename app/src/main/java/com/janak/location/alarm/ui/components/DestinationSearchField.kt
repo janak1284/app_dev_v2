@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.model.PhotonFeature
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 
 enum class SortOrder {
     NEAREST, FURTHEST
@@ -43,7 +45,9 @@ fun DestinationSearchField(
     modifier: Modifier = Modifier,
     userLocation: Location? = null
 ) {
+    val focusManager = LocalFocusManager.current
     var sortOrder by remember { mutableStateOf(SortOrder.NEAREST) }
+    var isFocused by remember { mutableStateOf(false) }
 
     val displayResults = remember(query, results, history, userLocation, sortOrder) {
         val baseResults = if (query.isEmpty()) history else results
@@ -79,7 +83,9 @@ fun DestinationSearchField(
             TextField(
                 value = query,
                 onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { isFocused = it.isFocused },
                 placeholder = { Text("Search destination...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
@@ -132,7 +138,7 @@ fun DestinationSearchField(
         }
 
         AnimatedVisibility(
-            visible = displayResults.isNotEmpty(),
+            visible = isFocused && displayResults.isNotEmpty(),
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut()
         ) {
@@ -190,7 +196,10 @@ fun DestinationSearchField(
                                     )
                                 }
                             },
-                            modifier = Modifier.clickable { onResultClick(feature) }
+                            modifier = Modifier.clickable { 
+                                focusManager.clearFocus()
+                                onResultClick(feature)
+                            }
                         )
                         if (feature != displayResults.last().first) {
                             HorizontalDivider(

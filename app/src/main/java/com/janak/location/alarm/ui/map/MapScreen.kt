@@ -30,6 +30,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.drawable.toBitmap
@@ -80,6 +83,7 @@ fun MapScreen(viewModel: MapViewModel) {
 fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val focusManager = LocalFocusManager.current
     
     val userLocation by viewModel.userLocation.collectAsState()
 
@@ -161,6 +165,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     // Handle Map Clicks
     LaunchedEffect(mapInstance) {
         mapInstance?.addOnMapClickListener { latLng ->
+            focusManager.clearFocus()
             if (!isAlarmSet) {
                 viewModel.setDestination(latLng)
             }
@@ -262,7 +267,15 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }
+    ) {
         AndroidView(
             factory = { mapView },
             modifier = Modifier.fillMaxSize(),
