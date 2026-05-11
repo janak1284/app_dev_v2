@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -226,8 +225,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
             }
 
             if (dest != null) {
-                val point = org.maplibre.geojson.Point.fromLngLat(dest.longitude, dest.latitude)
-                source?.setGeoJson(point)
+                val point = Point.fromLngLat(dest.longitude, dest.latitude)
+                source.setGeoJson(point)
             }
         }
     }
@@ -309,6 +308,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
             onResultClick = { viewModel.selectSearchResult(it) },
             isSearching = isSearching,
             onMenuClick = onOpenSettings,
+            userLocation = userLocation,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
