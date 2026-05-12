@@ -64,6 +64,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import android.view.MotionEvent
 
 @Composable
 fun MapScreen(viewModel: MapViewModel) {
@@ -99,6 +100,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     val searchHistory by viewModel.searchHistory.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
+    var isSearchFocused by remember { mutableStateOf(false) }
+    var isMapInteracting by remember { mutableStateOf(false) }
 
     var hasLocationPermission by remember { 
         mutableStateOf(
@@ -141,6 +144,18 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     val mapView = remember {
         MapView(context).apply {
             onCreate(Bundle())
+            setOnTouchListener { _, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        isMapInteracting = true
+                        focusManager.clearFocus()
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        isMapInteracting = false
+                    }
+                }
+                false
+            }
         }
     }
 
@@ -232,6 +247,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
             if (dest != null) {
                 val point = Point.fromLngLat(dest.longitude, dest.latitude)
                 source.setGeoJson(point)
+            } else {
+                source.setGeoJson(Point.fromLngLat(0.0, 0.0)) // Clear marker
             }
         }
     }
@@ -267,6 +284,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
         }
     }
 
+    val isPaneVisible = destination != null && !isSearchFocused && !isMapInteracting
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -283,6 +302,12 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
                 map.getMapAsync { mapLibreMap ->
                     mapInstance = mapLibreMap
                     
+                    // Reposition compass to bottom-left to avoid overlap with search bar
+                    mapLibreMap.uiSettings.isCompassEnabled = true
+                    mapLibreMap.uiSettings.setCompassFadeFacingNorth(false) // Make it always visible for debugging/better UX
+                    mapLibreMap.uiSettings.setCompassGravity(android.view.Gravity.BOTTOM or android.view.Gravity.START)
+                    mapLibreMap.uiSettings.setCompassMargins(48, 0, 0, 150) // Adjust bottom margin to be above the logo
+
                     if (mapLibreMap.style == null) {
                         val osmStyle = """
                         {
@@ -322,6 +347,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
             isSearching = isSearching,
             onMenuClick = onOpenSettings,
             userLocation = userLocation,
+            onFocusChanged = { isSearchFocused = it },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
@@ -332,7 +358,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = if (destination != null) 320.dp else 32.dp, end = 16.dp),
+                .padding(bottom = if (isPaneVisible) 320.dp else 32.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SmallFloatingActionButton(
@@ -382,7 +408,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
         
         // --- STEP 2: Animated Status Card ---
         AnimatedVisibility(
-            visible = destination != null,
+            visible = isPaneVisible,
             enter = slideInVertically { it } + fadeIn(),
             exit = slideOutVertically { it } + fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter)
@@ -397,53 +423,64 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
                 ),
                 shape = RoundedCornerShape(28.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (isAlarmSet) {
-                        StatusHeader(
-                            title = "GUARDIAN ACTIVE",
-                            icon = Icons.Default.Lock,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = distanceToDestination ?: "Calculating...",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "DISTANCE TO TARGET",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(
-                            onClick = { viewModel.toggleAlarm() },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape = RoundedCornerShape(16.dp)
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (!isAlarmSet) {
+                        IconButton(
+                            onClick = { viewModel.clearDestination() },
+                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                         ) {
-                            Icon(Icons.Default.Stop, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("DEACTIVATE")
+                            Icon(Icons.Default.Close, contentDescription = "Discard Location")
                         }
-                    } else {
-                        StatusHeader(
-                            title = "DESTINATION SET",
-                            icon = Icons.Default.Route,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(
-                            onClick = { showBottomSheet = true },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Icon(Icons.Default.Shield, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("ARM GUARDIAN")
+                    }
+
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (isAlarmSet) {
+                            StatusHeader(
+                                title = "GUARDIAN ACTIVE",
+                                icon = Icons.Default.Lock,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = distanceToDestination ?: "Calculating...",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "DISTANCE TO TARGET",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Button(
+                                onClick = { viewModel.toggleAlarm() },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(Icons.Default.Stop, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("DEACTIVATE")
+                            }
+                        } else {
+                            StatusHeader(
+                                title = "DESTINATION SET",
+                                icon = Icons.Default.Route,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Button(
+                                onClick = { showBottomSheet = true },
+                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(Icons.Default.Shield, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("ARM GUARDIAN")
+                            }
                         }
                     }
                 }

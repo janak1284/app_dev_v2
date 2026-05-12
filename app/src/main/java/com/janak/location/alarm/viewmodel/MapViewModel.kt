@@ -221,6 +221,13 @@ class MapViewModel(
         alarmEngine.stop()
     }
 
+    fun clearDestination() {
+        if (!_isAlarmSet.value) {
+            _destination.value = null
+            _distanceToDestination.value = null
+        }
+    }
+
     private fun checkDistance(currentLocation: Location) {
         val dest = _destination.value ?: return
 

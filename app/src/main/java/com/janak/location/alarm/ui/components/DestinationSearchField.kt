@@ -43,7 +43,8 @@ fun DestinationSearchField(
     isSearching: Boolean,
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier,
-    userLocation: Location? = null
+    userLocation: Location? = null,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
     var sortOrder by remember { mutableStateOf(SortOrder.NEAREST) }
@@ -85,7 +86,10 @@ fun DestinationSearchField(
                 onValueChange = onQueryChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onFocusChanged { isFocused = it.isFocused },
+                    .onFocusChanged { 
+                        isFocused = it.isFocused
+                        onFocusChanged(it.isFocused)
+                    },
                 placeholder = { Text("Search destination...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
