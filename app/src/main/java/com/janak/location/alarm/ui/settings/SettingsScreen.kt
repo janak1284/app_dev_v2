@@ -6,7 +6,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Brightness4
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,7 +23,8 @@ import com.janak.location.alarm.viewmodel.MapViewModel
 @Composable
 fun SettingsScreen(
     viewModel: MapViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onNavigateToHistory: () -> Unit
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     
@@ -77,6 +80,25 @@ fun SettingsScreen(
                             onClick = { viewModel.setThemeMode(2) }
                         )
                         Text("Dark", modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+
+            // --- Section: Search Management ---
+            SettingsSection(title = "Search Management", icon = Icons.Default.Search) {
+                Column {
+                    Button(
+                        onClick = onNavigateToHistory,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Icon(Icons.Default.History, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Manage Search History")
                     }
                 }
             }

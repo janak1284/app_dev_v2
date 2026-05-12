@@ -69,14 +69,30 @@ import android.view.MotionEvent
 @Composable
 fun MapScreen(viewModel: MapViewModel) {
     var showSettings by remember { mutableStateOf(false) }
+    var showHistory by remember { mutableStateOf(false) }
 
-    if (showSettings) {
-        SettingsScreen(
-            viewModel = viewModel,
-            onBackClick = { showSettings = false }
-        )
-    } else {
-        MapContent(viewModel = viewModel, onOpenSettings = { showSettings = true })
+    when {
+        showHistory -> {
+            com.janak.location.alarm.ui.settings.SearchHistoryScreen(
+                viewModel = viewModel,
+                onBackClick = { showHistory = false },
+                onItemClick = { feature ->
+                    viewModel.selectSearchResult(feature)
+                    showHistory = false
+                    showSettings = false
+                }
+            )
+        }
+        showSettings -> {
+            SettingsScreen(
+                viewModel = viewModel,
+                onBackClick = { showSettings = false },
+                onNavigateToHistory = { showHistory = true }
+            )
+        }
+        else -> {
+            MapContent(viewModel = viewModel, onOpenSettings = { showSettings = true })
+        }
     }
 }
 

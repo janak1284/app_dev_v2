@@ -328,8 +328,9 @@ fun ModernConfigurationSheet(
                         onSaveSettings(
                             AlarmSettings(
                                 distanceMeters = distanceMeters.toInt(),
-                                backupHour = if (timerEnabled) backupHour else 0,
-                                backupMinute = if (timerEnabled) backupMinute else 0,
+                                backupHour = backupHour,
+                                backupMinute = backupMinute,
+                                isBackupEnabled = timerEnabled,
                                 isVibrateEnabled = vibrateEnabled,
                                 ringtoneUri = selectedRingtoneUri
                             )

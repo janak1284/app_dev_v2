@@ -1,6 +1,10 @@
 package com.janak.location.alarm.viewmodel
 
+import android.content.Context
+import android.content.Intent
 import android.location.Location
+import android.location.LocationManager
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,6 +18,7 @@ import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.alarm.AlarmScheduler
 import com.janak.location.alarm.api.PhotonApiService
 import com.janak.location.alarm.model.PhotonFeature
+import com.janak.location.alarm.service.LocationAlarmService
 import org.maplibre.android.geometry.LatLng
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.debounce
@@ -27,10 +32,11 @@ class MapViewModel(
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
-    context: android.content.Context
+    private val context: Context
 ) : ViewModel() {
 
     private val sharedPrefs = context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+    private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     private val _userLocation = MutableStateFlow<android.location.Location?>(null)
     val userLocation: StateFlow<android.location.Location?> = _userLocation.asStateFlow()
@@ -57,6 +63,10 @@ class MapViewModel(
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
+    // --- System State ---
+    private val _isLocationEnabled = MutableStateFlow(true)
+    val isLocationEnabled: StateFlow<Boolean> = _isLocationEnabled.asStateFlow()
+
     // --- Theme State ---
     // 0 = System, 1 = Light, 2 = Dark
     private val _themeMode = MutableStateFlow(sharedPrefs.getInt("theme_mode", 0))
@@ -67,7 +77,14 @@ class MapViewModel(
     val searchHistory: StateFlow<List<PhotonFeature>> = _searchHistory.asStateFlow()
 
     init {
+        checkLocationSettings()
         setupSearchDebounce()
+    }
+
+    fun checkLocationSettings() {
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        _isLocationEnabled.value = isGpsEnabled || isNetworkEnabled
     }
 
     private fun loadSearchHistory(): List<PhotonFeature> {
@@ -140,6 +157,19 @@ class MapViewModel(
         }
     }
 
+    fun clearSearchHistory() {
+        _searchHistory.value = emptyList()
+        saveSearchHistory(emptyList())
+    }
+
+    fun removeFromHistory(feature: PhotonFeature) {
+        val updated = _searchHistory.value.filter { 
+            it.geometry.coordinates != feature.geometry.coordinates 
+        }
+        _searchHistory.value = updated
+        saveSearchHistory(updated)
+    }
+
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
     }
@@ -152,15 +182,34 @@ class MapViewModel(
         
         // 2. Mark the alarm as active
         _isAlarmSet.value = true
+        
+        // 3. Start Location Alarm Service
+        val dest = _destination.value
+        if (dest != null) {
+            val serviceIntent = Intent(context, LocationAlarmService::class.java).apply {
+                putExtra("DEST_LAT", dest.latitude)
+                putExtra("DEST_LNG", dest.longitude)
+                putExtra("DISTANCE_THRESHOLD", settings.distanceMeters.toFloat())
+                putExtra("RINGTONE_URI", settings.ringtoneUri?.toString())
+                putExtra("VIBRATE", settings.isVibrateEnabled)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        }
+        
         _userLocation.value?.let { checkDistance(it) }
         
-        // 3. Start Location Tracking logic for distance threshold
+        // 4. Start Location Tracking logic for UI updates
         startLocationUpdates()
     }
 
     private var locationJob: kotlinx.coroutines.Job? = null
 
     fun startLocationUpdates() {
+        checkLocationSettings()
         android.util.Log.d("MapViewModel", "startLocationUpdates: Called")
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
@@ -191,7 +240,7 @@ class MapViewModel(
             it.geometry.coordinates == feature.geometry.coordinates 
         }
         currentHistory.add(0, feature)
-        val updatedHistory = currentHistory.take(10) // Keep last 10
+        val updatedHistory = currentHistory.take(50) // Keep last 50
         _searchHistory.value = updatedHistory
         saveSearchHistory(updatedHistory)
 
@@ -207,9 +256,7 @@ class MapViewModel(
             stopAlarm()
         } else {
             if (_destination.value != null) {
-                _isAlarmSet.value = true
-                _userLocation.value?.let { checkDistance(it) }
-                startLocationUpdates()
+                updateAlarmSettings(_alarmSettings.value)
             }
         }
     }
@@ -219,6 +266,10 @@ class MapViewModel(
         _distanceToDestination.value = null
         alarmScheduler.cancelAlarm()
         alarmEngine.stop()
+        
+        // Stop the service
+        val serviceIntent = Intent(context, LocationAlarmService::class.java)
+        context.stopService(serviceIntent)
     }
 
     fun clearDestination() {
@@ -243,9 +294,7 @@ class MapViewModel(
 
         if (_isAlarmSet.value) {
             _distanceToDestination.value = "${distance.roundToInt()}m"
-            if (distance <= _alarmSettings.value.distanceMeters) {
-                alarmEngine.start(shouldVibrate = _alarmSettings.value.isVibrateEnabled)
-            }
+            // Note: Alarm triggering is now handled by LocationAlarmService
         } else {
             _distanceToDestination.value = null
         }
@@ -253,7 +302,7 @@ class MapViewModel(
     
     override fun onCleared() {
         super.onCleared()
-        alarmEngine.stop()
+        // We don't stop the service here because we want it to run in background
     }
 }
 
@@ -262,7 +311,7 @@ class MapViewModelFactory(
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
-    private val context: android.content.Context
+    private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {

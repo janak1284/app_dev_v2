@@ -16,6 +16,11 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
     override fun scheduleBackupAlarm(settings: AlarmSettings) {
+        if (!settings.isBackupEnabled) {
+            cancelAlarm()
+            return
+        }
+
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("RINGTONE_URI", settings.ringtoneUri?.toString())
             putExtra("VIBRATE", settings.isVibrateEnabled)

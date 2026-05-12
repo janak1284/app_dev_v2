@@ -149,74 +149,109 @@ fun DestinationSearchField(
             Card(
                 modifier = Modifier
                     .padding(top = 8.dp)
-                    .fillMaxWidth()
-                    .heightIn(max = 300.dp),
+                    .fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                LazyColumn {
-                    if (isShowingHistory) {
-                        item {
-                            Text(
-                                text = "Recent Searches",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                if (isShowingHistory) {
+                    // Non-scrollable history suggestions (up to 3)
+                    Column {
+                        Text(
+                            text = "Recent Searches",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                        displayResults.take(3).forEachIndexed { index, (feature, distance) ->
+                            SearchSuggestionItem(
+                                feature = feature,
+                                distance = distance,
+                                isFromHistory = true,
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    onResultClick(feature)
+                                }
                             )
+                            if (index < displayResults.take(3).size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
                         }
                     }
-                    items(displayResults) { (feature, distance) ->
-                        val isFromHistory = history.any { it.geometry.coordinates == feature.geometry.coordinates }
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = feature.properties.name ?: feature.properties.street ?: "Unknown",
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = feature.properties.displayName,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = if (isFromHistory) Icons.Default.History else Icons.Default.LocationOn,
-                                    contentDescription = null,
-                                    tint = if (isFromHistory) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            trailingContent = {
-                                if (distance != null) {
-                                    Text(
-                                        text = formatDistance(distance),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                } else {
+                    // Scrollable search results (limit height to 300dp)
+                    LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                        items(displayResults) { (feature, distance) ->
+                            val isFromHistory = history.any { it.geometry.coordinates == feature.geometry.coordinates }
+                            SearchSuggestionItem(
+                                feature = feature,
+                                distance = distance,
+                                isFromHistory = isFromHistory,
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    onResultClick(feature)
                                 }
-                            },
-                            modifier = Modifier.clickable { 
-                                focusManager.clearFocus()
-                                onResultClick(feature)
-                            }
-                        )
-                        if (feature != displayResults.last().first) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant
                             )
+                            if (feature != displayResults.last().first) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SearchSuggestionItem(
+    feature: PhotonFeature,
+    distance: Float?,
+    isFromHistory: Boolean,
+    onClick: () -> Unit
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = feature.properties.name ?: feature.properties.street ?: "Unknown",
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        supportingContent = {
+            Text(
+                text = feature.properties.displayName,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        leadingContent = {
+            Icon(
+                imageVector = if (isFromHistory) Icons.Default.History else Icons.Default.LocationOn,
+                contentDescription = null,
+                tint = if (isFromHistory) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+            )
+        },
+        trailingContent = {
+            if (distance != null) {
+                Text(
+                    text = formatDistance(distance),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        modifier = Modifier.clickable { onClick() }
+    )
 }
 
 private fun formatDistance(meters: Float): String {
