@@ -31,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
@@ -62,9 +64,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import android.view.MotionEvent
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.rememberScrollState
 
 @Composable
 fun MapScreen(viewModel: MapViewModel) {
@@ -116,6 +121,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     val searchHistory by viewModel.searchHistory.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
+    val onDismissSheet = remember { { showBottomSheet = false } }
     var isSearchFocused by remember { mutableStateOf(false) }
     var isMapInteracting by remember { mutableStateOf(false) }
 
@@ -370,6 +376,13 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
                 .fillMaxWidth()
         )
 
+        // --- STEP 1.1: Backup Timer Pill (Isolated Recomposition) ---
+        TimerOverlay(
+            viewModel = viewModel,
+            isSearchFocused = isSearchFocused,
+            modifier = Modifier.align(Alignment.TopStart)
+        )
+
         // --- STEP 1.5: Floating Buttons ---
         Column(
             modifier = Modifier
@@ -504,16 +517,59 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
         }
          
          if (showBottomSheet) {
-             ModernConfigurationSheet(
-                 initialSettings = alarmSettings,
-                 onDismissRequest = { showBottomSheet = false },
-                 onSaveSettings = { newSettings ->
-                     viewModel.updateAlarmSettings(newSettings)
-                     showBottomSheet = false
-                 }
+             ConfigSheetWrapper(
+                 viewModel = viewModel,
+                 onDismiss = onDismissSheet
              )
          }
     }
+}
+
+@Composable
+fun TimerOverlay(
+    viewModel: MapViewModel,
+    isSearchFocused: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val remainingSeconds by viewModel.remainingSeconds.collectAsState()
+    val totalSeconds by viewModel.totalSeconds.collectAsState()
+
+    AnimatedVisibility(
+        visible = remainingSeconds > 0 && !isSearchFocused,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+        modifier = modifier.padding(top = 96.dp, start = 16.dp)
+    ) {
+        BackupTimerPill(
+            remainingSeconds = remainingSeconds,
+            totalSeconds = totalSeconds
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConfigSheetWrapper(
+    viewModel: MapViewModel,
+    onDismiss: () -> Unit
+) {
+    val alarmSettings by viewModel.alarmSettings.collectAsState()
+    val scrollState = rememberScrollState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    
+    // Stable dismiss lambda
+    val stableOnDismiss = remember(onDismiss) { onDismiss }
+
+    ModernConfigurationSheet(
+        initialSettings = alarmSettings,
+        onDismissRequest = stableOnDismiss,
+        onSaveSettings = { newSettings ->
+            viewModel.updateAlarmSettings(newSettings)
+            stableOnDismiss()
+        },
+        scrollState = scrollState,
+        sheetState = sheetState
+    )
 }
 
 @Composable
@@ -528,5 +584,57 @@ fun StatusHeader(title: String, icon: ImageVector, color: androidx.compose.ui.gr
             fontWeight = FontWeight.Bold
         )
     }
+}
+
+@Composable
+fun BackupTimerPill(
+    remainingSeconds: Long,
+    totalSeconds: Long,
+    modifier: Modifier = Modifier
+) {
+    val progress = if (totalSeconds > 0) remainingSeconds.toFloat() / totalSeconds else 0f
+    
+    Box(
+        modifier = modifier
+            .width(120.dp)
+            .height(40.dp)
+            .clip(CircleShape)
+            .background(Color(0xFF2C2C2C)) // Dark gray
+    ) {
+        // Inner Progress Box
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(progress)
+                .background(Color(0xFF2196F3)) // Bright Blue
+        )
+        
+        // Content Overlay
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                Icons.Default.Timer,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = formatSeconds(remainingSeconds),
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+private fun formatSeconds(seconds: Long): String {
+    val mins = seconds / 60
+    val secs = seconds % 60
+    return String.format("%02d:%02d", mins, secs)
 }
 

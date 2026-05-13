@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
@@ -67,6 +68,15 @@ class MapViewModel(
     private val _isLocationEnabled = MutableStateFlow(true)
     val isLocationEnabled: StateFlow<Boolean> = _isLocationEnabled.asStateFlow()
 
+    // --- Timer State ---
+    private val _remainingSeconds = MutableStateFlow(0L)
+    val remainingSeconds: StateFlow<Long> = _remainingSeconds.asStateFlow()
+
+    private val _totalSeconds = MutableStateFlow(0L)
+    val totalSeconds: StateFlow<Long> = _totalSeconds.asStateFlow()
+
+    private var countdownJob: kotlinx.coroutines.Job? = null
+
     // --- Theme State ---
     // 0 = System, 1 = Light, 2 = Dark
     private val _themeMode = MutableStateFlow(sharedPrefs.getInt("theme_mode", 0))
@@ -85,6 +95,30 @@ class MapViewModel(
         val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
         _isLocationEnabled.value = isGpsEnabled || isNetworkEnabled
+    }
+
+    private fun startVisualCountdown(totalSecs: Long) {
+        countdownJob?.cancel()
+        if (totalSecs <= 0) {
+            _remainingSeconds.value = 0
+            return
+        }
+
+        _totalSeconds.value = totalSecs
+        _remainingSeconds.value = totalSecs
+
+        countdownJob = viewModelScope.launch {
+            while (_remainingSeconds.value > 0) {
+                kotlinx.coroutines.delay(1000)
+                _remainingSeconds.value -= 1
+            }
+        }
+    }
+
+    private fun stopCountdown() {
+        countdownJob?.cancel()
+        _remainingSeconds.value = 0
+        _totalSeconds.value = 0
     }
 
     private fun loadSearchHistory(): List<PhotonFeature> {
@@ -183,7 +217,15 @@ class MapViewModel(
         // 2. Mark the alarm as active
         _isAlarmSet.value = true
         
-        // 3. Start Location Alarm Service
+        // 3. Start Visual Countdown for UI
+        if (settings.isBackupEnabled) {
+            val totalSecs = (settings.backupHour * 3600L) + (settings.backupMinute * 60L)
+            startVisualCountdown(totalSecs)
+        } else {
+            stopCountdown()
+        }
+        
+        // 4. Start Location Alarm Service
         val dest = _destination.value
         if (dest != null) {
             val serviceIntent = Intent(context, LocationAlarmService::class.java).apply {
@@ -202,7 +244,7 @@ class MapViewModel(
         
         _userLocation.value?.let { checkDistance(it) }
         
-        // 4. Start Location Tracking logic for UI updates
+        // 5. Start Location Tracking logic for UI updates
         startLocationUpdates()
     }
 
@@ -266,6 +308,7 @@ class MapViewModel(
         _distanceToDestination.value = null
         alarmScheduler.cancelAlarm()
         alarmEngine.stop()
+        stopCountdown()
         
         // Stop the service
         val serviceIntent = Intent(context, LocationAlarmService::class.java)

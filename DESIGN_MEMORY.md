@@ -22,10 +22,14 @@
 ## Component Patterns
 
 ### Contextual Visibility
-- UI elements (Bottom Card) should only appear when a destination is set, reducing cognitive load for the user.
+- UI elements (Bottom Card, Timer Pill) should only appear when relevant (e.g., destination set or alarm active), reducing cognitive load for the user.
 
 ### Progressive Disclosure
 - Complex settings (Backup Timer) are hidden behind a toggle and revealed only when needed, keeping the initial view "clean and lean".
 
 ### Animated Feedback
 - Every major state change (setting destination, arming alarm, expanding settings) uses vertical slide/fade animations (200-300ms) to provide clear visual cues.
+- **Visual Countdown:** A progress-aware pill appears dynamically to show backup alarm status, utilizing a background fill to represent remaining time.
+
+### Time Selection
+- Transitioned from wheel-based selection to direct `TimeInput` to support the "On-the-go" user persona, prioritizing speed and input accuracy.

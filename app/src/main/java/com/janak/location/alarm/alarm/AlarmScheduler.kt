@@ -33,18 +33,13 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, settings.backupHour)
-            set(Calendar.MINUTE, settings.backupMinute)
-            set(Calendar.SECOND, 0)
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
-        }
+        // Calculate trigger time as current time + duration
+        val durationMs = (settings.backupHour * 3600000L) + (settings.backupMinute * 60000L)
+        val triggerAtMillis = System.currentTimeMillis() + durationMs
 
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis,
+            triggerAtMillis,
             pendingIntent
         )
     }

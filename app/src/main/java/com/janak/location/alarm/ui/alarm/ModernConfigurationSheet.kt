@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -31,7 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.janak.location.alarm.model.AlarmSettings
-import com.janak.location.alarm.ui.components.InfiniteWheelPicker
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,19 +39,24 @@ import kotlinx.coroutines.launch
 fun ModernConfigurationSheet(
     initialSettings: AlarmSettings = AlarmSettings(),
     onDismissRequest: () -> Unit,
-    onSaveSettings: (AlarmSettings) -> Unit
+    onSaveSettings: (AlarmSettings) -> Unit,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    scrollState: ScrollState = rememberScrollState()
 ) {
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
-
+    
     // Form States
     var distanceMeters by remember { mutableStateOf(initialSettings.distanceMeters.toFloat()) }
-    var backupHour by remember { mutableStateOf(initialSettings.backupHour) }
-    var backupMinute by remember { mutableStateOf(initialSettings.backupMinute) }
+    val timePickerState = rememberTimePickerState(
+        initialHour = 0,
+        initialMinute = 0,
+        is24Hour = true
+    )
     var vibrateEnabled by remember { mutableStateOf(initialSettings.isVibrateEnabled) }
-    var timerEnabled by remember { mutableStateOf(initialSettings.backupHour != 0 || initialSettings.backupMinute != 0) }
+    var timerEnabled by remember { mutableStateOf(initialSettings.isBackupEnabled) }
     var showTimePicker by remember { mutableStateOf(false) }
+
+    val durationInMinutes = (timePickerState.hour * 60) + timePickerState.minute
 
     // Ringtone States
     var selectedRingtoneUri by remember { mutableStateOf<Uri?>(initialSettings.ringtoneUri) }
@@ -89,22 +94,20 @@ fun ModernConfigurationSheet(
         ringtonePickerLauncher.launch(intent)
     }
 
-    /* Removed manual scroll logic to prevent jumping - animateContentSize handles the balloon effect */
-
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
         tonalElevation = 0.dp,
-        windowInsets = WindowInsets(0, 0, 0, 0) // Critical: Let the Column handle the nav bar lock
+        windowInsets = WindowInsets(0, 0, 0, 0)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight() // Snug fit for the "balloon"
-                .navigationBarsPadding() // Locks the bottom just above nav buttons
-                .padding(bottom = 20.dp) // Professional spacing
+                .navigationBarsPadding()
+                .padding(bottom = 20.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -116,241 +119,266 @@ fun ModernConfigurationSheet(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-            Text(
-                text = "Guard Configuration",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
+                Text(
+                    text = "Guard Configuration",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
 
-            // --- Section: Distance ---
-            AnimatedCard(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Column {
-                            Text(
-                                text = "Wake-up Distance",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = formatDistance(distanceMeters.toInt()),
-                                style = MaterialTheme.typography.displaySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Icon(
-                            Icons.Default.MyLocation, 
-                            contentDescription = null, 
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Slider(
-                        value = distanceMeters,
-                        onValueChange = { distanceMeters = it },
-                        valueRange = 100f..5000f,
-                        steps = 48,
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                DistanceSection(
+                    distanceMeters = distanceMeters,
+                    onDistanceChange = { distanceMeters = it }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                SoundVibrationSection(
+                    ringtoneName = ringtoneName,
+                    vibrateEnabled = vibrateEnabled,
+                    onRingtoneClick = launchRingtonePicker,
+                    onVibrateToggle = { vibrateEnabled = !vibrateEnabled }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                BackupTimerSection(
+                    timerEnabled = timerEnabled,
+                    onTimerToggle = { timerEnabled = it },
+                    showTimePicker = showTimePicker,
+                    onToggleTimePicker = { showTimePicker = !showTimePicker },
+                    timePickerState = timePickerState,
+                    durationInMinutes = durationInMinutes
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PrimaryActionButton(
+                onClick = {
+                    onSaveSettings(
+                        AlarmSettings(
+                            distanceMeters = distanceMeters.toInt(),
+                            backupHour = timePickerState.hour,
+                            backupMinute = timePickerState.minute,
+                            isBackupEnabled = timerEnabled,
+                            isVibrateEnabled = vibrateEnabled,
+                            ringtoneUri = selectedRingtoneUri
                         )
                     )
                 }
-            }
+            )
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // --- Section: Sound & Vibration ---
+@Composable
+fun DistanceSection(
+    distanceMeters: Float,
+    onDistanceChange: (Float) -> Unit
+) {
+    AnimatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
             ) {
-                QuickActionPill(
-                    title = "Alarm Sound",
-                    value = ringtoneName,
-                    icon = Icons.Default.MusicNote,
-                    modifier = Modifier.weight(1f),
-                    onClick = launchRingtonePicker,
-                    active = true
-                )
-                QuickActionPill(
-                    title = "Vibration",
-                    value = if (vibrateEnabled) "On" else "Off",
-                    icon = if (vibrateEnabled) Icons.Default.Vibration else Icons.Default.DoNotDisturbOn,
-                    modifier = Modifier.weight(1f),
-                    onClick = { vibrateEnabled = !vibrateEnabled },
-                    active = vibrateEnabled,
-                    activeColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // --- Section: Backup Timer ---
-            AnimatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                color = if (timerEnabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant,
-                                shape = CircleShape,
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        Icons.Default.Timer, 
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp),
-                                        tint = if (timerEnabled) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                Text(
-                                    text = "Backup Timer",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = if (timerEnabled) "Active at ${formatTime(backupHour, backupMinute)}" else "Disabled",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        Switch(
-                            checked = timerEnabled,
-                            onCheckedChange = { timerEnabled = it }
-                        )
-                    }
-
-                    AnimatedVisibility(
-                        visible = timerEnabled,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        Column {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { showTimePicker = !showTimePicker },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(if (showTimePicker) "Hide Time Picker" else "Set Custom Time")
-                            }
-                            
-                            AnimatedVisibility(
-                                visible = showTimePicker,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(top = 16.dp)
-                                        .fillMaxWidth()
-                                        .height(160.dp) // Adjusted for 3 items at 50dp height
-                                        .background(
-                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                            RoundedCornerShape(16.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    val timeStyle = MaterialTheme.typography.displayMedium.copy(
-                                        fontSize = 36.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        lineHeight = 36.sp,
-                                        color = Color.White
-                                    )
-                                    
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center,
-                                        modifier = Modifier.fillMaxHeight()
-                                    ) {
-                                            InfiniteWheelPicker(
-                                                items = (0..23).map { it.toString().padStart(2, '0') },
-                                                initialIndex = backupHour,
-                                                onItemSelected = { _, item -> backupHour = item.toInt() },
-                                                modifier = Modifier.width(72.dp),
-                                                itemHeight = 50.dp,
-                                                textStyle = timeStyle
-                                            )
-                                            Text(
-                                                text = ":",
-                                                style = timeStyle,
-                                                modifier = Modifier.padding(horizontal = 4.dp).offset(y = (-2).dp)
-                                            )
-                                            InfiniteWheelPicker(
-                                                items = (0..59).map { it.toString().padStart(2, '0') },
-                                                initialIndex = backupMinute,
-                                                onItemSelected = { _, item -> backupMinute = item.toInt() },
-                                                modifier = Modifier.width(72.dp),
-                                                itemHeight = 50.dp,
-                                                textStyle = timeStyle
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-            }
-
-            // --- Primary Action ---
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 16.dp)
-            ) {
-                Button(
-                    onClick = {
-                        onSaveSettings(
-                            AlarmSettings(
-                                distanceMeters = distanceMeters.toInt(),
-                                backupHour = backupHour,
-                                backupMinute = backupMinute,
-                                isBackupEnabled = timerEnabled,
-                                isVibrateEnabled = vibrateEnabled,
-                                ringtoneUri = selectedRingtoneUri
-                            )
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                ) {
-                    Icon(Icons.Default.Shield, contentDescription = null)
-                    Spacer(modifier = Modifier.width(12.dp))
+                Column {
                     Text(
-                        text = "ACTIVATE GUARD",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "Wake-up Distance",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = formatDistance(distanceMeters.toInt()),
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                 }
+                Icon(
+                    Icons.Default.MyLocation,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Slider(
+                value = distanceMeters,
+                onValueChange = onDistanceChange,
+                valueRange = 100f..5000f,
+                steps = 48,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun SoundVibrationSection(
+    ringtoneName: String,
+    vibrateEnabled: Boolean,
+    onRingtoneClick: () -> Unit,
+    onVibrateToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        QuickActionPill(
+            title = "Alarm Sound",
+            value = ringtoneName,
+            icon = Icons.Default.MusicNote,
+            modifier = Modifier.weight(1f),
+            onClick = onRingtoneClick,
+            active = true
+        )
+        QuickActionPill(
+            title = "Vibration",
+            value = if (vibrateEnabled) "On" else "Off",
+            icon = if (vibrateEnabled) Icons.Default.Vibration else Icons.Default.DoNotDisturbOn,
+            modifier = Modifier.weight(1f),
+            onClick = onVibrateToggle,
+            active = vibrateEnabled,
+            activeColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BackupTimerSection(
+    timerEnabled: Boolean,
+    onTimerToggle: (Boolean) -> Unit,
+    showTimePicker: Boolean,
+    onToggleTimePicker: () -> Unit,
+    timePickerState: TimePickerState,
+    durationInMinutes: Int
+) {
+    AnimatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = if (timerEnabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant,
+                        shape = CircleShape,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Timer,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (timerEnabled) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "Backup Timer",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (timerEnabled) {
+                                if (durationInMinutes > 0) "Duration: ${formatTime(timePickerState.hour, timePickerState.minute)}" else "Set duration"
+                            } else "Disabled",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (timerEnabled && durationInMinutes == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Switch(
+                    checked = timerEnabled,
+                    onCheckedChange = onTimerToggle
+                )
+            }
+
+            AnimatedVisibility(
+                visible = timerEnabled,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onToggleTimePicker,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(if (showTimePicker) "Hide Time Picker" else "Set Custom Time")
+                    }
+
+                    AnimatedVisibility(
+                        visible = showTimePicker,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 16.dp)
+                                .fillMaxWidth()
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    RoundedCornerShape(16.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            TimeInput(
+                                state = timePickerState,
+                                modifier = Modifier.padding(24.dp),
+                                colors = TimePickerDefaults.colors(
+                                    timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    timeSelectorUnselectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    timeSelectorUnselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PrimaryActionButton(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(top = 16.dp)
+    ) {
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            shape = RoundedCornerShape(20.dp),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+        ) {
+            Icon(Icons.Default.Shield, contentDescription = null)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "ACTIVATE GUARD",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -381,7 +409,7 @@ fun QuickActionPill(
     activeColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
 ) {
     val scale by animateFloatAsState(if (active) 1f else 0.98f, label = "scale")
-    
+
     Surface(
         modifier = modifier
             .scale(scale)

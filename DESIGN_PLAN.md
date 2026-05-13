@@ -9,6 +9,10 @@ The finalized design (Variant F) transforms the "bleak" MapScreen into a modern,
 - `viewModel: MapViewModel`: Existing ViewModel managing state.
 - `mapInstance: MapLibreMap?`: Current map instance for marker updates.
 
+### BackupTimerPill (New)
+- `remainingSeconds: Long`: Time left in seconds.
+- `totalSeconds: Long`: Initial duration in seconds for progress calculation.
+
 ### ModernConfigurationSheet
 - `initialSettings: AlarmSettings`: Initial state for the configuration.
 - `onDismissRequest: () -> Unit`: Callback to close the sheet.
@@ -20,6 +24,7 @@ The finalized design (Variant F) transforms the "bleak" MapScreen into a modern,
 - Update `MapScreen.kt` to include a `Box` as the root container.
 - Place the `AndroidView` (MapLibre) at the bottom of the stack.
 - Implement the Top Search Card using `MaterialTheme.colorScheme.surface` and standard elevation.
+- **Visual Countdown:** Integrate the `BackupTimerPill` below the search bar, appearing when a backup timer is active.
 
 ### Step 2: Animated Status Card
 - Use `AnimatedVisibility` with `slideInVertically` and `fadeIn` for the bottom card.
@@ -31,6 +36,7 @@ The finalized design (Variant F) transforms the "bleak" MapScreen into a modern,
 - Implement a `Slider` for wake-up distance (100m to 5km).
 - Use `QuickSettingCard` components for Sound and Vibration toggles.
 - Implement the "Backup Timer" section using `AnimatedVisibility` for the time picker.
+- **Time Selection:** Replaced custom wheel pickers with official Material 3 `TimeInput` for improved accessibility and speed.
 - Add auto-scroll logic using `scrollState.animateScrollTo(scrollState.maxValue)` inside a `LaunchedEffect` triggered by the timer toggle.
 
 ## Accessibility Checklist

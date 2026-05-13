@@ -1,6 +1,14 @@
 # Project Updates - Location Alarm MVP
 
 ## Features Implemented
+- **Visual Countdown Timer (New):**
+    - Implemented a `BackupTimerPill` composable to display a dynamic progress bar and a formatted (MM:SS) timer directly on the map overlay.
+    - Updated `MapViewModel` with coroutine-based countdown logic to track `remainingSeconds` and `totalSeconds` when a backup alarm is set.
+    - Synced the UI countdown state with the Android `AlarmManager` for precise time tracking.
+- **Smart Search Interaction (New):**
+    - Search suggestions and history now follow a focus-driven lifecycle: they appear only when the search field is focused.
+    - Integrated `LocalFocusManager` with the Map UI; tapping the map or selecting a destination automatically clears focus and hides search results.
+    - Added `pointerInput` gesture detection to the map container for a more responsive "tap-to-dismiss" behavior.
 - **Search History & Local Bias (New):**
     - Search now persists the last 10 selected destinations using `SharedPreferences`.
     - Local history matches are prioritized and merged with remote Photon API results for faster access.
@@ -16,6 +24,7 @@
 - **Background Readiness (Phase 2):**
     - Fully implemented `LocationAlarmService` as a Foreground Service with persistent notifications.
     - Established `RingingActivity` for high-priority wake-up states that survive background execution.
+    - Configured `AndroidManifest.xml` with Foreground Service declarations and necessary permissions (`FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `SCHEDULE_EXACT_ALARM`).
 - **Destination Search:** Integrated the Photon API (OpenStreetMap) for real-time location auto-suggestions.
 - **Networking Foundation:** Setup Retrofit, OkHttp, and Kotlinx Serialization for client-side API communication.
 - **Search Logic:** Implemented 500ms debouncing and location-biasing in the ViewModel to prioritize local search results.
@@ -29,19 +38,10 @@
     - Integrated `AlarmEngine` into `MapViewModel` and `MainActivity`.
     - Connected distance-trigger logic to start the alarm hardware.
     - Added vibration preference support, allowing users to toggle haptics on/off from the UI.
-- **Enhanced Map Controls:**
-    - **Refocus Button:** Added a floating button to instantly center the map on the user's current location.
-    - **Manual Refresh:** Added a refresh button to manually restart location tracking and update the user position.
-- **Persistence & Personalization:**
-    - **Search History:** Implemented local storage for recently selected destinations, integrated into the search suggestions for faster access.
-    - **Theme Management:** Added support for Light, Dark, and System theme modes with persistent storage of user preference.
 - **Advanced Configuration (Modern Configuration Sheet):**
+    - **Material 3 Time Integration:** Replaced the custom scroll wheel with the official Jetpack Compose `TimeInput` for faster, keyboard-friendly time selection.
     - **Backup Time-Based Alarm:** Integrated a secondary backup alarm using `AlarmManager` for specific arrival times.
     - **Custom Ringtones:** Added a system ringtone picker allowing users to select their preferred alert sound.
-    - **Infinite Wheel Picker:** Implemented a custom scrollable wheel for intuitive time selection.
-- **Phase 2 - Background Readiness:**
-    - Configured `AndroidManifest.xml` with Foreground Service declarations and necessary permissions (`FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `SCHEDULE_EXACT_ALARM`).
-    - Established architecture for `LocationAlarmService` to handle tracking in the background.
 
 ## Technical Fixes
 - **Location Collector Stability:** Resolved a race condition where multiple location collectors could be launched simultaneously; implemented job cancellation to ensure only one active tracking session.
