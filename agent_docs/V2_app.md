@@ -3,27 +3,27 @@
 ## Phase 1: The Data Foundation (Room DB)
 Before touching the UI or the map, we need to establish where the data lives. Room will act as our single source of truth.
 
-* **Implement Room Dependencies:** Add the required Room Gradle dependencies (room-runtime, room-ktx, room-compiler).
-* **Define SavedRoute Entity:** Create a table to store the metadata of the journey. Columns should include routeId (Primary Key), destinationName, targetTime (if applicable), and dateSaved.
-* **Define RouteBreadcrumb Entity:** Create a table to hold the actual GPS trail. Columns should include pointId, routeId (Foreign Key linked to SavedRoute), latitude, longitude, speed, and timestamp.
-* **Create DAOs:** Write the Data Access Objects to insert breadcrumbs in batches and to fetch a Flow<List<SavedRoute>> for your new Home Screen.
-* **Repository Layer:** Abstract the Room DB behind a Repository so your ViewModels can seamlessly observe the saved routes.
+* [x] **Implement Room Dependencies:** Add the required Room Gradle dependencies (room-runtime, room-ktx, room-compiler).
+* [x] **Define SavedRoute Entity:** Create a table to store the metadata of the journey. Columns should include routeId (Primary Key), destinationName, targetTime (if applicable), and dateSaved.
+* [x] **Define RouteBreadcrumb Entity:** Create a table to hold the actual GPS trail. Columns should include pointId, routeId (Foreign Key linked to SavedRoute), latitude, longitude, speed, and timestamp.
+* [x] **Create DAOs:** Write the Data Access Objects to insert breadcrumbs in batches and to fetch a Flow<List<SavedRoute>> for your new Home Screen.
+* [x] **Repository Layer:** Abstract the Room DB behind a Repository so your ViewModels can seamlessly observe the saved routes.
 
 ## Phase 2: Network & Visuals (OSRM + MapLibre)
 Next, we connect to the routing engine and get the path rendering on the screen.
 
-* **OSRM Retrofit Interface:** Build a new API service for http://router.project-osrm.org. Construct the GET request to fetch the driving/walking route between the user's current location and the destination.
-* **GeoJSON Parsing:** Set up Kotlinx Serialization to parse the OSRM response, specifically extracting the LineString coordinates and the duration (estimated time).
-* **MapLibre Rendering:** Feed the parsed LineString directly into MapLibre as a GeoJsonSource and draw it using a LineLayer. This gives the user a visual path to follow.
+* [ ] **OSRM Retrofit Interface:** Build a new API service for http://router.project-osrm.org. Construct the GET request to fetch the driving/walking route between the user's current location and the destination.
+* [ ] **GeoJSON Parsing:** Set up Kotlinx Serialization to parse the OSRM response, specifically extracting the LineString coordinates and the duration (estimated time).
+* [ ] **MapLibre Rendering:** Feed the parsed LineString directly into MapLibre as a GeoJsonSource and draw it using a LineLayer. This gives the user a visual path to follow.
 
 ## Phase 3: The Engine Room (Spatial Math & Predictive ETA)
 This is where the application becomes intelligent. It leans heavily into data science principles, processing real-time streams to make predictions.
 
-* **Turf-Java Integration:** Add the Turf library. This is crucial for local, on-device spatial calculations without pinging an API.
-* **Route Snapping & Distance:** Update the Foreground Service. Every time a new GPS coordinate arrives, use Turf to calculate the distance along the OSRM LineString from the user's snapped position to the final destination.
-* **The 100m Deviation Trigger:** Calculate the cross-track distance (how far the raw GPS point is from the OSRM line). If deviation > 100 meters, drop the current polyline and trigger Phase 2 again to fetch a new route.
-* **Sliding Window Speed Algorithm:** Implement an Exponential Moving Average (EMA) or a simple queue (e.g., the last 30 location updates) to calculate the user's actual average speed.
-* **Dynamic ETA Calculation:** Divide the Turf remaining route distance by your sliding average speed. This yields a highly accurate, real-time ETA that adapts to traffic or train delays.
+* [x] **Turf-Java Integration:** Add the Turf library. This is crucial for local, on-device spatial calculations without pinging an API.
+* [x] **Route Snapping & Distance:** Update the Foreground Service. Every time a new GPS coordinate arrives, use Turf to calculate the distance along the OSRM LineString from the user's snapped position to the final destination.
+* [x] **The 100m Deviation Trigger:** Calculate the cross-track distance (how far the raw GPS point is from the OSRM line). If deviation > 100 meters, drop the current polyline and trigger Phase 2 again to fetch a new route.
+* [ ] **Sliding Window Speed Algorithm:** Implement an Exponential Moving Average (EMA) or a simple queue (e.g., the last 30 location updates) to calculate the user's actual average speed.
+* [ ] **Dynamic ETA Calculation:** Divide the Turf remaining route distance by your sliding average speed. This yields a highly accurate, real-time ETA that adapts to traffic or train delays.
 
 ## Phase 4: Service State Machine Overhaul
 The background service must evolve from a simple trigger to a continuous recording engine.

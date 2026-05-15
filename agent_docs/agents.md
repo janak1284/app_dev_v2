@@ -59,9 +59,9 @@ If no automated tests:
 
 * [x] MVP Proximity Alarm built (MapLibre + FusedLocation)
 * [x] Hardware-level alarm bypassing notifications
-* [ ] V2 DB Schema established (Room)
+* [x] V2 DB Schema established (Room)
 * [ ] V2 Routing engine connected (OSRM + Retrofit)
-* [ ] V2 Spatial math active (Turf-Java route slicing)
+* [x] V2 Spatial math active (Turf-Java route slicing)
 * [ ] V2 Dynamic ETA working
 * [ ] V2 UI (Home screen & History) implemented
 
@@ -70,8 +70,8 @@ If no automated tests:
 ## Current State (Update During Development)
 
 **Last Updated:** May 2026
-**Working On:** **Phase 1 & 2 — The V2 Pivot** (Establishing Room DB and OSRM Networking)
-**Recently Completed:** MVP Phase (Straight-line distance, LocalFocusManager, Deep Dark Theme)
+**Working On:** **Phase 4 — Service State Machine Overhaul**
+**Recently Completed:** Phase 1 (Room DB) & Phase 3 (RouteDistanceEngine with Turf-Java)
 **Blocked By:** Data model contracts between DB and UI.
 
 ---
@@ -79,10 +79,10 @@ If no automated tests:
 ## Roadmap (The V2 Pivot)
 
 ### Phase 1: The Data Foundation (Room DB)
-* [ ] Add Room dependencies.
-* [ ] Create `SavedRoute` (Metadata) and `RouteBreadcrumb` (GPS Trail) Entities.
-* [ ] Build DAOs for bulk inserts and Flow observations.
-* [ ] Build Repository layer.
+* [x] Add Room dependencies.
+* [x] Create `SavedRoute` (Metadata) and `RouteBreadcrumb` (GPS Trail) Entities.
+* [x] Build DAOs for bulk inserts and Flow observations.
+* [x] Build Repository layer.
 
 ### Phase 2: Network & Visuals (OSRM + MapLibre)
 * [ ] Setup Retrofit for OSRM public API.
@@ -90,9 +90,9 @@ If no automated tests:
 * [ ] Render `LineString` dynamically via MapLibre `GeoJsonSource`.
 
 ### Phase 3: The Engine Room (Spatial Math & ETA)
-* [ ] Integrate Turf-Java.
-* [ ] Snap raw GPS to polyline and calculate remaining route distance.
-* [ ] Implement >100m cross-track deviation trigger for route recalculation.
+* [x] Integrate Turf-Java.
+* [x] Snap raw GPS to polyline and calculate remaining route distance.
+* [x] Implement >100m cross-track deviation trigger for route recalculation.
 * [ ] Implement sliding average speed (EMA) for dynamic ETA.
 
 ### Phase 4: Service State Machine Overhaul

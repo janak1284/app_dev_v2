@@ -25,11 +25,12 @@ The "Location Alarm" is an intelligent, route-based Android commuter application
   - Core MapLibre UI integration with `LocalFocusManager` for smart search bar dismissals.
   - Hardware-level alarm bypassing standard notifications.
   - "Deep Dark" Material 3 UI.
-- **Currently in Development (The V2 Pivot):**
-  - Shifting from Haversine (point-to-point) distance to Route-based distance.
-  - Integrating Turf-Java to snap raw GPS coordinates to OSRM GeoJSON paths.
-  - Replacing volatile `SharedPreferences` history with a robust Room SQLite architecture.
-  - Refactoring UI terminology (Distance vs. Time alarms).
+- **Implemented (V2 Pivot):**
+  - **Room Database:** Relational schema with `SavedRoute` and `RouteBreadcrumb` entities, DAOs, and Repository.
+  - **Spatial Engine:** `RouteDistanceEngine` using Turf-Java for snapping, deviation triggers, and route slicing.
+- **Currently in Development:**
+  - **Phase 4:** Service state machine overhaul, GPS buffering, and dynamic ETA (EMA).
+  - **Phase 2:** Dev 2 is working on OSRM integration and GeoJSON rendering.
 
 ## 4. Database Architecture (Room)
 The data layer treats journeys as first-class relational entities:
