@@ -29,4 +29,13 @@ object RetrofitClient {
             .build()
             .create(PhotonApiService::class.java)
     }
+    
+    val osrmApiService: PhotonApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(PhotonApiService.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(PhotonApiService::class.java)
+    }
 }
