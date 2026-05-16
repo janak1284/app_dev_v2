@@ -8,25 +8,22 @@ import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.janak.location.alarm.location.LocationTrackingManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-
 import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.alarm.AlarmScheduler
 import com.janak.location.alarm.api.PhotonApiService
+import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.PhotonFeature
 import com.janak.location.alarm.service.LocationAlarmService
-import org.maplibre.android.geometry.LatLng
-import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import org.maplibre.android.geometry.LatLng
+import kotlin.math.roundToInt
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
@@ -36,11 +33,11 @@ class MapViewModel(
     private val context: Context
 ) : ViewModel() {
 
-    private val sharedPrefs = context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+    private val sharedPrefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-    private val _userLocation = MutableStateFlow<android.location.Location?>(null)
-    val userLocation: StateFlow<android.location.Location?> = _userLocation.asStateFlow()
+    private val _userLocation = MutableStateFlow<Location?>(null)
+    val userLocation: StateFlow<Location?> = _userLocation.asStateFlow()
 
     private val _destination = MutableStateFlow<LatLng?>(null)
     val destination: StateFlow<LatLng?> = _destination.asStateFlow()
@@ -173,7 +170,8 @@ class MapViewModel(
             }
 
             // 3. Merge: Prioritize history, then remote results, removing duplicates
-            val combined = (historyMatches + response.features).distinctBy { 
+            val remoteFeatures = response.body()?.features ?: emptyList()
+            val combined = (historyMatches + remoteFeatures).distinctBy { 
                 "${it.geometry.coordinates[0]},${it.geometry.coordinates[1]}"
             }
 
