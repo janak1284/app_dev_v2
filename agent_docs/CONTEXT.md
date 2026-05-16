@@ -27,9 +27,9 @@ The "Location Alarm" is an intelligent, route-based Android commuter application
   - "Deep Dark" Material 3 UI.
 - **Implemented (V2 Pivot):**
   - **Room Database:** Relational schema with `SavedRoute` and `RouteBreadcrumb` entities, DAOs, and Repository.
-  - **Spatial Engine:** `RouteDistanceEngine` using Turf-Java for snapping, deviation triggers, and route slicing.
+  - **Spatial Engine:** `RouteDistanceEngine` using Turf-Java for snapping, deviation triggers, route slicing, EMA speed, and dynamic ETA.
 - **Currently in Development:**
-  - **Phase 4:** Service state machine overhaul, GPS buffering, and dynamic ETA (EMA).
+  - **Phase 4:** Service state machine overhaul, GPS buffering, and repository integration.
   - **Phase 2:** Dev 2 is working on OSRM integration and GeoJSON rendering.
 
 ## 4. Database Architecture (Room)

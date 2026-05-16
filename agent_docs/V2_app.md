@@ -22,8 +22,8 @@ This is where the application becomes intelligent. It leans heavily into data sc
 * [x] **Turf-Java Integration:** Add the Turf library. This is crucial for local, on-device spatial calculations without pinging an API.
 * [x] **Route Snapping & Distance:** Update the Foreground Service. Every time a new GPS coordinate arrives, use Turf to calculate the distance along the OSRM LineString from the user's snapped position to the final destination.
 * [x] **The 100m Deviation Trigger:** Calculate the cross-track distance (how far the raw GPS point is from the OSRM line). If deviation > 100 meters, drop the current polyline and trigger Phase 2 again to fetch a new route.
-* [ ] **Sliding Window Speed Algorithm:** Implement an Exponential Moving Average (EMA) or a simple queue (e.g., the last 30 location updates) to calculate the user's actual average speed.
-* [ ] **Dynamic ETA Calculation:** Divide the Turf remaining route distance by your sliding average speed. This yields a highly accurate, real-time ETA that adapts to traffic or train delays.
+* [x] **Sliding Window Speed Algorithm:** Implement an Exponential Moving Average (EMA) or a simple queue (e.g., the last 30 location updates) to calculate the user's actual average speed.
+* [x] **Dynamic ETA Calculation:** Divide the Turf remaining route distance by your sliding average speed. This yields a highly accurate, real-time ETA that adapts to traffic or train delays.
 
 ## Phase 4: Service State Machine Overhaul
 The background service must evolve from a simple trigger to a continuous recording engine.

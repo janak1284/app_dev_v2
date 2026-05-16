@@ -71,7 +71,7 @@ If no automated tests:
 
 **Last Updated:** May 2026
 **Working On:** **Phase 4 — Service State Machine Overhaul**
-**Recently Completed:** Phase 1 (Room DB) & Phase 3 (RouteDistanceEngine with Turf-Java)
+**Recently Completed:** Phase 1 (Room DB) & Phase 3 (RouteDistanceEngine EMA/ETA)
 **Blocked By:** Data model contracts between DB and UI.
 
 ---
@@ -93,7 +93,7 @@ If no automated tests:
 * [x] Integrate Turf-Java.
 * [x] Snap raw GPS to polyline and calculate remaining route distance.
 * [x] Implement >100m cross-track deviation trigger for route recalculation.
-* [ ] Implement sliding average speed (EMA) for dynamic ETA.
+* [x] Implement sliding average speed (EMA) for dynamic ETA.
 
 ### Phase 4: Service State Machine Overhaul
 * [ ] Update `LocationAlarmService` to buffer GPS points into a `MutableList`.
