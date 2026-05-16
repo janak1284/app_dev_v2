@@ -8,6 +8,9 @@ import com.mapbox.turf.TurfMisc
 
 class RouteDistanceEngine {
 
+    private var averageSpeedMps: Double = 0.0
+    private val alpha = 0.2 // Smoothing factor for EMA (higher = more weight to recent speed)
+
     /**
      * Calculates the distance remaining along a polyline from the user's current snapped position.
      * 
@@ -40,5 +43,38 @@ class RouteDistanceEngine {
         
         // Distance between raw GPS and snapped point on the path
         return TurfMeasurement.distance(userLocation, snappedPoint, TurfConstants.UNIT_METERS)
+    }
+
+    /**
+     * Updates the sliding average speed using Exponential Moving Average (EMA).
+     * 
+     * @param currentSpeedMps The latest speed from GPS in meters per second.
+     * @return The updated average speed.
+     */
+    fun updateAverageSpeed(currentSpeedMps: Double): Double {
+        if (averageSpeedMps == 0.0 && currentSpeedMps > 0) {
+            averageSpeedMps = currentSpeedMps
+        } else if (averageSpeedMps > 0) {
+            averageSpeedMps = (alpha * currentSpeedMps) + (1 - alpha) * averageSpeedMps
+        }
+        return averageSpeedMps
+    }
+
+    /**
+     * Predicts the dynamic ETA in minutes.
+     * 
+     * @param remainingDistanceMeters Distance left along the route.
+     * @return ETA in minutes.
+     */
+    fun calculateDynamicETA(remainingDistanceMeters: Double): Double {
+        if (averageSpeedMps <= 0.5) { // User is stationary or moving very slowly (~1.8 km/h)
+            return Double.MAX_VALUE
+        }
+        val secondsRemaining = remainingDistanceMeters / averageSpeedMps
+        return secondsRemaining / 60.0
+    }
+
+    fun resetStats() {
+        averageSpeedMps = 0.0
     }
 }
