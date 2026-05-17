@@ -10,10 +10,12 @@ Summary of Changes to V2 Pivot (May 17, 2026)
    - Route Rendering: Restored and stabilized the GeoJSON-based path rendering logic, ensuring OSRM route data is correctly drawn on the map.
    - Focus Logic: Completely removed all automatic map re-centering/refocusing triggers. The map is now fully manual in its focus behavior: it only centers on the user location when the "Focus Me" FAB (MyLocation icon) is explicitly clicked.
    - Map View Cleanup: Simplified the `MapContent` logic by removing persistent `LaunchedEffect` blocks that were causing map-camera fighting during user interactions.
+   - Navigation: Integrated Home Screen and Map Screen navigation, with journey completion now triggering a "Save Route" dialog.
 
 3. ViewModel Integration:
    - Restored `MapViewModel` support for route data fetching, ensuring the UI can correctly display the path between user location and destination.
    - Verified that route state is correctly observed and cleared when a destination is removed.
+   - Added `savedRoutes` Flow and `saveRoute` functionality.
 
 4. Pending Work:
-   - Home Screen Implementation (HomeScreen.kt): The architecture is ready for the new Home Screen; this remains the primary remaining task for the V2 Pivot.
+   - None (V2 Pivot UI/Data complete).

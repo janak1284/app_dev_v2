@@ -120,7 +120,7 @@ fun ModernConfigurationSheet(
                 verticalArrangement = Arrangement.Top
             ) {
                 Text(
-                    text = "Guard Configuration",
+                    text = "Alarm Configuration",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(bottom = 32.dp)
@@ -375,7 +375,7 @@ fun PrimaryActionButton(onClick: () -> Unit) {
             Icon(Icons.Default.Shield, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "ACTIVATE GUARD",
+                text = "Activate Alarm",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

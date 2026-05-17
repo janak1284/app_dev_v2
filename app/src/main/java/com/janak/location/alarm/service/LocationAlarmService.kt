@@ -46,6 +46,10 @@ class LocationAlarmService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "STOP_ALARM") {
+            // Signal journey completion
+            val broadcastIntent = Intent("com.janak.location.alarm.JOURNEY_COMPLETED")
+            sendBroadcast(broadcastIntent)
+            
             stopSelf()
             return START_NOT_STICKY
         }
@@ -58,7 +62,7 @@ class LocationAlarmService : Service() {
         ringtoneUri = intent?.getStringExtra("RINGTONE_URI")
         isVibrateEnabled = intent?.getBooleanExtra("VIBRATE", true) ?: true
 
-        startForeground(1, createNotification("Guardian Active", "Monitoring distance to destination..."))
+        startForeground(1, createNotification("Alarm is Active", "Monitoring distance to destination..."))
         startLocationTracking()
 
         return START_STICKY
@@ -94,7 +98,7 @@ class LocationAlarmService : Service() {
         )
         val distance = results[0]
         
-        updateNotification("Guardian Active", "Distance to target: ${distance.roundToInt()}m")
+        updateNotification("Alarm is Active", "Distance to target: ${distance.roundToInt()}m")
 
         if (distance <= distanceThreshold) {
             triggerAlarm()

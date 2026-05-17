@@ -487,14 +487,20 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         }
         
         // Journey completion state
-        val journeyCompleted by viewModel.journeyCompleted.collectAsState()
         var showSaveDialog by remember { mutableStateOf(false) }
         var routeName by remember { mutableStateOf("") }
 
-        LaunchedEffect(journeyCompleted) {
-            if (journeyCompleted) {
-                showSaveDialog = true
-                viewModel.resetJourneyCompleted()
+        DisposableEffect(context) {
+            val receiver = object : android.content.BroadcastReceiver() {
+                override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+                    showSaveDialog = true
+                }
+            }
+            val filter = android.content.IntentFilter("com.janak.location.alarm.JOURNEY_COMPLETED")
+            context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+            
+            onDispose {
+                context.unregisterReceiver(receiver)
             }
         }
 
@@ -573,7 +579,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     ) {
                         if (isAlarmSet) {
                             StatusHeader(
-                                title = "GUARDIAN ACTIVE",
+                                title = "ALARM ACTIVE",
                                 icon = Icons.Default.Lock,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -597,7 +603,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                             ) {
                                 Icon(Icons.Default.Stop, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("DEACTIVATE")
+                                Text("TURN OFF")
                             }
                         } else {
                             StatusHeader(
@@ -613,7 +619,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                             ) {
                                 Icon(Icons.Default.Shield, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("ARM GUARDIAN")
+                                Text("SET UP ALARM")
                             }
                         }
                     }
