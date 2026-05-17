@@ -1,6 +1,7 @@
 package com.janak.location.alarm.ui.map
 
 import android.Manifest
+import android.location.Location
 import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,10 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import java.util.Calendar
 import android.app.TimePickerDialog
@@ -70,6 +68,9 @@ import androidx.compose.ui.text.font.FontWeight
 import android.view.MotionEvent
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 
 @Composable
 fun MapScreen(viewModel: MapViewModel) {
@@ -107,7 +108,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val focusManager = LocalFocusManager.current
     
-    val userLocation by viewModel.userLocation.collectAsState()
+    val userLocation by viewModel.userLocation.collectAsState(initial = null)
 
 
     val destination by viewModel.destination.collectAsState()
@@ -277,20 +278,52 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
 
     var hasZoomedToUser by remember { mutableStateOf(false) }
     
-    // Auto-zoom to user location
-    LaunchedEffect(userLocation, mapInstance) {
-        val loc = userLocation
+    // --- STEP 1.6: Observe Route Updates ---
+    val routeLine by viewModel.routeLine.collectAsState()
+    LaunchedEffect(routeLine, mapInstance) {
+        val line = routeLine
         val map = mapInstance
-        if (loc != null && map != null && !hasZoomedToUser) {
-            map.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                    LatLng(loc.latitude, loc.longitude),
-                    15.0
+        android.util.Log.d("MapScreen", "RouteLine changed: ${line != null}")
+        
+        if (map?.style?.isFullyLoaded == true) {
+            val style = map.style!!
+            val sourceId = "route-source"
+            val layerId = "route-layer"
+
+            var source = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(sourceId)
+            
+            if (line != null) {
+            if (source == null) {
+                android.util.Log.d("MapScreen", "Creating new route source")
+                source = org.maplibre.android.style.sources.GeoJsonSource(sourceId)
+                style.addSource(source)
+            }
+            
+            if (style.getLayer(layerId) == null) {
+                android.util.Log.d("MapScreen", "Creating new route layer")
+                val layer = org.maplibre.android.style.layers.LineLayer(layerId, sourceId)
+                layer.setProperties(
+                    org.maplibre.android.style.layers.PropertyFactory.lineColor(android.graphics.Color.BLUE),
+                    org.maplibre.android.style.layers.PropertyFactory.lineWidth(5f),
+                    org.maplibre.android.style.layers.PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
+                    org.maplibre.android.style.layers.PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
                 )
-            )
-            hasZoomedToUser = true
+                style.addLayerBelow(layer, "destination-layer")
+            }
+                android.util.Log.d("MapScreen", "Updating route source with geometry")
+                source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(org.maplibre.geojson.Feature.fromGeometry(line)))
+            } else {
+                // Remove route if null
+                android.util.Log.d("MapScreen", "Clearing route from map")
+                if (source != null) {
+                    source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
+                }
+            }
+        } else {
+            android.util.Log.d("MapScreen", "Map style not fully loaded yet")
         }
     }
+
 
     // Zoom to destination when it changes
     LaunchedEffect(destination, mapInstance) {

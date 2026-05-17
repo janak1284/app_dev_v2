@@ -23,6 +23,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 import kotlin.math.roundToInt
 
 class MapViewModel(
@@ -38,6 +40,9 @@ class MapViewModel(
 
     private val _userLocation = MutableStateFlow<Location?>(null)
     val userLocation: StateFlow<Location?> = _userLocation.asStateFlow()
+
+    private val _routeLine = MutableStateFlow<LineString?>(null)
+    val routeLine: StateFlow<LineString?> = _routeLine.asStateFlow()
 
     private val _destination = MutableStateFlow<LatLng?>(null)
     val destination: StateFlow<LatLng?> = _destination.asStateFlow()
@@ -86,6 +91,46 @@ class MapViewModel(
     init {
         checkLocationSettings()
         setupSearchDebounce()
+        observeDestinationAndLocation()
+    }
+
+    private fun observeDestinationAndLocation() {
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(_destination, _userLocation) { dest, loc ->
+                dest to loc
+            }.collect { (dest, loc) ->
+                if (dest != null && loc != null && _routeLine.value == null) {
+                    fetchRoute(LatLng(loc.latitude, loc.longitude), dest)
+                }
+            }
+        }
+    }
+
+    private fun fetchRoute(start: LatLng, end: LatLng) {
+        android.util.Log.d("MapViewModel", "fetchRoute called with: $start -> $end")
+        viewModelScope.launch {
+            try {
+                val coords = "${start.longitude},${start.latitude};${end.longitude},${end.latitude}"
+                android.util.Log.d("MapViewModel", "Fetching route for: $coords")
+                val response = photonApiService.getRoute(coords)
+                if (response.isSuccessful) {
+                    val route = response.body()?.routes?.firstOrNull()
+                    if (route != null) {
+                        android.util.Log.d("MapViewModel", "Route fetched successfully. Geometry coords: ${route.geometry.coordinates.size}")
+                        val coordinates = route.geometry.coordinates.map { 
+                            Point.fromLngLat(it[0], it[1]) 
+                        }
+                        _routeLine.value = LineString.fromLngLats(coordinates)
+                    } else {
+                        android.util.Log.e("MapViewModel", "Route response empty")
+                    }
+                } else {
+                    android.util.Log.e("MapViewModel", "Route request failed: ${response.code()} ${response.message()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MapViewModel", "Failed to fetch route", e)
+            }
+        }
     }
 
     fun checkLocationSettings() {
@@ -269,7 +314,10 @@ class MapViewModel(
         if (!_isAlarmSet.value) {
             _destination.value = latLng
             // Recalculate distance immediately if we have a location
-            _userLocation.value?.let { checkDistance(it) }
+            _userLocation.value?.let { 
+                checkDistance(it)
+                fetchRoute(LatLng(it.latitude, it.longitude), latLng)
+            }
         }
     }
 
@@ -317,6 +365,7 @@ class MapViewModel(
         if (!_isAlarmSet.value) {
             _destination.value = null
             _distanceToDestination.value = null
+            _routeLine.value = null
         }
     }
 

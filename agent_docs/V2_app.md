@@ -14,7 +14,7 @@ Next, we connect to the routing engine and get the path rendering on the screen.
 
 * [x] **OSRM Retrofit Interface:** Build a new API service for http://router.project-osrm.org. Construct the GET request to fetch the driving/walking route between the user's current location and the destination.
 * [x] **GeoJSON Parsing:** Set up Kotlinx Serialization to parse the OSRM response, specifically extracting the LineString coordinates and the duration (estimated time).
-* [ ] **MapLibre Rendering:** Feed the parsed LineString directly into MapLibre as a GeoJsonSource and draw it using a LineLayer. This gives the user a visual path to follow.
+* [x] **MapLibre Rendering:** Feed the parsed LineString directly into MapLibre as a GeoJsonSource and draw it using a LineLayer. This gives the user a visual path to follow.
 
 ## Phase 3: The Engine Room (Spatial Math & Predictive ETA)
 This is where the application becomes intelligent. It leans heavily into data science principles, processing real-time streams to make predictions.
