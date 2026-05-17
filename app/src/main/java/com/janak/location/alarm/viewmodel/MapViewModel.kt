@@ -27,13 +27,20 @@ import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
 import kotlin.math.roundToInt
 
+import com.janak.location.alarm.data.repository.RouteRepository
+import com.janak.location.alarm.data.entity.SavedRouteEntity
+// ... (keep existing imports)
+
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
+    private val routeRepository: RouteRepository,
     private val context: Context
 ) : ViewModel() {
+    
+    val savedRoutes = routeRepository.allSavedRoutes
 
     private val sharedPrefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -349,12 +356,22 @@ class MapViewModel(
         }
     }
 
+    private val _journeyCompleted = MutableStateFlow<Boolean>(false)
+    val journeyCompleted: StateFlow<Boolean> = _journeyCompleted.asStateFlow()
+    
+    fun resetJourneyCompleted() {
+        _journeyCompleted.value = false
+    }
+
     private fun stopAlarm() {
         _isAlarmSet.value = false
         _distanceToDestination.value = null
         alarmScheduler.cancelAlarm()
         alarmEngine.stop()
         stopCountdown()
+        
+        // Trigger dialog
+        _journeyCompleted.value = true
         
         // Stop the service
         val serviceIntent = Intent(context, LocationAlarmService::class.java)
@@ -390,6 +407,16 @@ class MapViewModel(
         }
     }
     
+    fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>) {
+        viewModelScope.launch {
+            val route = SavedRouteEntity(
+                destinationName = destinationName,
+                dateSaved = System.currentTimeMillis()
+            )
+            routeRepository.saveJourney(route, breadcrumbs)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         // We don't stop the service here because we want it to run in background
@@ -401,12 +428,13 @@ class MapViewModelFactory(
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
+    private val routeRepository: RouteRepository,
     private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MapViewModel(locationTrackingManager, alarmEngine, alarmScheduler, photonApiService, context) as T
+            return MapViewModel(locationTrackingManager, alarmEngine, alarmScheduler, photonApiService, routeRepository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

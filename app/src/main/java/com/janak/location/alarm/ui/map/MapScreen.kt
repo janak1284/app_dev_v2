@@ -73,7 +73,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 
 @Composable
-fun MapScreen(viewModel: MapViewModel) {
+fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
     var showSettings by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
 
@@ -97,13 +97,17 @@ fun MapScreen(viewModel: MapViewModel) {
             )
         }
         else -> {
-            MapContent(viewModel = viewModel, onOpenSettings = { showSettings = true })
+            MapContent(
+                viewModel = viewModel, 
+                onOpenSettings = { showSettings = true },
+                onNavigateHome = onNavigateHome
+            )
         }
     }
 }
 
 @Composable
-fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
+fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHome: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val focusManager = LocalFocusManager.current
@@ -228,7 +232,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
                 }
                 if (locationComponent.isLocationComponentActivated) {
                     locationComponent.isLocationComponentEnabled = true
-                    locationComponent.cameraMode = CameraMode.TRACKING
+                    // REMOVED: locationComponent.cameraMode = CameraMode.TRACKING
+                    // This was forcing the camera to follow the user and resetting the camera.
                     locationComponent.renderMode = RenderMode.COMPASS
                 }
             }
@@ -325,6 +330,23 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
     }
 
 
+    // Initial Zoom Effect
+    // Using rememberSaveable ensures this state persists when navigating away to Settings and back
+    var isInitialZoomDone by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    
+    LaunchedEffect(userLocation, mapInstance) {
+        if (!isInitialZoomDone && userLocation != null && mapInstance != null) {
+            mapInstance?.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(userLocation!!.latitude, userLocation!!.longitude),
+                    15.0
+                )
+            )
+            isInitialZoomDone = true
+        }
+    }
+
+
     // Zoom to destination when it changes
     LaunchedEffect(destination, mapInstance) {
         val dest = destination
@@ -393,21 +415,34 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
         )
         
         // --- STEP 1: Top Search Bar ---
-        DestinationSearchField(
-            query = searchQuery,
-            onQueryChange = { viewModel.onSearchQueryChange(it) },
-            results = searchResults,
-            history = searchHistory,
-            onResultClick = { viewModel.selectSearchResult(it) },
-            isSearching = isSearching,
-            onMenuClick = onOpenSettings,
-            userLocation = userLocation,
-            onFocusChanged = { isSearchFocused = it },
+        Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
-                .fillMaxWidth()
-        )
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onNavigateHome,
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .background(MaterialTheme.colorScheme.surface, shape = androidx.compose.foundation.shape.CircleShape)
+            ) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back to Home")
+            }
+            DestinationSearchField(
+                query = searchQuery,
+                onQueryChange = { viewModel.onSearchQueryChange(it) },
+                results = searchResults,
+                history = searchHistory,
+                onResultClick = { viewModel.selectSearchResult(it) },
+                isSearching = isSearching,
+                onMenuClick = onOpenSettings,
+                userLocation = userLocation,
+                onFocusChanged = { isSearchFocused = it },
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         // --- STEP 1.1: Backup Timer Pill (Isolated Recomposition) ---
         TimerOverlay(
@@ -451,6 +486,43 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
             }
         }
         
+        // Journey completion state
+        val journeyCompleted by viewModel.journeyCompleted.collectAsState()
+        var showSaveDialog by remember { mutableStateOf(false) }
+        var routeName by remember { mutableStateOf("") }
+
+        LaunchedEffect(journeyCompleted) {
+            if (journeyCompleted) {
+                showSaveDialog = true
+                viewModel.resetJourneyCompleted()
+            }
+        }
+
+        if (showSaveDialog) {
+            AlertDialog(
+                onDismissRequest = { showSaveDialog = false },
+                title = { Text("Save Journey") },
+                text = {
+                    OutlinedTextField(
+                        value = routeName,
+                        onValueChange = { routeName = it },
+                        label = { Text("Enter destination name") }
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        if (routeName.isNotBlank()) {
+                            viewModel.saveRoute(routeName, emptyList()) 
+                            showSaveDialog = false
+                        }
+                    }) { Text("Save") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSaveDialog = false }) { Text("Cancel") }
+                }
+            )
+        }
+
         // UI Overlay for Permissions
         if (!hasLocationPermission) {
             Button(
@@ -467,7 +539,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
                 Text(text = "Grant Location Permission")
             }
         }
-        
+
         // --- STEP 2: Animated Status Card ---
         AnimatedVisibility(
             visible = isPaneVisible,

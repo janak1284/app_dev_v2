@@ -1,50 +1,19 @@
-# Project Updates - Location Alarm MVP
+Summary of Changes to V2 Pivot (May 17, 2026)
 
-## Features Implemented
-- **Visual Countdown Timer (New):**
-    - Implemented a `BackupTimerPill` composable to display a dynamic progress bar and a formatted (MM:SS) timer directly on the map overlay.
-    - Updated `MapViewModel` with coroutine-based countdown logic to track `remainingSeconds` and `totalSeconds` when a backup alarm is set.
-    - Synced the UI countdown state with the Android `AlarmManager` for precise time tracking.
-- **Smart Search Interaction (New):**
-    - Search suggestions and history now follow a focus-driven lifecycle: they appear only when the search field is focused.
-    - Integrated `LocalFocusManager` with the Map UI; tapping the map or selecting a destination automatically clears focus and hides search results.
-    - Added `pointerInput` gesture detection to the map container for a more responsive "tap-to-dismiss" behavior.
-- **Search History & Local Bias (New):**
-    - Search now persists the last 10 selected destinations using `SharedPreferences`.
-    - Local history matches are prioritized and merged with remote Photon API results for faster access.
-    - Integrated history-specific iconography (History vs. Location) in the search dropdown.
-- **Theme Customization & UI Modernization (New):**
-    - Created a dedicated **Settings Screen** accessible from the search bar.
-    - Full support for **Light, Dark, and System Default** theme modes.
-    - Implemented "Deep Dark" color palette for improved battery efficiency on OLED screens.
-- **Enhanced Map Interaction (New):**
-    - **One-Tap Refocus:** Added a dedicated floating button to instantly center the map on the user's current GPS position.
-    - **Active Refresh:** Manual refresh button to restart location tracking collectors.
-    - **Smart Camera:** The map now automatically pans and zooms to the destination upon selection.
-- **Background Readiness (Phase 2):**
-    - Fully implemented `LocationAlarmService` as a Foreground Service with persistent notifications.
-    - Established `RingingActivity` for high-priority wake-up states that survive background execution.
-    - Configured `AndroidManifest.xml` with Foreground Service declarations and necessary permissions (`FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `SCHEDULE_EXACT_ALARM`).
-- **Destination Search:** Integrated the Photon API (OpenStreetMap) for real-time location auto-suggestions.
-- **Networking Foundation:** Setup Retrofit, OkHttp, and Kotlinx Serialization for client-side API communication.
-- **Search Logic:** Implemented 500ms debouncing and location-biasing in the ViewModel to prioritize local search results.
-- **Search UI:** Created a modern `DestinationSearchField` component with loading indicators and animated suggestion lists.
-- **Map Integration:**
-    - **Camera Animation:** The map now smoothly flys to the selected destination.
-    - **Destination Markers:** Visual markers are placed at the selected coordinates.
-    - **Style Safety:** Implemented listeners to ensure markers persist across map style reloads.
-- **Alarm Engine:**
-    - Created `AlarmEngine.kt` to handle hardware interactions (Sound & Haptics).
-    - Integrated `AlarmEngine` into `MapViewModel` and `MainActivity`.
-    - Connected distance-trigger logic to start the alarm hardware.
-    - Added vibration preference support, allowing users to toggle haptics on/off from the UI.
-- **Advanced Configuration (Modern Configuration Sheet):**
-    - **Material 3 Time Integration:** Replaced the custom scroll wheel with the official Jetpack Compose `TimeInput` for faster, keyboard-friendly time selection.
-    - **Backup Time-Based Alarm:** Integrated a secondary backup alarm using `AlarmManager` for specific arrival times.
-    - **Custom Ringtones:** Added a system ringtone picker allowing users to select their preferred alert sound.
+1. Gradle Configuration & Build Fixes:
+   - Migrated Room database annotation processing from `annotationProcessor` to `ksp` for better performance and compatibility.
+   - Updated Room database version to `2.7.0-rc01` to resolve runtime build errors ("unexpected jvm signature V").
+   - Synchronized dependencies and plugins in `gradle/libs.versions.toml` and `app/build.gradle.kts`.
 
-## Technical Fixes
-- **Location Collector Stability:** Resolved a race condition where multiple location collectors could be launched simultaneously; implemented job cancellation to ensure only one active tracking session.
-- **State Management:** Refactored `MapViewModel` to use `SharedPreference` for persisting history and theme settings.
-- **UI Logic:** Optimized the "Guardian" status card with better animations and clearer state transitions.
-- **Architecture Cleanup:** Introduced `AlarmScheduler` to decouple time-based alarm logic from the proximity engine.
+2. MapScreen.kt UI & Interaction Refinements:
+   - Terminology Update: Standardized all labels and UI elements to use "Distance Alarm" instead of previous temporary terms.
+   - Route Rendering: Restored and stabilized the GeoJSON-based path rendering logic, ensuring OSRM route data is correctly drawn on the map.
+   - Focus Logic: Completely removed all automatic map re-centering/refocusing triggers. The map is now fully manual in its focus behavior: it only centers on the user location when the "Focus Me" FAB (MyLocation icon) is explicitly clicked.
+   - Map View Cleanup: Simplified the `MapContent` logic by removing persistent `LaunchedEffect` blocks that were causing map-camera fighting during user interactions.
+
+3. ViewModel Integration:
+   - Restored `MapViewModel` support for route data fetching, ensuring the UI can correctly display the path between user location and destination.
+   - Verified that route state is correctly observed and cleared when a destination is removed.
+
+4. Pending Work:
+   - Home Screen Implementation (HomeScreen.kt): The architecture is ready for the new Home Screen; this remains the primary remaining task for the V2 Pivot.
