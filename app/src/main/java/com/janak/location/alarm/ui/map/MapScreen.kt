@@ -403,13 +403,6 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             )
         }
 
-        // --- Timer Pill ---
-        TimerOverlay(
-            viewModel = viewModel,
-            isSearchFocused = isSearchFocused,
-            modifier = Modifier.align(Alignment.TopStart)
-        )
-
         // --- Floating Buttons ---
         Column(
             modifier = Modifier
@@ -586,28 +579,6 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     }
 }
 
-@Composable
-fun TimerOverlay(
-    viewModel: MapViewModel,
-    isSearchFocused: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val remainingSeconds by viewModel.remainingSeconds.collectAsState()
-    val totalSeconds by viewModel.totalSeconds.collectAsState()
-
-    AnimatedVisibility(
-        visible = remainingSeconds > 0 && !isSearchFocused,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically(),
-        modifier = modifier.padding(top = 96.dp, start = 16.dp)
-    ) {
-        TimeAlarmPill(
-            remainingSeconds = remainingSeconds,
-            totalSeconds = totalSeconds
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigSheetWrapper(
@@ -646,60 +617,3 @@ fun StatusHeader(title: String, icon: ImageVector, color: Color) {
     }
 }
 
-@Composable
-fun TimeAlarmPill(
-    remainingSeconds: Long,
-    totalSeconds: Long,
-    modifier: Modifier = Modifier
-) {
-    val progress = if (totalSeconds > 0) remainingSeconds.toFloat() / totalSeconds else 0f
-    
-    Box(
-        modifier = modifier
-            .width(120.dp)
-            .height(40.dp)
-            .clip(CircleShape)
-            .background(Color(0xFF2C2C2C))
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(progress)
-                .background(Color(0xFF2196F3))
-        )
-        
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                Icons.Default.Timer,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = formatSeconds(remainingSeconds),
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-private fun formatSeconds(seconds: Long): String {
-    val mins = seconds / 60
-    val secs = seconds % 60
-    return String.format("%02d:%02d", mins, secs)
-}
-
-private fun formatDistance(meters: Int): String {
-    return if (meters >= 1000) {
-        String.format("%.1fkm", meters / 1000f)
-    } else {
-        "${meters}m"
-    }
-}

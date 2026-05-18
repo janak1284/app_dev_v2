@@ -6,7 +6,7 @@ Location Alarm is a smart, GPS-based alarm application designed specifically for
 
 - **Real-Time Destination Search:** Powered by the **Photon API (OpenStreetMap)**, featuring 500ms debouncing, location-biased auto-suggestions, and persistent search history.
 - **Interactive MapLibre Integration:** Smooth map interface with **Auto-Zoom** to selected destinations and floating controls for **One-Tap Refocus** and **Location Refresh**.
-- **Proximity & Time-Based Alarms:** High-precision distance calculations combined with a **Backup Time-Based Alarm** system to ensure arrival coverage.
+- **Proximity Alarms:** High-precision distance calculations to ensure arrival coverage.
 - **Background Guardian:** A dedicated **Foreground Service** tracks your location and maintains alarm readiness even when the app is in the background or the screen is off.
 - **Hardware-Level Alarm Engine:** High-priority sound and haptic vibration loops that bypass standard notification limitations.
 - **Modern Material 3 UI:** Entirely built with Jetpack Compose, featuring a "Deep Dark" mode for OLED efficiency and a seamless "Guardian" status system.
@@ -27,7 +27,6 @@ The project follows a robust **Clean Architecture** pattern with a unidirectiona
     - `LocationAlarmService`: Foreground Service for background tracking and distance monitoring.
     - `LocationTrackingManager`: Handles the FusedLocationProviderClient.
     - `AlarmEngine`: Hardware abstraction for Ringtone and Vibrator APIs.
-    - `AlarmScheduler`: Manages system-level exact alarms for time-based backups.
 
 ---
 
@@ -47,15 +46,15 @@ The project follows a robust **Clean Architecture** pattern with a unidirectiona
 ## 📂 Project Structure
 
 ```text
-app/src/main/java/com/janak/location/alarm/
-├── alarm/                  # AlarmEngine, Handler, Receiver, Scheduler
+app/src/main/java/com\janak/location/alarm/
+├── alarm/                  # AlarmEngine, Handler
 ├── api/                    # Retrofit service & Photon API client
 ├── location/               # Fused Location Provider manager
 ├── model/                  # Data models (PhotonResponse, AlarmSettings)
 ├── service/                # LocationAlarmService (Background Tracking)
 ├── ui/                     # Compose Screens & Components
 │   ├── alarm/              # Configuration sheets
-│   ├── components/         # Reusable UI elements (SearchField, WheelPicker)
+│   ├── components/         # Reusable UI elements (SearchField, JourneySummary)
 │   ├── map/                # MapScreen & MapContent
 │   ├── settings/           # SettingsScreen & Theme Controls
 │   └── theme/              # Material 3 Design Tokens & Custom Colors
@@ -84,7 +83,6 @@ app/src/main/java/com/janak/location/alarm/
 
 - [x] **MVP Core:** Map + Search + Proximity Alarm.
 - [x] **Phase 2:** Background Service integration for tracking when the screen is off.
-- [x] **Phase 2:** Backup Time-Based Alarm (AlarmManager).
 - [x] **Phase 3:** Search History and Persistent Preferences.
 - [ ] **Phase 3:** Battery optimization and "Smart Polling" based on distance.
 - [ ] **Phase 4:** Multiple saved destinations (Bookmarks).
