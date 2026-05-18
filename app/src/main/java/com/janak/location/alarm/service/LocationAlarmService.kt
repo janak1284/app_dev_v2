@@ -44,6 +44,9 @@ class LocationAlarmService : Service() {
     private var destinationLng: Double = 0.0
     private var destinationName: String = "Unknown Destination"
     private var distanceThreshold: Float = 500f
+    private var isDistanceAlarmEnabled: Boolean = true
+    private var predictiveMinutesThreshold: Int = 10
+    private var isPredictiveAlarmEnabled: Boolean = false
     private var ringtoneUri: String? = null
     private var isVibrateEnabled: Boolean = true
     
@@ -109,6 +112,9 @@ class LocationAlarmService : Service() {
         destinationLng = intent?.getDoubleExtra("DEST_LNG", 0.0) ?: 0.0
         destinationName = intent?.getStringExtra("DEST_NAME") ?: "Unknown Destination"
         distanceThreshold = intent?.getFloatExtra("DISTANCE_THRESHOLD", 500f) ?: 500f
+        isDistanceAlarmEnabled = intent?.getBooleanExtra("DISTANCE_ALARM_ENABLED", true) ?: true
+        predictiveMinutesThreshold = intent?.getIntExtra("PREDICTIVE_MINUTES", 10) ?: 10
+        isPredictiveAlarmEnabled = intent?.getBooleanExtra("PREDICTIVE_ALARM_ENABLED", false) ?: false
         ringtoneUri = intent?.getStringExtra("RINGTONE_URI")
         isVibrateEnabled = intent?.getBooleanExtra("VIBRATE", true) ?: true
         
@@ -192,8 +198,13 @@ class LocationAlarmService : Service() {
         val notificationContent = "Distance: ${formatDistance(distance.toInt())}$etaText"
         updateNotification("Distance Alarm Active", notificationContent)
 
-        if (currentState == ServiceState.TRACKING && distance <= distanceThreshold) {
-            triggerAlarm()
+        if (currentState == ServiceState.TRACKING) {
+            val shouldTriggerDistance = isDistanceAlarmEnabled && distance <= distanceThreshold
+            val shouldTriggerPredictive = isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold
+            
+            if (shouldTriggerDistance || shouldTriggerPredictive) {
+                triggerAlarm()
+            }
         }
     }
 

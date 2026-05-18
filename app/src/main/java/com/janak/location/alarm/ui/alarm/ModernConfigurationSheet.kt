@@ -46,7 +46,12 @@ fun ModernConfigurationSheet(
     val context = LocalContext.current
     
     // Form States
+    var distanceEnabled by remember { mutableStateOf(initialSettings.isDistanceAlarmEnabled) }
     var distanceMeters by remember { mutableStateOf(initialSettings.distanceMeters.toFloat()) }
+    
+    var predictiveEnabled by remember { mutableStateOf(initialSettings.isPredictiveAlarmEnabled) }
+    var predictiveMinutes by remember { mutableStateOf(initialSettings.predictiveMinutes.toFloat()) }
+
     val timePickerState = rememberTimePickerState(
         initialHour = initialSettings.timeAlarmHour,
         initialMinute = initialSettings.timeAlarmMinute,
@@ -127,8 +132,19 @@ fun ModernConfigurationSheet(
                 )
 
                 DistanceSection(
+                    enabled = distanceEnabled,
+                    onToggle = { distanceEnabled = it },
                     distanceMeters = distanceMeters,
                     onDistanceChange = { distanceMeters = it }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                PredictiveSection(
+                    enabled = predictiveEnabled,
+                    onToggle = { predictiveEnabled = it },
+                    minutes = predictiveMinutes,
+                    onMinutesChange = { predictiveMinutes = it }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -159,6 +175,9 @@ fun ModernConfigurationSheet(
                     onSaveSettings(
                         AlarmSettings(
                             distanceMeters = distanceMeters.toInt(),
+                            isDistanceAlarmEnabled = distanceEnabled,
+                            predictiveMinutes = predictiveMinutes.toInt(),
+                            isPredictiveAlarmEnabled = predictiveEnabled,
                             timeAlarmHour = timePickerState.hour,
                             timeAlarmMinute = timePickerState.minute,
                             isTimeAlarmEnabled = timerEnabled,
@@ -174,6 +193,8 @@ fun ModernConfigurationSheet(
 
 @Composable
 fun DistanceSection(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
     distanceMeters: Float,
     onDistanceChange: (Float) -> Unit
 ) {
@@ -182,39 +203,108 @@ fun DistanceSection(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Wake-up Distance",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.MyLocation,
+                        contentDescription = null,
+                        tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text(
-                        text = formatDistance(distanceMeters.toInt()),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Distance Alarm",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (enabled) {
+                            Text(
+                                text = "Wake at ${formatDistance(distanceMeters.toInt())}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                Switch(checked = enabled, onCheckedChange = onToggle)
+            }
+            
+            AnimatedVisibility(visible = enabled) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Slider(
+                        value = distanceMeters,
+                        onValueChange = onDistanceChange,
+                        valueRange = 100f..5000f,
+                        steps = 48,
+                        colors = SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                     )
                 }
-                Icon(
-                    Icons.Default.MyLocation,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Slider(
-                value = distanceMeters,
-                onValueChange = onDistanceChange,
-                valueRange = 100f..5000f,
-                steps = 48,
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            )
+        }
+    }
+}
+
+@Composable
+fun PredictiveSection(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+    minutes: Float,
+    onMinutesChange: (Float) -> Unit
+) {
+    AnimatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.AutoMode,
+                        contentDescription = null,
+                        tint = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Smart ETA Alarm",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (enabled) {
+                            Text(
+                                text = "Wake ${minutes.toInt()} mins before arrival",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    }
+                }
+                Switch(checked = enabled, onCheckedChange = onToggle)
+            }
+            
+            AnimatedVisibility(visible = enabled) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Slider(
+                        value = minutes,
+                        onValueChange = onMinutesChange,
+                        valueRange = 1f..60f,
+                        steps = 59,
+                        colors = SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.secondary,
+                            activeTrackColor = MaterialTheme.colorScheme.secondary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    )
+                }
+            }
         }
     }
 }
@@ -269,7 +359,7 @@ fun TimeAlarmSection(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = if (timerEnabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant,
+                        color = if (timerEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant,
                         shape = CircleShape,
                         modifier = Modifier.size(40.dp)
                     ) {
@@ -278,20 +368,20 @@ fun TimeAlarmSection(
                                 Icons.Default.Timer,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
-                                tint = if (timerEnabled) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (timerEnabled) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "Time Alarm",
+                            text = "Backup Time Alarm",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = if (timerEnabled) {
-                                if (durationInMinutes > 0) "Duration: ${formatTime(timePickerState.hour, timePickerState.minute)}" else "Set duration"
+                                if (durationInMinutes > 0) "Fixed alert at: ${formatTime(timePickerState.hour, timePickerState.minute)}" else "Set absolute time"
                             } else "Disabled",
                             style = MaterialTheme.typography.bodySmall,
                             color = if (timerEnabled && durationInMinutes == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
@@ -315,12 +405,12 @@ fun TimeAlarmSection(
                         onClick = onToggleTimePicker,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(if (showTimePicker) "Hide Time Picker" else "Set Custom Time")
+                        Text(if (showTimePicker) "Hide Time Picker" else "Set Fixed Alert Time")
                     }
 
                     AnimatedVisibility(
@@ -342,8 +432,8 @@ fun TimeAlarmSection(
                                 state = timePickerState,
                                 modifier = Modifier.padding(24.dp),
                                 colors = TimePickerDefaults.colors(
-                                    timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                                     timeSelectorUnselectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                     timeSelectorUnselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

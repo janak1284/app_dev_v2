@@ -1,6 +1,10 @@
 # Project Updates - Location Alarm V2
 
-## Connection Phase & Service Overhaul (Dev 1)
+## Predictive ETA Trigger (Dev 1)
+- **Smart Alarms:** Implemented dual-trigger logic in `LocationAlarmService`. Users can now choose to be woken up based on a distance threshold OR a predictive ETA threshold (e.g., "Wake me 10 minutes before arrival").
+- **UI Configuration:** Added a "Smart ETA Alarm" section to the configuration sheet with a toggle and minute slider.
+- **Model Expansion:** Updated `AlarmSettings` to persist predictive alarm states.
+- **Service Handshake:** Integrated the predictive parameters into the `MapViewModel` -> `LocationAlarmService` intent flow.
 - **Service State Machine:** Refactored `LocationAlarmService` with a robust state machine (`TRACKING`, `ALARM_RINGING`). The service now remains active post-alarm for continuous breadcrumb recording.
 - **Dynamic Re-routing Handshake:** Implemented a bi-directional loop where the service signals deviations (>100m) and `MapViewModel` pushes updated OSRM paths.
 - **Spatial Math Engine:** Integrated `Turf-Java` for route-based distance calculation, route snapping, and cross-track deviation detection.
