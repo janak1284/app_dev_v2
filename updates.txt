@@ -11,12 +11,11 @@
 - **Predictive ETA:** Implemented a sliding window speed algorithm to provide real-time, road-aware ETAs.
 - **Global Terminology Alignment:** Standardized on "Distance Alarm" and "Time Alarm" across the service and logic layers.
 
-## UI/UX Refinement & Phase 5 Completion (Dev 2)
-- **Home Screen:** Built a new landing screen displaying past `SavedRoute` cards from the Room database.
-- **Journey Summary:** Integrated a "Save Route" dialog triggered upon journey completion.
-- **Map Interaction:** Refined focus behavior (fully manual focus) and cleaned up camera-fighting logic.
-- **Theme Support:** Verified Dark Mode / Light Mode consistency across all new UI components.
-- **Alarm Configuration:** Finalized the setup sheet for selecting Distance vs. Predictive Time thresholds.
+## Home Screen & Journey Summary Refinement (Dev 2)
+- **Home Screen:** Overhauled the landing screen with a modern "Deep Dark" aesthetic, featuring a dynamic header and rich `RouteCard` components displaying journey metadata.
+- **Journey Summary Sheet:** Replaced the basic save dialog with a polished `ModalBottomSheet` that triggers upon journey completion, allowing users to gracefully save or discard their routes.
+- **Navigation Flow:** Unified the transition from journey tracking back to the saved routes list.
+- **Visual Consistency:** Standardized colors and component shapes across the V2 UI layer.
 
 ## Technical Foundation
 - **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.

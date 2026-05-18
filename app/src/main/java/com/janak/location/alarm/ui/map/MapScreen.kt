@@ -5,73 +5,48 @@ import android.location.Location
 import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import java.util.Calendar
-import android.app.TimePickerDialog
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.foundation.background
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.janak.location.alarm.location.LocationTrackingManager
-import com.janak.location.alarm.viewmodel.MapViewModel
-import com.janak.location.alarm.viewmodel.MapViewModelFactory
-import org.maplibre.android.MapLibre
-import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.geometry.LatLng
-import org.maplibre.geojson.Point
-import org.maplibre.android.location.LocationComponentActivationOptions
-import org.maplibre.android.location.modes.CameraMode
-import org.maplibre.android.location.modes.RenderMode
-import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.MapView
-import org.maplibre.android.maps.Style
-import com.janak.location.alarm.ui.alarm.ModernConfigurationSheet
-import com.janak.location.alarm.ui.components.DestinationSearchField
-import com.janak.location.alarm.ui.settings.SettingsScreen
 import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
-import android.view.MotionEvent
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.janak.location.alarm.service.LocationAlarmService
+import com.janak.location.alarm.ui.alarm.ModernConfigurationSheet
+import com.janak.location.alarm.ui.components.DestinationSearchField
+import com.janak.location.alarm.ui.components.JourneySummarySheet
+import com.janak.location.alarm.ui.settings.SettingsScreen
+import com.janak.location.alarm.viewmodel.MapViewModel
+import org.maplibre.android.MapLibre
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
+import org.maplibre.geojson.Point
+import android.view.MotionEvent
+import kotlin.math.roundToInt
 
 @Composable
 fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
@@ -114,9 +89,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val focusManager = LocalFocusManager.current
     
     val userLocation by viewModel.userLocation.collectAsState(initial = null)
-
-
     val destination by viewModel.destination.collectAsState()
+    val destinationName by viewModel.destinationName.collectAsState()
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val alarmSettings by viewModel.alarmSettings.collectAsState()
@@ -233,8 +207,6 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 }
                 if (locationComponent.isLocationComponentActivated) {
                     locationComponent.isLocationComponentEnabled = true
-                    // REMOVED: locationComponent.cameraMode = CameraMode.TRACKING
-                    // This was forcing the camera to follow the user and resetting the camera.
                     locationComponent.renderMode = RenderMode.COMPASS
                 }
             }
@@ -282,14 +254,11 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         }
     }
 
-    var hasZoomedToUser by remember { mutableStateOf(false) }
-    
-    // --- STEP 1.6: Observe Route Updates ---
+    // Observe Route Updates
     val routeLine by viewModel.routeLine.collectAsState()
     LaunchedEffect(routeLine, mapInstance) {
         val line = routeLine
         val map = mapInstance
-        android.util.Log.d("MapScreen", "RouteLine changed: ${line != null}")
         
         if (map?.style?.isFullyLoaded == true) {
             val style = map.style!!
@@ -299,40 +268,31 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             var source = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(sourceId)
             
             if (line != null) {
-            if (source == null) {
-                android.util.Log.d("MapScreen", "Creating new route source")
-                source = org.maplibre.android.style.sources.GeoJsonSource(sourceId)
-                style.addSource(source)
-            }
-            
-            if (style.getLayer(layerId) == null) {
-                android.util.Log.d("MapScreen", "Creating new route layer")
-                val layer = org.maplibre.android.style.layers.LineLayer(layerId, sourceId)
-                layer.setProperties(
-                    org.maplibre.android.style.layers.PropertyFactory.lineColor(android.graphics.Color.BLUE),
-                    org.maplibre.android.style.layers.PropertyFactory.lineWidth(5f),
-                    org.maplibre.android.style.layers.PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
-                    org.maplibre.android.style.layers.PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
-                )
-                style.addLayerBelow(layer, "destination-layer")
-            }
-                android.util.Log.d("MapScreen", "Updating route source with geometry")
+                if (source == null) {
+                    source = org.maplibre.android.style.sources.GeoJsonSource(sourceId)
+                    style.addSource(source)
+                }
+                
+                if (style.getLayer(layerId) == null) {
+                    val layer = org.maplibre.android.style.layers.LineLayer(layerId, sourceId)
+                    layer.setProperties(
+                        org.maplibre.android.style.layers.PropertyFactory.lineColor(android.graphics.Color.BLUE),
+                        org.maplibre.android.style.layers.PropertyFactory.lineWidth(5f),
+                        org.maplibre.android.style.layers.PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
+                        org.maplibre.android.style.layers.PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
+                    )
+                    style.addLayerBelow(layer, "destination-layer")
+                }
                 source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(org.maplibre.geojson.Feature.fromGeometry(line)))
             } else {
-                // Remove route if null
-                android.util.Log.d("MapScreen", "Clearing route from map")
                 if (source != null) {
                     source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
                 }
             }
-        } else {
-            android.util.Log.d("MapScreen", "Map style not fully loaded yet")
         }
     }
 
-
     // Initial Zoom Effect
-    // Using rememberSaveable ensures this state persists when navigating away to Settings and back
     var isInitialZoomDone by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     
     LaunchedEffect(userLocation, mapInstance) {
@@ -346,7 +306,6 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             isInitialZoomDone = true
         }
     }
-
 
     // Zoom to destination when it changes
     LaunchedEffect(destination, mapInstance) {
@@ -380,11 +339,10 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 map.getMapAsync { mapLibreMap ->
                     mapInstance = mapLibreMap
                     
-                    // Reposition compass to bottom-left to avoid overlap with search bar
                     mapLibreMap.uiSettings.isCompassEnabled = true
-                    mapLibreMap.uiSettings.setCompassFadeFacingNorth(false) // Make it always visible for debugging/better UX
+                    mapLibreMap.uiSettings.setCompassFadeFacingNorth(false)
                     mapLibreMap.uiSettings.setCompassGravity(android.view.Gravity.BOTTOM or android.view.Gravity.START)
-                    mapLibreMap.uiSettings.setCompassMargins(48, 0, 0, 150) // Adjust bottom margin to be above the logo
+                    mapLibreMap.uiSettings.setCompassMargins(48, 0, 0, 150)
 
                     if (mapLibreMap.style == null) {
                         val osmStyle = """
@@ -415,7 +373,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
         )
         
-        // --- STEP 1: Top Search Bar ---
+        // --- Top Search Bar ---
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -427,7 +385,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 onClick = onNavigateHome,
                 modifier = Modifier
                     .padding(end = 8.dp)
-                    .background(MaterialTheme.colorScheme.surface, shape = androidx.compose.foundation.shape.CircleShape)
+                    .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
             ) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back to Home")
             }
@@ -445,14 +403,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             )
         }
 
-        // --- STEP 1.1: Backup Timer Pill (Isolated Recomposition) ---
+        // --- Timer Pill ---
         TimerOverlay(
             viewModel = viewModel,
             isSearchFocused = isSearchFocused,
             modifier = Modifier.align(Alignment.TopStart)
         )
 
-        // --- STEP 1.5: Floating Buttons ---
+        // --- Floating Buttons ---
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -489,7 +447,6 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         
         // Journey completion state
         var showSaveDialog by remember { mutableStateOf(false) }
-        var routeName by remember { mutableStateOf("") }
 
         DisposableEffect(context) {
             val receiver = object : android.content.BroadcastReceiver() {
@@ -501,31 +458,23 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
             
             onDispose {
-                context.unregisterReceiver(receiver)
+                try {
+                    context.unregisterReceiver(receiver)
+                } catch (e: Exception) {}
             }
         }
 
         if (showSaveDialog) {
-            AlertDialog(
-                onDismissRequest = { showSaveDialog = false },
-                title = { Text("Save Journey") },
-                text = {
-                    OutlinedTextField(
-                        value = routeName,
-                        onValueChange = { routeName = it },
-                        label = { Text("Enter destination name") }
-                    )
+            JourneySummarySheet(
+                initialDestinationName = destinationName ?: "",
+                onDismissRequest = { 
+                    showSaveDialog = false
+                    viewModel.resetJourneyCompleted()
                 },
-                confirmButton = {
-                    Button(onClick = {
-                        if (routeName.isNotBlank()) {
-                            viewModel.saveRoute(routeName, emptyList()) 
-                            showSaveDialog = false
-                        }
-                    }) { Text("Save") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showSaveDialog = false }) { Text("Cancel") }
+                onSaveJourney = { routeName ->
+                    viewModel.saveRoute(routeName, emptyList()) 
+                    showSaveDialog = false
+                    viewModel.resetJourneyCompleted()
                 }
             )
         }
@@ -547,7 +496,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
         }
 
-        // --- STEP 2: Animated Status Card ---
+        // --- Animated Status Card ---
         AnimatedVisibility(
             visible = isPaneVisible,
             enter = slideInVertically { it } + fadeIn(),
@@ -669,7 +618,6 @@ fun ConfigSheetWrapper(
     val scrollState = rememberScrollState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
-    // Stable dismiss lambda
     val stableOnDismiss = remember(onDismiss) { onDismiss }
 
     ModernConfigurationSheet(
@@ -685,7 +633,7 @@ fun ConfigSheetWrapper(
 }
 
 @Composable
-fun StatusHeader(title: String, icon: ImageVector, color: androidx.compose.ui.graphics.Color) {
+fun StatusHeader(title: String, icon: ImageVector, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, tint = color)
         Spacer(modifier = Modifier.width(8.dp))
@@ -711,17 +659,15 @@ fun TimeAlarmPill(
             .width(120.dp)
             .height(40.dp)
             .clip(CircleShape)
-            .background(Color(0xFF2C2C2C)) // Dark gray
+            .background(Color(0xFF2C2C2C))
     ) {
-        // Inner Progress Box
         Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(progress)
-                .background(Color(0xFF2196F3)) // Bright Blue
+                .background(Color(0xFF2196F3))
         )
         
-        // Content Overlay
         Row(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
@@ -748,4 +694,12 @@ private fun formatSeconds(seconds: Long): String {
     val mins = seconds / 60
     val secs = seconds % 60
     return String.format("%02d:%02d", mins, secs)
+}
+
+private fun formatDistance(meters: Int): String {
+    return if (meters >= 1000) {
+        String.format("%.1fkm", meters / 1000f)
+    } else {
+        "${meters}m"
+    }
 }
