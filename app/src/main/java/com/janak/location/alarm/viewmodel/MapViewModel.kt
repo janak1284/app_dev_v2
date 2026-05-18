@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.janak.location.alarm.alarm.AlarmEngine
-import com.janak.location.alarm.alarm.AlarmScheduler
 import com.janak.location.alarm.api.PhotonApiService
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.PhotonFeature
@@ -35,7 +34,6 @@ import com.janak.location.alarm.data.entity.SavedRouteEntity
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
     private val alarmEngine: AlarmEngine,
-    private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
     private val routeRepository: RouteRepository,
@@ -84,15 +82,6 @@ class MapViewModel(
     // --- System State ---
     private val _isLocationEnabled = MutableStateFlow(true)
     val isLocationEnabled: StateFlow<Boolean> = _isLocationEnabled.asStateFlow()
-
-    // --- Timer State ---
-    private val _remainingSeconds = MutableStateFlow(0L)
-    val remainingSeconds: StateFlow<Long> = _remainingSeconds.asStateFlow()
-
-    private val _totalSeconds = MutableStateFlow(0L)
-    val totalSeconds: StateFlow<Long> = _totalSeconds.asStateFlow()
-
-    private var countdownJob: kotlinx.coroutines.Job? = null
 
     // --- Theme State ---
     // 0 = System, 1 = Light, 2 = Dark
@@ -145,30 +134,6 @@ class MapViewModel(
         val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
         _isLocationEnabled.value = isGpsEnabled || isNetworkEnabled
-    }
-
-    private fun startVisualCountdown(totalSecs: Long) {
-        countdownJob?.cancel()
-        if (totalSecs <= 0) {
-            _remainingSeconds.value = 0
-            return
-        }
-
-        _totalSeconds.value = totalSecs
-        _remainingSeconds.value = totalSecs
-
-        countdownJob = viewModelScope.launch {
-            while (_remainingSeconds.value > 0) {
-                kotlinx.coroutines.delay(1000)
-                _remainingSeconds.value -= 1
-            }
-        }
-    }
-
-    private fun stopCountdown() {
-        countdownJob?.cancel()
-        _remainingSeconds.value = 0
-        _totalSeconds.value = 0
     }
 
     private fun loadSearchHistory(): List<PhotonFeature> {
@@ -257,15 +222,7 @@ class MapViewModel(
 
     fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
         _alarmSettings.value = settings
-        alarmScheduler.scheduleBackupAlarm(settings)
         _isAlarmSet.value = true
-        
-        if (settings.isTimeAlarmEnabled) {
-            val totalSecs = (settings.timeAlarmHour * 3600L) + (settings.timeAlarmMinute * 60L)
-            startVisualCountdown(totalSecs)
-        } else {
-            stopCountdown()
-        }
         
         val dest = _destination.value
         val destName = _destinationName.value ?: "Unknown Destination"
@@ -400,9 +357,7 @@ class MapViewModel(
         _destinationName.value = null
         _currentRouteGeoJson.value = null
         _routeLine.value = null
-        alarmScheduler.cancelAlarm()
         alarmEngine.stop()
-        stopCountdown()
         
         val serviceIntent = Intent(context, LocationAlarmService::class.java)
         context.stopService(serviceIntent)
@@ -457,7 +412,6 @@ class MapViewModel(
 class MapViewModelFactory(
     private val locationTrackingManager: LocationTrackingManager,
     private val alarmEngine: AlarmEngine,
-    private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
     private val routeRepository: RouteRepository,
@@ -467,7 +421,7 @@ class MapViewModelFactory(
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return MapViewModel(
-                locationTrackingManager, alarmEngine, alarmScheduler, 
+                locationTrackingManager, alarmEngine, 
                 photonApiService, osrmApiService, routeRepository, context
             ) as T
         }

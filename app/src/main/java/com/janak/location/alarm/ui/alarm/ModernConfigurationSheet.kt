@@ -52,16 +52,7 @@ fun ModernConfigurationSheet(
     var predictiveEnabled by remember { mutableStateOf(initialSettings.isPredictiveAlarmEnabled) }
     var predictiveMinutes by remember { mutableStateOf(initialSettings.predictiveMinutes.toFloat()) }
 
-    val timePickerState = rememberTimePickerState(
-        initialHour = initialSettings.timeAlarmHour,
-        initialMinute = initialSettings.timeAlarmMinute,
-        is24Hour = true
-    )
     var vibrateEnabled by remember { mutableStateOf(initialSettings.isVibrateEnabled) }
-    var timerEnabled by remember { mutableStateOf(initialSettings.isTimeAlarmEnabled) }
-    var showTimePicker by remember { mutableStateOf(false) }
-
-    val durationInMinutes = (timePickerState.hour * 60) + timePickerState.minute
 
     // Ringtone States
     var selectedRingtoneUri by remember { mutableStateOf<Uri?>(initialSettings.ringtoneUri) }
@@ -155,17 +146,6 @@ fun ModernConfigurationSheet(
                     onRingtoneClick = launchRingtonePicker,
                     onVibrateToggle = { vibrateEnabled = !vibrateEnabled }
                 )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                TimeAlarmSection(
-                    timerEnabled = timerEnabled,
-                    onTimerToggle = { timerEnabled = it },
-                    showTimePicker = showTimePicker,
-                    onToggleTimePicker = { showTimePicker = !showTimePicker },
-                    timePickerState = timePickerState,
-                    durationInMinutes = durationInMinutes
-                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -178,9 +158,6 @@ fun ModernConfigurationSheet(
                             isDistanceAlarmEnabled = distanceEnabled,
                             predictiveMinutes = predictiveMinutes.toInt(),
                             isPredictiveAlarmEnabled = predictiveEnabled,
-                            timeAlarmHour = timePickerState.hour,
-                            timeAlarmMinute = timePickerState.minute,
-                            isTimeAlarmEnabled = timerEnabled,
                             isVibrateEnabled = vibrateEnabled,
                             ringtoneUri = selectedRingtoneUri
                         )
@@ -340,112 +317,6 @@ fun SoundVibrationSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimeAlarmSection(
-    timerEnabled: Boolean,
-    onTimerToggle: (Boolean) -> Unit,
-    showTimePicker: Boolean,
-    onToggleTimePicker: () -> Unit,
-    timePickerState: TimePickerState,
-    durationInMinutes: Int
-) {
-    AnimatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        color = if (timerEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant,
-                        shape = CircleShape,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.Timer,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = if (timerEnabled) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = "Backup Time Alarm",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = if (timerEnabled) {
-                                if (durationInMinutes > 0) "Fixed alert at: ${formatTime(timePickerState.hour, timePickerState.minute)}" else "Set absolute time"
-                            } else "Disabled",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (timerEnabled && durationInMinutes == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                Switch(
-                    checked = timerEnabled,
-                    onCheckedChange = onTimerToggle
-                )
-            }
-
-            AnimatedVisibility(
-                visible = timerEnabled,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onToggleTimePicker,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(if (showTimePicker) "Hide Time Picker" else "Set Fixed Alert Time")
-                    }
-
-                    AnimatedVisibility(
-                        visible = showTimePicker,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 16.dp)
-                                .fillMaxWidth()
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                    RoundedCornerShape(16.dp)
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            TimeInput(
-                                state = timePickerState,
-                                modifier = Modifier.padding(24.dp),
-                                colors = TimePickerDefaults.colors(
-                                    timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    timeSelectorUnselectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    timeSelectorUnselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 @Composable
 fun PrimaryActionButton(onClick: () -> Unit) {
     Box(
@@ -543,6 +414,3 @@ private fun formatDistance(meters: Int): String {
     }
 }
 
-private fun formatTime(hour: Int, minute: Int): String {
-    return String.format("%02d:%02d", hour, minute)
-}

@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.janak.location.alarm.alarm.AlarmEngine
-import com.janak.location.alarm.alarm.AlarmSchedulerImpl
 import com.janak.location.alarm.api.RetrofitClient
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.viewmodel.MapViewModel
@@ -35,7 +34,6 @@ class MainActivity : ComponentActivity() {
             
             // Components
             val alarmEngine = remember { AlarmEngine(context) }
-            val alarmScheduler = remember { AlarmSchedulerImpl(context) }
             val locationTrackingManager = remember { LocationTrackingManager(context) }
             val photonApiService = remember { RetrofitClient.photonApiService }
             val osrmApiService = remember { RetrofitClient.osrmApiService }
@@ -44,7 +42,6 @@ class MainActivity : ComponentActivity() {
                 factory = MapViewModelFactory(
                     locationTrackingManager, 
                     alarmEngine, 
-                    alarmScheduler,
                     photonApiService,
                     osrmApiService,
                     routeRepository,
