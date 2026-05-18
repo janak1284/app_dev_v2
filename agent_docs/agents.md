@@ -63,15 +63,15 @@ If no automated tests:
 * [x] V2 Routing engine connected (OSRM + Retrofit)
 * [x] V2 Spatial math active (Turf-Java route slicing)
 * [x] V2 Dynamic ETA working
-* [ ] V2 UI (Home screen & History) implemented
+* [x] V2 UI (Home screen & History) implemented
 
 ---
 
 ## Current State (Update During Development)
 
 **Last Updated:** May 2026
-**Working On:** **Phase 5 — UI Refactoring & History Implementation**
-**Recently Completed:** Phase 4 (Service State Machine Overhaul, GPS Buffering, and DB Persistence Integration)
+**Working On:** **Final V2 Verification & Field Testing**
+**Recently Completed:** Phase 5 (UI Refactoring, Home Screen, and Journey Summary Implementation)
 **Blocked By:** None.
 
 ---
@@ -101,9 +101,9 @@ If no automated tests:
 * [x] Bulk insert buffered route to Room on journey end.
 
 ### Phase 5: UI Refactoring & Terminology
-* [ ] Change UI terminology to **Distance Alarm** and **Time Alarm**.
-* [ ] Build Home Screen (Saved Routes list).
-* [ ] Build "Save Journey" Bottom Sheet prompt.
+* [x] Change UI terminology to **Distance Alarm** and **Time Alarm**.
+* [x] Build Home Screen (Saved Routes list).
+* [x] Build "Save Journey" Bottom Sheet prompt.
 
 ---
 
