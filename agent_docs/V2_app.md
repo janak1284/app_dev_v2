@@ -28,16 +28,16 @@ This is where the application becomes intelligent. It leans heavily into data sc
 ## Phase 4: Service State Machine Overhaul
 The background service must evolve from a simple trigger to a continuous recording engine.
 
-* **Breadcrumb Buffering:** As the FusedLocation Provider emits locations, store them in a local MutableList<Location>.
-* **State Redesign:** Change the service states. Instead of terminating when the alarm fires, transition from TRACKING to ALARM_RINGING.
-* **Journey Termination:** The location collectors and the breadcrumb buffer must keep running until the user explicitly triggers an End Journey Intent.
-* **Save Mechanism:** When the journey ends, pass the buffered coordinate list to the Room Repository via a bulk insert to save the actual path taken.
+* [x] **Breadcrumb Buffering:** As the FusedLocation Provider emits locations, store them in a local MutableList<Location>.
+* [x] **State Redesign:** Change the service states. Instead of terminating when the alarm fires, transition from TRACKING to ALARM_RINGING.
+* [x] **Journey Termination:** The location collectors and the breadcrumb buffer must keep running until the user explicitly triggers an End Journey Intent.
+* [x] **Save Mechanism:** When the journey ends, pass the buffered coordinate list to the Room Repository via a bulk insert to save the actual path taken.
 
 ## Phase 5: UI Refactoring & Terminology
 Finally, align the Jetpack Compose layer with the new backend reality.
 
-* **Scrub Old Terminology:** Search and replace all instances of "Guard" and "Backup Alarm". Rename them to Distance Alarm and Time Alarm in the UI strings and ViewModel states.
-* **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
+* [x] **Scrub Old Terminology:** Search and replace all instances of "Guard" and "Backup Alarm". Rename them to Distance Alarm and Time Alarm in the UI strings and ViewModel states.
+* [ ] **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
 * **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
 * **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
 

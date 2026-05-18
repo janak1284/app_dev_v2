@@ -1,7 +1,7 @@
 package com.janak.location.alarm.api
 
-import com.janak.location.alarm.model.OsrmResponse
 import com.janak.location.alarm.model.PhotonResponse
+import kotlinx.serialization.json.JsonObject
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -13,7 +13,8 @@ import retrofit2.http.Query
 interface PhotonApiService {
 
     companion object {
-        const val BASE_URL = "http://router.project-osrm.org/"
+        const val BASE_URL = "https://photon.komoot.io/"
+        const val OSRM_BASE_URL = "https://router.project-osrm.org/"
     }
 
     // OSRM Routing
@@ -22,10 +23,10 @@ interface PhotonApiService {
         @Path("coordinates") coordinates: String,
         @Query("overview") overview: String = "full",
         @Query("geometries") geometries: String = "geojson"
-    ): Response<OsrmResponse>
+    ): Response<JsonObject>
 
-    // Photon Search (Placeholder, needs correct base URL if different)
-    @GET("https://photon.komoot.io/api/")
+    // Photon Search
+    @GET("api/")
     suspend fun getSuggestions(
         @Query("q") query: String,
         @Query("lat") lat: Double?,

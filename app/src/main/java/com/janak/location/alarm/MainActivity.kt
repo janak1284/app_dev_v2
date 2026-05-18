@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
             val alarmScheduler = remember { AlarmSchedulerImpl(context) }
             val locationTrackingManager = remember { LocationTrackingManager(context) }
             val photonApiService = remember { RetrofitClient.photonApiService }
+            val osrmApiService = remember { RetrofitClient.osrmApiService }
             
             val viewModel: MapViewModel = viewModel(
                 factory = MapViewModelFactory(
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
                     alarmEngine, 
                     alarmScheduler,
                     photonApiService,
+                    osrmApiService,
                     context
                 )
             )

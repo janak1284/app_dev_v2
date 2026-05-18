@@ -468,7 +468,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
                     ) {
                         if (isAlarmSet) {
                             StatusHeader(
-                                title = "GUARDIAN ACTIVE",
+                                title = "ALARM ACTIVE",
                                 icon = Icons.Default.Lock,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -508,7 +508,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit) {
                             ) {
                                 Icon(Icons.Default.Shield, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("ARM GUARDIAN")
+                                Text("ACTIVATE ALARM")
                             }
                         }
                     }
@@ -540,7 +540,7 @@ fun TimerOverlay(
         exit = fadeOut() + shrinkVertically(),
         modifier = modifier.padding(top = 96.dp, start = 16.dp)
     ) {
-        BackupTimerPill(
+        TimeAlarmPill(
             remainingSeconds = remainingSeconds,
             totalSeconds = totalSeconds
         )
@@ -587,7 +587,7 @@ fun StatusHeader(title: String, icon: ImageVector, color: androidx.compose.ui.gr
 }
 
 @Composable
-fun BackupTimerPill(
+fun TimeAlarmPill(
     remainingSeconds: Long,
     totalSeconds: Long,
     modifier: Modifier = Modifier

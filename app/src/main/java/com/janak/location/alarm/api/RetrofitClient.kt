@@ -32,7 +32,7 @@ object RetrofitClient {
     
     val osrmApiService: PhotonApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(PhotonApiService.BASE_URL)
+            .baseUrl(PhotonApiService.OSRM_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

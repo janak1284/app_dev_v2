@@ -6,12 +6,13 @@ import com.janak.location.alarm.data.entity.SavedRouteEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
+@JvmSuppressWildcards
 interface RouteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSavedRoute(route: SavedRouteEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBreadcrumbs(breadcrumbs: List<RouteBreadcrumbEntity>)
+    suspend fun insertBreadcrumbs(breadcrumbs: List<RouteBreadcrumbEntity>): List<Long>
 
     @Query("SELECT * FROM saved_routes ORDER BY dateSaved DESC")
     fun getAllSavedRoutes(): Flow<List<SavedRouteEntity>>
@@ -20,12 +21,5 @@ interface RouteDao {
     fun getBreadcrumbsForRoute(routeId: Long): Flow<List<RouteBreadcrumbEntity>>
 
     @Delete
-    suspend fun deleteRoute(route: SavedRouteEntity)
-
-    @Transaction
-    suspend fun saveJourney(route: SavedRouteEntity, breadcrumbs: List<RouteBreadcrumbEntity>) {
-        val id = insertSavedRoute(route)
-        val breadcrumbsWithId = breadcrumbs.map { it.copy(routeId = id) }
-        insertBreadcrumbs(breadcrumbsWithId)
-    }
+    suspend fun deleteRoute(route: SavedRouteEntity): Int
 }

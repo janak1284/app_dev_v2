@@ -16,7 +16,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
     override fun scheduleBackupAlarm(settings: AlarmSettings) {
-        if (!settings.isBackupEnabled) {
+        if (!settings.isTimeAlarmEnabled) {
             cancelAlarm()
             return
         }
@@ -34,7 +34,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
         )
 
         // Calculate trigger time as current time + duration
-        val durationMs = (settings.backupHour * 3600000L) + (settings.backupMinute * 60000L)
+        val durationMs = (settings.timeAlarmHour * 3600000L) + (settings.timeAlarmMinute * 60000L)
         val triggerAtMillis = System.currentTimeMillis() + durationMs
 
         alarmManager.setExactAndAllowWhileIdle(

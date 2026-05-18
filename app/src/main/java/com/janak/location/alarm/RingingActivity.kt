@@ -2,6 +2,7 @@ package com.janak.location.alarm
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.net.Uri
@@ -62,15 +63,42 @@ class RingingActivity : ComponentActivity() {
                 ) {
                     Text("Alarm!", fontSize = 48.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(32.dp))
+                    
                     Button(
-                        onClick = { stopAlarmAndFinish() },
-                        modifier = Modifier.size(200.dp, 60.dp)
+                        onClick = { dismissAlarm() },
+                        modifier = Modifier.fillMaxWidth(0.8f).height(64.dp)
                     ) {
-                        Text("Dismiss", fontSize = 24.sp)
+                        Text("Dismiss (Keep Tracking)", fontSize = 18.sp)
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    OutlinedButton(
+                        onClick = { endJourney() },
+                        modifier = Modifier.fillMaxWidth(0.8f).height(64.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("End Journey", fontSize = 18.sp)
                     }
                 }
             }
         }
+    }
+
+    private fun dismissAlarm() {
+        val intent = Intent(this, com.janak.location.alarm.service.LocationAlarmService::class.java).apply {
+            action = com.janak.location.alarm.service.LocationAlarmService.ACTION_STOP_ALARM
+        }
+        startService(intent)
+        stopAlarmAndFinish()
+    }
+
+    private fun endJourney() {
+        val intent = Intent(this, com.janak.location.alarm.service.LocationAlarmService::class.java).apply {
+            action = com.janak.location.alarm.service.LocationAlarmService.ACTION_END_JOURNEY
+        }
+        startService(intent)
+        stopAlarmAndFinish()
     }
 
     private fun startAlarm(uriString: String?, vibrate: Boolean) {

@@ -43,8 +43,22 @@
     - **Backup Time-Based Alarm:** Integrated a secondary backup alarm using `AlarmManager` for specific arrival times.
     - **Custom Ringtones:** Added a system ringtone picker allowing users to select their preferred alert sound.
 
+- **Service State Machine (Connection Phase):**
+    - Refactored `LocationAlarmService` with a robust state machine (`TRACKING`, `ALARM_RINGING`).
+    - The service now remains active post-alarm, continuing GPS tracking until the user explicitly ends the journey.
+    - Implemented `ACTION_RE_ROUTE` and `ACTION_UPDATE_ROUTE` for a seamless handshake between the background engine and the UI.
+- **Dynamic Re-routing Handshake (Connection Phase):**
+    - Implemented a bi-directional communication loop: the service signals route deviations (>100m) and the `MapViewModel` fetches and pushes updated OSRM paths.
+    - Ensures spatial calculations always use the most accurate road-snapped data.
+- **Global Terminology Alignment (Connection Phase):**
+    - Scrubbed "Guard" and "Guardian" from the entire codebase, including UI, notifications, and code comments.
+    - Standardized on **Distance Alarm** and **Time Alarm** as per the V2 pivot requirements.
+    - Renamed application to **Location Alarm V2** in resources.
+- **Enhanced Alarm Interaction (Connection Phase):**
+    - Redesigned `RingingActivity` with dual-action feedback: "Dismiss (Keep Tracking)" and "End Journey".
+    - Connected alarm UI buttons directly to the service lifecycle, allowing for proper journey persistence and data saving.
+
 ## Technical Fixes
-- **Location Collector Stability:** Resolved a race condition where multiple location collectors could be launched simultaneously; implemented job cancellation to ensure only one active tracking session.
-- **State Management:** Refactored `MapViewModel` to use `SharedPreference` for persisting history and theme settings.
-- **UI Logic:** Optimized the "Guardian" status card with better animations and clearer state transitions.
-- **Architecture Cleanup:** Introduced `AlarmScheduler` to decouple time-based alarm logic from the proximity engine.
+- **Handshake Synchronization:** Fixed a critical gap where the service wouldn't observe route changes; now supports real-time OSRM path updates via intents.
+- **Resource Management:** Ensured proper `BroadcastReceiver` unregistration in `MapViewModel` to prevent memory leaks during re-routing.
+- **Service Lifecycle:** Resolved premature service termination after the alarm trigger; implemented persistent tracking for complete breadcrumb trails.

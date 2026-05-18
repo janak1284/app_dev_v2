@@ -60,9 +60,9 @@ If no automated tests:
 * [x] MVP Proximity Alarm built (MapLibre + FusedLocation)
 * [x] Hardware-level alarm bypassing notifications
 * [x] V2 DB Schema established (Room)
-* [ ] V2 Routing engine connected (OSRM + Retrofit)
+* [x] V2 Routing engine connected (OSRM + Retrofit)
 * [x] V2 Spatial math active (Turf-Java route slicing)
-* [ ] V2 Dynamic ETA working
+* [x] V2 Dynamic ETA working
 * [ ] V2 UI (Home screen & History) implemented
 
 ---
@@ -70,9 +70,9 @@ If no automated tests:
 ## Current State (Update During Development)
 
 **Last Updated:** May 2026
-**Working On:** **Phase 4 — Service State Machine Overhaul**
-**Recently Completed:** Phase 1 (Room DB) & Phase 3 (RouteDistanceEngine EMA/ETA)
-**Blocked By:** Data model contracts between DB and UI.
+**Working On:** **Phase 5 — UI Refactoring & History Implementation**
+**Recently Completed:** Phase 4 (Service State Machine Overhaul, GPS Buffering, and DB Persistence Integration)
+**Blocked By:** None.
 
 ---
 
@@ -85,9 +85,9 @@ If no automated tests:
 * [x] Build Repository layer.
 
 ### Phase 2: Network & Visuals (OSRM + MapLibre)
-* [ ] Setup Retrofit for OSRM public API.
-* [ ] Parse GeoJSON `LineString` using Kotlinx Serialization.
-* [ ] Render `LineString` dynamically via MapLibre `GeoJsonSource`.
+* [x] Setup Retrofit for OSRM public API.
+* [x] Parse GeoJSON `LineString` using Kotlinx Serialization.
+* [ ] Render `LineString` dynamically via MapLibre `GeoJsonSource`. (UI implementation pending)
 
 ### Phase 3: The Engine Room (Spatial Math & ETA)
 * [x] Integrate Turf-Java.
@@ -96,9 +96,9 @@ If no automated tests:
 * [x] Implement sliding average speed (EMA) for dynamic ETA.
 
 ### Phase 4: Service State Machine Overhaul
-* [ ] Update `LocationAlarmService` to buffer GPS points into a `MutableList`.
-* [ ] Shift states to keep tracking post-alarm until "End Journey".
-* [ ] Bulk insert buffered route to Room on journey end.
+* [x] Update `LocationAlarmService` to buffer GPS points into a `MutableList`.
+* [x] Shift states to keep tracking post-alarm until "End Journey".
+* [x] Bulk insert buffered route to Room on journey end.
 
 ### Phase 5: UI Refactoring & Terminology
 * [ ] Change UI terminology to **Distance Alarm** and **Time Alarm**.

@@ -4,9 +4,9 @@ import android.net.Uri
 
 data class AlarmSettings(
     val distanceMeters: Int = 500,
-    val backupHour: Int = 0,
-    val backupMinute: Int = 0,
-    val isBackupEnabled: Boolean = false,
+    val timeAlarmHour: Int = 0,
+    val timeAlarmMinute: Int = 0,
+    val isTimeAlarmEnabled: Boolean = false,
     val isVibrateEnabled: Boolean = true,
     val ringtoneUri: Uri? = null,
     val alarmName: String = ""

@@ -53,7 +53,7 @@ fun ModernConfigurationSheet(
         is24Hour = true
     )
     var vibrateEnabled by remember { mutableStateOf(initialSettings.isVibrateEnabled) }
-    var timerEnabled by remember { mutableStateOf(initialSettings.isBackupEnabled) }
+    var timerEnabled by remember { mutableStateOf(initialSettings.isTimeAlarmEnabled) }
     var showTimePicker by remember { mutableStateOf(false) }
 
     val durationInMinutes = (timePickerState.hour * 60) + timePickerState.minute
@@ -120,7 +120,7 @@ fun ModernConfigurationSheet(
                 verticalArrangement = Arrangement.Top
             ) {
                 Text(
-                    text = "Guard Configuration",
+                    text = "Alarm Configuration",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(bottom = 32.dp)
@@ -142,7 +142,7 @@ fun ModernConfigurationSheet(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                BackupTimerSection(
+                TimeAlarmSection(
                     timerEnabled = timerEnabled,
                     onTimerToggle = { timerEnabled = it },
                     showTimePicker = showTimePicker,
@@ -159,9 +159,9 @@ fun ModernConfigurationSheet(
                     onSaveSettings(
                         AlarmSettings(
                             distanceMeters = distanceMeters.toInt(),
-                            backupHour = timePickerState.hour,
-                            backupMinute = timePickerState.minute,
-                            isBackupEnabled = timerEnabled,
+                            timeAlarmHour = timePickerState.hour,
+                            timeAlarmMinute = timePickerState.minute,
+                            isTimeAlarmEnabled = timerEnabled,
                             isVibrateEnabled = vibrateEnabled,
                             ringtoneUri = selectedRingtoneUri
                         )
@@ -252,7 +252,7 @@ fun SoundVibrationSection(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BackupTimerSection(
+fun TimeAlarmSection(
     timerEnabled: Boolean,
     onTimerToggle: (Boolean) -> Unit,
     showTimePicker: Boolean,
@@ -285,7 +285,7 @@ fun BackupTimerSection(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "Backup Timer",
+                            text = "Time Alarm",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -375,7 +375,7 @@ fun PrimaryActionButton(onClick: () -> Unit) {
             Icon(Icons.Default.Shield, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "ACTIVATE GUARD",
+                text = "ACTIVATE ALARM",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

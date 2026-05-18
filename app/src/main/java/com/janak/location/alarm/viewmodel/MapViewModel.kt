@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import org.maplibre.android.geometry.LatLng
 import kotlin.math.roundToInt
 
@@ -30,6 +32,7 @@ class MapViewModel(
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
+    private val osrmApiService: PhotonApiService,
     private val context: Context
 ) : ViewModel() {
 
@@ -41,6 +44,12 @@ class MapViewModel(
 
     private val _destination = MutableStateFlow<LatLng?>(null)
     val destination: StateFlow<LatLng?> = _destination.asStateFlow()
+
+    private val _destinationName = MutableStateFlow<String?>(null)
+    val destinationName: StateFlow<String?> = _destinationName.asStateFlow()
+
+    private val _currentRouteGeoJson = MutableStateFlow<String?>(null)
+    val currentRouteGeoJson: StateFlow<String?> = _currentRouteGeoJson.asStateFlow()
 
     private val _isAlarmSet = MutableStateFlow(false)
     val isAlarmSet: StateFlow<Boolean> = _isAlarmSet.asStateFlow()
@@ -83,9 +92,28 @@ class MapViewModel(
     private val _searchHistory = MutableStateFlow<List<PhotonFeature>>(loadSearchHistory())
     val searchHistory: StateFlow<List<PhotonFeature>> = _searchHistory.asStateFlow()
 
+    private val reRouteReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == LocationAlarmService.ACTION_RE_ROUTE) {
+                android.util.Log.d("MapViewModel", "Re-route broadcast received")
+                val start = _userLocation.value
+                val end = _destination.value
+                if (start != null && end != null) {
+                    fetchRoute(start, end, pushToService = true)
+                }
+            }
+        }
+    }
+
     init {
         checkLocationSettings()
         setupSearchDebounce()
+        val filter = android.content.IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(reRouteReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            context.registerReceiver(reRouteReceiver, filter)
+        }
     }
 
     fun checkLocationSettings() {
@@ -209,15 +237,15 @@ class MapViewModel(
     fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
         _alarmSettings.value = settings
         
-        // 1. Schedule the exact Time-Based Backup Alarm via Android System
+        // 1. Schedule the exact Time-Based Alarm via Android System
         alarmScheduler.scheduleBackupAlarm(settings)
         
         // 2. Mark the alarm as active
         _isAlarmSet.value = true
         
         // 3. Start Visual Countdown for UI
-        if (settings.isBackupEnabled) {
-            val totalSecs = (settings.backupHour * 3600L) + (settings.backupMinute * 60L)
+        if (settings.isTimeAlarmEnabled) {
+            val totalSecs = (settings.timeAlarmHour * 3600L) + (settings.timeAlarmMinute * 60L)
             startVisualCountdown(totalSecs)
         } else {
             stopCountdown()
@@ -225,10 +253,14 @@ class MapViewModel(
         
         // 4. Start Location Alarm Service
         val dest = _destination.value
+        val destName = _destinationName.value ?: "Unknown Destination"
+        val routeJson = _currentRouteGeoJson.value
         if (dest != null) {
             val serviceIntent = Intent(context, LocationAlarmService::class.java).apply {
                 putExtra("DEST_LAT", dest.latitude)
                 putExtra("DEST_LNG", dest.longitude)
+                putExtra("DEST_NAME", destName)
+                putExtra("ROUTE_GEOJSON", routeJson)
                 putExtra("DISTANCE_THRESHOLD", settings.distanceMeters.toFloat())
                 putExtra("RINGTONE_URI", settings.ringtoneUri?.toString())
                 putExtra("VIBRATE", settings.isVibrateEnabled)
@@ -265,11 +297,46 @@ class MapViewModel(
         startLocationUpdates()
     }
 
-    fun setDestination(latLng: LatLng) {
+    fun setDestination(latLng: LatLng, name: String? = null) {
         if (!_isAlarmSet.value) {
             _destination.value = latLng
+            _destinationName.value = name
             // Recalculate distance immediately if we have a location
-            _userLocation.value?.let { checkDistance(it) }
+            _userLocation.value?.let { 
+                checkDistance(it)
+                fetchRoute(it, latLng)
+            }
+        }
+    }
+
+    private fun fetchRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
+        viewModelScope.launch {
+            try {
+                val coords = "${start.longitude},${start.latitude};${end.longitude},${end.latitude}"
+                val response = osrmApiService.getRoute(coords)
+                if (response.isSuccessful) {
+                    val root = response.body()
+                    val routes = root?.get("routes")?.jsonArray
+                    val firstRoute = routes?.getOrNull(0)?.jsonObject
+                    val geometry = firstRoute?.get("geometry")
+                    
+                    if (geometry != null) {
+                        val geoJson = geometry.toString()
+                        _currentRouteGeoJson.value = geoJson
+                        android.util.Log.d("MapViewModel", "Route GeoJSON: $geoJson")
+                        
+                        if (pushToService && _isAlarmSet.value) {
+                            val updateIntent = Intent(context, LocationAlarmService::class.java).apply {
+                                action = LocationAlarmService.ACTION_UPDATE_ROUTE
+                                putExtra("ROUTE_GEOJSON", geoJson)
+                            }
+                            context.startService(updateIntent)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MapViewModel", "Failed to fetch route", e)
+            }
         }
     }
 
@@ -286,7 +353,8 @@ class MapViewModel(
 
         val coords = feature.geometry.coordinates
         val latLng = LatLng(coords[1], coords[0])
-        setDestination(latLng)
+        val name = feature.properties.name ?: feature.properties.street ?: "Search Result"
+        setDestination(latLng, name)
         _searchQuery.value = ""
         _searchResults.value = emptyList()
     }
@@ -304,6 +372,8 @@ class MapViewModel(
     private fun stopAlarm() {
         _isAlarmSet.value = false
         _distanceToDestination.value = null
+        _destinationName.value = null
+        _currentRouteGeoJson.value = null
         alarmScheduler.cancelAlarm()
         alarmEngine.stop()
         stopCountdown()
@@ -316,7 +386,9 @@ class MapViewModel(
     fun clearDestination() {
         if (!_isAlarmSet.value) {
             _destination.value = null
+            _destinationName.value = null
             _distanceToDestination.value = null
+            _currentRouteGeoJson.value = null
         }
     }
 
@@ -343,6 +415,11 @@ class MapViewModel(
     
     override fun onCleared() {
         super.onCleared()
+        try {
+            context.unregisterReceiver(reRouteReceiver)
+        } catch (e: Exception) {
+            // Receiver might not be registered
+        }
         // We don't stop the service here because we want it to run in background
     }
 }
@@ -352,12 +429,20 @@ class MapViewModelFactory(
     private val alarmEngine: AlarmEngine,
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
+    private val osrmApiService: PhotonApiService,
     private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MapViewModel(locationTrackingManager, alarmEngine, alarmScheduler, photonApiService, context) as T
+            return MapViewModel(
+                locationTrackingManager, 
+                alarmEngine, 
+                alarmScheduler, 
+                photonApiService, 
+                osrmApiService,
+                context
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

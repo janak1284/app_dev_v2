@@ -28,9 +28,12 @@ The "Location Alarm" is an intelligent, route-based Android commuter application
 - **Implemented (V2 Pivot):**
   - **Room Database:** Relational schema with `SavedRoute` and `RouteBreadcrumb` entities, DAOs, and Repository.
   - **Spatial Engine:** `RouteDistanceEngine` using Turf-Java for snapping, deviation triggers, route slicing, EMA speed, and dynamic ETA.
+  - **Service Overhaul:** `LocationAlarmService` now supports route-based tracking, OSRM GeoJSON parsing, GPS buffering, and automatic journey persistence to Room.
+  - **Network Handshake:** `MapViewModel` successfully fetches OSRM routes and communicates them to the background service.
+  - **Terminology Scrub:** All instances of "Guard/Guardian" replaced with "Distance/Time Alarm".
 - **Currently in Development:**
-  - **Phase 4:** Service state machine overhaul, GPS buffering, and repository integration.
-  - **Phase 2:** Dev 2 is working on OSRM integration and GeoJSON rendering.
+  - **Phase 6:** Journey Summary UI and explicit "Save Journey" flow.
+  - **Phase 7:** Home Screen for managing Saved Routes.
 
 ## 4. Database Architecture (Room)
 The data layer treats journeys as first-class relational entities:
