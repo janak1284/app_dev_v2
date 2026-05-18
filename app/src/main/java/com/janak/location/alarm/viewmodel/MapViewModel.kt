@@ -277,6 +277,9 @@ class MapViewModel(
                 putExtra("DEST_NAME", destName)
                 putExtra("ROUTE_GEOJSON", routeJson)
                 putExtra("DISTANCE_THRESHOLD", settings.distanceMeters.toFloat())
+                putExtra("DISTANCE_ALARM_ENABLED", settings.isDistanceAlarmEnabled)
+                putExtra("PREDICTIVE_MINUTES", settings.predictiveMinutes)
+                putExtra("PREDICTIVE_ALARM_ENABLED", settings.isPredictiveAlarmEnabled)
                 putExtra("RINGTONE_URI", settings.ringtoneUri?.toString())
                 putExtra("VIBRATE", settings.isVibrateEnabled)
             }
