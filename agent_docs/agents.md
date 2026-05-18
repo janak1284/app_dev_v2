@@ -87,7 +87,7 @@ If no automated tests:
 ### Phase 2: Network & Visuals (OSRM + MapLibre)
 * [x] Setup Retrofit for OSRM public API.
 * [x] Parse GeoJSON `LineString` using Kotlinx Serialization.
-* [ ] Render `LineString` dynamically via MapLibre `GeoJsonSource`. (UI implementation pending)
+* [x] Render `LineString` dynamically via MapLibre `GeoJsonSource`.
 
 ### Phase 3: The Engine Room (Spatial Math & ETA)
 * [x] Integrate Turf-Java.

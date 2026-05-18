@@ -12,28 +12,23 @@ The "Location Alarm" is an intelligent, route-based Android commuter application
 - **Core Components:**
   - `LocationAlarmService`: An active state machine (Foreground Service) that tracks location, buffers GPS breadcrumbs during the trip, and monitors the 100m route deviation limit.
   - `LocationTrackingManager`: Wraps the `FusedLocationProviderClient`, providing updates via Kotlin `Flow`.
-  - `RouteDistanceEngine` (New): Handles Turf-Java calculations to find distance remaining *along* the route and calculates dynamic ETAs using an Exponential Moving Average (EMA) of user speed.
+  - `RouteDistanceEngine`: Handles Turf-Java calculations to find distance remaining *along* the route and calculates dynamic ETAs using an Exponential Moving Average (EMA) of user speed.
   - `AlarmEngine`: Logic for triggering the hardware-level alarm UI (Sound & Haptics).
   - `RingingActivity`: The high-priority wake-up screen that survives background execution.
 - **Terminology Base:**
-  - **Distance Alarm:** Replaces "Guard" / Proximity alarm. Alerts user when *X* km/m remaining along the route.
-  - **Time Alarm:** Replaces "Backup Alarm". Alerts user when dynamic ETA is less than *X* minutes.
+  - **Distance Alarm:** Alerts user when *X* km/m remaining along the route.
+  - **Time Alarm:** Alerts user when dynamic ETA is less than *X* minutes.
 
 ## 3. Current State (V2 Pivot Active)
-- **Implemented (from MVP):**
-  - Base Foreground Service (`foregroundServiceType="location"`) with `WakeLock` usage to prevent deep sleep deaths.
-  - Core MapLibre UI integration with `LocalFocusManager` for smart search bar dismissals.
-  - Hardware-level alarm bypassing standard notifications.
-  - "Deep Dark" Material 3 UI.
-- **Implemented (V2 Pivot):**
+- **Implemented (V2 Pivot Core):**
   - **Room Database:** Relational schema with `SavedRoute` and `RouteBreadcrumb` entities, DAOs, and Repository.
   - **Spatial Engine:** `RouteDistanceEngine` using Turf-Java for snapping, deviation triggers, route slicing, EMA speed, and dynamic ETA.
   - **Service Overhaul:** `LocationAlarmService` now supports route-based tracking, OSRM GeoJSON parsing, GPS buffering, and automatic journey persistence to Room.
   - **Network Handshake:** `MapViewModel` successfully fetches OSRM routes and communicates them to the background service.
-  - **Terminology Scrub:** All instances of "Guard/Guardian" replaced with "Distance/Time Alarm".
+  - **Terminology Scrub:** Core logic renamed to "Distance/Time Alarm".
 - **Currently in Development:**
-  - **Phase 6:** Journey Summary UI and explicit "Save Journey" flow.
-  - **Phase 7:** Home Screen for managing Saved Routes.
+  - **Phase 5:** UI Refactoring (Home Screen, History, and Journey Summary).
+  - **Handshake Integration:** Ensuring seamless communication between the Service and the new UI layers.
 
 ## 4. Database Architecture (Room)
 The data layer treats journeys as first-class relational entities:
@@ -47,11 +42,8 @@ The project is actively developed by two engineers using a lightweight feature-b
 - **Handshake Protocol:** Parallel development is unblocked by agreeing on Data Classes (`SavedRoute`, `LineString`) and creating mock repositories while backend wires up the actual logic.
 
 ## 6. Goals Remaining (Execution Roadmap)
-- **Phase 1 (Data):** Establish Room DAOs, Entities, and Repositories for bulk inserting route breadcrumbs.
-- **Phase 2 (Network):** Build OSRM Retrofit calls to fetch `/driving/` routes and parse GeoJSON. Render `LineString` in MapLibre.
-- **Phase 3 (Spatial Math):** Implement Turf-Java to snap GPS points to the polyline, calculate distance remaining, and trigger route recalculation if the user deviates >100m.
-- **Phase 4 (Service Overhaul):** Update `LocationAlarmService` to buffer GPS coordinates into a `MutableList` and keep running post-alarm until the user explicitly hits "End Journey".
 - **Phase 5 (UI Refactor):** Build the new Home Screen for saved routes, and the Bottom Sheet prompt to save breadcrumb trails upon journey completion.
+- **Verification:** Full field testing and spatial math tuning.
 
 ## 7. Assumptions & Constraints
 - Application logic must rely exclusively on Free and Open Source Software (FOSS) dependencies (OSRM, Turf, MapLibre) to avoid API rate limiting and billing.

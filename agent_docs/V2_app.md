@@ -37,9 +37,9 @@ The background service must evolve from a simple trigger to a continuous recordi
 Finally, align the Jetpack Compose layer with the new backend reality.
 
 * [x] **Scrub Old Terminology:** Search and replace all instances of "Guard" and "Backup Alarm". Rename them to Distance Alarm and Time Alarm in the UI strings and ViewModel states.
-* [x] **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
-* [x] **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
-* [x] **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
+* [ ] **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
+* [ ] **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
+* [ ] **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
 
 ## The Onboarding Brief (Read this first)
 **The Big Pivot:**
