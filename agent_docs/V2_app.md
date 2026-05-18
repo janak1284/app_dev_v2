@@ -41,6 +41,14 @@ Finally, align the Jetpack Compose layer with the new backend reality.
 * [x] **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
 * [x] **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
 
+## Phase 6: Journey Preview & Speed-Adjusted ETA
+Enhance the transition from Home to Map with a preview state and a more robust predictive engine.
+
+* [ ] **Journey Preview State:** When a user selects a route from HomeScreen, navigate to MapScreen but stay in a "PREVIEW" mode. Show the route line, distance, and initial OSRM ETA.
+* [ ] **The "Continue" Confirmation:** Add a "CONTINUE TO ALARM" button in the preview mode. The alarm and background service should only start after this confirmation.
+* [ ] **OSRM Speed Calibration:** Capture the initial `duration` from the OSRM response. Calculate the "Expected Speed" ($Distance / Duration$).
+* [ ] **Dynamic Speed Ratio ETA:** Instead of relying purely on current speed, calculate a "Speed Ratio" ($\text{User Avg Speed} / \text{OSRM Expected Speed}$). Multiply the remaining OSRM duration by this ratio to provide an ETA that respects road-specific speed limits while adapting to the user's relative pace.
+
 ## The Onboarding Brief (Read this first)
 **The Big Pivot:**
 We are shifting the Location Alarm MVP from a simple "proximity trigger" to a smart, predictive routing engine. Previously, the app drew a straight circle around the destination. This caused false positives if the user was on a winding road or a V-shaped junction.

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.compose.material.icons.filled.PlayCircle
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: MapViewModel,
@@ -76,59 +80,107 @@ fun HomeScreen(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
-                    items(savedRoutes) { route ->
-                        RouteCard(route = route)
-                    }
-                }
-            }
-        }
-    }
-}
+                    items(
+                        items = savedRoutes,
+                        key = { it.routeId }
+                    ) { route ->
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = {
+                                if (it == SwipeToDismissBoxValue.EndToStart) {
+                                    viewModel.deleteRoute(route)
+                                    true
+                                } else false
+                            }
+                        )
 
-@Composable
-fun HomeHeader() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            backgroundContent = {
+                                val isSwiping = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart
+                                val color = if (isSwiping) {
+                                    MaterialTheme.colorScheme.errorContainer
+                                } else Color.Transparent
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(24.dp))
+                                        .background(color)
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    if (isSwiping) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Delete",
+                                            tint = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            RouteCard(
+                                route = route,
+                                onClick = {
+                                    viewModel.startJourneyFromHistory(route)
+                                    onNewJourneyClick()
+                                }
+                            )
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+
+                        @Composable
+                        fun HomeHeader() {
+                        Column(
+                        modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                        brush = Brush.verticalGradient(
+                        colors = listOf(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                         Color.Transparent
-                    )
-                )
-            )
-            .padding(horizontal = 24.dp, vertical = 32.dp)
-    ) {
-        Text(
-            text = "Commuter",
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = (-1).sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = "Smart Location Alarms",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
+                        )
+                        )
+                        )
+                        .padding(horizontal = 24.dp, vertical = 32.dp)
+                        ) {
+                        Text(
+                        text = "Commuter",
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-1).sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                        text = "Smart Location Alarms",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                        )
+                        }
+                        }
 
-@Composable
-fun RouteCard(route: SavedRouteEntity) {
-    Surface(
-        onClick = { /* Could navigate to details or re-run */ },
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp, 
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
+                        @Composable
+                        fun RouteCard(
+                        route: SavedRouteEntity,
+                        onClick: () -> Unit
+                        ) {
+                        Surface(
+                        onClick = onClick,
+                        shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant, // Opaque background
+                        border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                        ) {        Row(
             modifier = Modifier
                 .padding(20.dp)
                 .fillMaxWidth(),
@@ -166,9 +218,9 @@ fun RouteCard(route: SavedRouteEntity) {
             }
 
             Icon(
-                Icons.Default.NavigateNext,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                Icons.Default.PlayCircle,
+                contentDescription = "Re-activate",
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
         }
     }

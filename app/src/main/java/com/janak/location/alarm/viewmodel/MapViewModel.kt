@@ -400,6 +400,25 @@ class MapViewModel(
         }
     }
 
+    fun deleteRoute(route: SavedRouteEntity) {
+        viewModelScope.launch {
+            routeRepository.deleteRoute(route)
+        }
+    }
+
+    fun startJourneyFromHistory(route: SavedRouteEntity) {
+        viewModelScope.launch {
+            _searchQuery.value = route.destinationName
+            performSearch(route.destinationName)
+            
+            // Auto-select the first result if available
+            val firstResult = _searchResults.value.firstOrNull()
+            if (firstResult != null) {
+                selectSearchResult(firstResult)
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         try {
