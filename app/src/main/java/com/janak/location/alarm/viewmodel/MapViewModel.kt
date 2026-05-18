@@ -25,7 +25,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 import kotlin.math.roundToInt
+
+import com.janak.location.alarm.data.repository.RouteRepository
+import com.janak.location.alarm.data.entity.SavedRouteEntity
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
@@ -33,14 +38,20 @@ class MapViewModel(
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
+    private val routeRepository: RouteRepository,
     private val context: Context
 ) : ViewModel() {
+    
+    val savedRoutes = routeRepository.allSavedRoutes
 
     private val sharedPrefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     private val _userLocation = MutableStateFlow<Location?>(null)
     val userLocation: StateFlow<Location?> = _userLocation.asStateFlow()
+
+    private val _routeLine = MutableStateFlow<LineString?>(null)
+    val routeLine: StateFlow<LineString?> = _routeLine.asStateFlow()
 
     private val _destination = MutableStateFlow<LatLng?>(null)
     val destination: StateFlow<LatLng?> = _destination.asStateFlow()
@@ -105,14 +116,28 @@ class MapViewModel(
         }
     }
 
+    private val journeyCompletedReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == LocationAlarmService.JOURNEY_COMPLETED_BROADCAST) {
+                _journeyCompleted.value = true
+                stopAlarm()
+            }
+        }
+    }
+
     init {
         checkLocationSettings()
         setupSearchDebounce()
-        val filter = android.content.IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
+        
+        val reRouteFilter = android.content.IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
+        val journeyFilter = android.content.IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(reRouteReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+            context.registerReceiver(reRouteReceiver, reRouteFilter, Context.RECEIVER_NOT_EXPORTED)
+            context.registerReceiver(journeyCompletedReceiver, journeyFilter, Context.RECEIVER_NOT_EXPORTED)
         } else {
-            context.registerReceiver(reRouteReceiver, filter)
+            context.registerReceiver(reRouteReceiver, reRouteFilter)
+            context.registerReceiver(journeyCompletedReceiver, journeyFilter)
         }
     }
 
@@ -183,21 +208,18 @@ class MapViewModel(
     private suspend fun performSearch(query: String) {
         _isSearching.value = true
         try {
-            // 1. Get remote results
             val response = photonApiService.getSuggestions(
                 query = query,
                 lat = _userLocation.value?.latitude,
                 lon = _userLocation.value?.longitude
             )
             
-            // 2. Find local matches from history
             val historyMatches = _searchHistory.value.filter { feature ->
                 val name = feature.properties.name ?: ""
                 val street = feature.properties.street ?: ""
                 name.contains(query, ignoreCase = true) || street.contains(query, ignoreCase = true)
             }
 
-            // 3. Merge: Prioritize history, then remote results, removing duplicates
             val remoteFeatures = response.body()?.features ?: emptyList()
             val combined = (historyMatches + remoteFeatures).distinctBy { 
                 "${it.geometry.coordinates[0]},${it.geometry.coordinates[1]}"
@@ -206,7 +228,6 @@ class MapViewModel(
             _searchResults.value = combined
         } catch (e: Exception) {
             android.util.Log.e("MapViewModel", "Search failed", e)
-            // Fallback to history only if network fails
             _searchResults.value = _searchHistory.value.filter { feature ->
                 val name = feature.properties.name ?: ""
                 val street = feature.properties.street ?: ""
@@ -236,14 +257,9 @@ class MapViewModel(
 
     fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
         _alarmSettings.value = settings
-        
-        // 1. Schedule the exact Time-Based Alarm via Android System
         alarmScheduler.scheduleBackupAlarm(settings)
-        
-        // 2. Mark the alarm as active
         _isAlarmSet.value = true
         
-        // 3. Start Visual Countdown for UI
         if (settings.isTimeAlarmEnabled) {
             val totalSecs = (settings.timeAlarmHour * 3600L) + (settings.timeAlarmMinute * 60L)
             startVisualCountdown(totalSecs)
@@ -251,7 +267,6 @@ class MapViewModel(
             stopCountdown()
         }
         
-        // 4. Start Location Alarm Service
         val dest = _destination.value
         val destName = _destinationName.value ?: "Unknown Destination"
         val routeJson = _currentRouteGeoJson.value
@@ -273,8 +288,6 @@ class MapViewModel(
         }
         
         _userLocation.value?.let { checkDistance(it) }
-        
-        // 5. Start Location Tracking logic for UI updates
         startLocationUpdates()
     }
 
@@ -282,11 +295,9 @@ class MapViewModel(
 
     fun startLocationUpdates() {
         checkLocationSettings()
-        android.util.Log.d("MapViewModel", "startLocationUpdates: Called")
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
             locationTrackingManager.getLocationUpdates().collect { location ->
-                android.util.Log.d("MapViewModel", "startLocationUpdates: Received location $location")
                 _userLocation.value = location
                 checkDistance(location)
             }
@@ -301,7 +312,6 @@ class MapViewModel(
         if (!_isAlarmSet.value) {
             _destination.value = latLng
             _destinationName.value = name
-            // Recalculate distance immediately if we have a location
             _userLocation.value?.let { 
                 checkDistance(it)
                 fetchRoute(it, latLng)
@@ -323,8 +333,16 @@ class MapViewModel(
                     if (geometry != null) {
                         val geoJson = geometry.toString()
                         _currentRouteGeoJson.value = geoJson
-                        android.util.Log.d("MapViewModel", "Route GeoJSON: $geoJson")
                         
+                        // Also update _routeLine for map rendering
+                        val coordinates = firstRoute.get("geometry")?.jsonObject?.get("coordinates")?.jsonArray?.map {
+                            val point = it.jsonArray
+                            Point.fromLngLat(point[0].toString().toDouble(), point[1].toString().toDouble())
+                        }
+                        if (coordinates != null) {
+                            _routeLine.value = LineString.fromLngLats(coordinates)
+                        }
+
                         if (pushToService && _isAlarmSet.value) {
                             val updateIntent = Intent(context, LocationAlarmService::class.java).apply {
                                 action = LocationAlarmService.ACTION_UPDATE_ROUTE
@@ -341,13 +359,10 @@ class MapViewModel(
     }
 
     fun selectSearchResult(feature: PhotonFeature) {
-        // Add to history
         val currentHistory = _searchHistory.value.toMutableList()
-        currentHistory.removeAll { 
-            it.geometry.coordinates == feature.geometry.coordinates 
-        }
+        currentHistory.removeAll { it.geometry.coordinates == feature.geometry.coordinates }
         currentHistory.add(0, feature)
-        val updatedHistory = currentHistory.take(50) // Keep last 50
+        val updatedHistory = currentHistory.take(50)
         _searchHistory.value = updatedHistory
         saveSearchHistory(updatedHistory)
 
@@ -369,16 +384,23 @@ class MapViewModel(
         }
     }
 
-    private fun stopAlarm() {
+    private val _journeyCompleted = MutableStateFlow<Boolean>(false)
+    val journeyCompleted: StateFlow<Boolean> = _journeyCompleted.asStateFlow()
+    
+    fun resetJourneyCompleted() {
+        _journeyCompleted.value = false
+    }
+
+    fun stopAlarm() {
         _isAlarmSet.value = false
         _distanceToDestination.value = null
         _destinationName.value = null
         _currentRouteGeoJson.value = null
+        _routeLine.value = null
         alarmScheduler.cancelAlarm()
         alarmEngine.stop()
         stopCountdown()
         
-        // Stop the service
         val serviceIntent = Intent(context, LocationAlarmService::class.java)
         context.stopService(serviceIntent)
     }
@@ -389,38 +411,43 @@ class MapViewModel(
             _destinationName.value = null
             _distanceToDestination.value = null
             _currentRouteGeoJson.value = null
+            _routeLine.value = null
         }
     }
 
     private fun checkDistance(currentLocation: Location) {
         val dest = _destination.value ?: return
-
         val results = FloatArray(1)
         Location.distanceBetween(
-            currentLocation.latitude,
-            currentLocation.longitude,
-            dest.latitude,
-            dest.longitude,
+            currentLocation.latitude, currentLocation.longitude,
+            dest.latitude, dest.longitude,
             results
         )
         val distance = results[0]
 
         if (_isAlarmSet.value) {
             _distanceToDestination.value = "${distance.roundToInt()}m"
-            // Note: Alarm triggering is now handled by LocationAlarmService
         } else {
             _distanceToDestination.value = null
         }
     }
     
+    fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>) {
+        viewModelScope.launch {
+            val route = SavedRouteEntity(
+                destinationName = destinationName,
+                dateSaved = System.currentTimeMillis()
+            )
+            routeRepository.saveJourney(route, breadcrumbs)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         try {
             context.unregisterReceiver(reRouteReceiver)
-        } catch (e: Exception) {
-            // Receiver might not be registered
-        }
-        // We don't stop the service here because we want it to run in background
+            context.unregisterReceiver(journeyCompletedReceiver)
+        } catch (e: Exception) {}
     }
 }
 
@@ -430,18 +457,15 @@ class MapViewModelFactory(
     private val alarmScheduler: AlarmScheduler,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
+    private val routeRepository: RouteRepository,
     private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return MapViewModel(
-                locationTrackingManager, 
-                alarmEngine, 
-                alarmScheduler, 
-                photonApiService, 
-                osrmApiService,
-                context
+                locationTrackingManager, alarmEngine, alarmScheduler, 
+                photonApiService, osrmApiService, routeRepository, context
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

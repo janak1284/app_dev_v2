@@ -3,7 +3,7 @@
 ## Phase 1: The Data Foundation (Room DB)
 Before touching the UI or the map, we need to establish where the data lives. Room will act as our single source of truth.
 
-* [x] **Implement Room Dependencies:** Add the required Room Gradle dependencies (room-runtime, room-ktx, room-compiler).
+* [x] **Implement Room Dependencies:** Add the required Room Gradle dependencies (room-runtime, room-ktx, room-compiler) and migrated to KSP.
 * [x] **Define SavedRoute Entity:** Create a table to store the metadata of the journey. Columns should include routeId (Primary Key), destinationName, targetTime (if applicable), and dateSaved.
 * [x] **Define RouteBreadcrumb Entity:** Create a table to hold the actual GPS trail. Columns should include pointId, routeId (Foreign Key linked to SavedRoute), latitude, longitude, speed, and timestamp.
 * [x] **Create DAOs:** Write the Data Access Objects to insert breadcrumbs in batches and to fetch a Flow<List<SavedRoute>> for your new Home Screen.
@@ -14,7 +14,7 @@ Next, we connect to the routing engine and get the path rendering on the screen.
 
 * [x] **OSRM Retrofit Interface:** Build a new API service for http://router.project-osrm.org. Construct the GET request to fetch the driving/walking route between the user's current location and the destination.
 * [x] **GeoJSON Parsing:** Set up Kotlinx Serialization to parse the OSRM response, specifically extracting the LineString coordinates and the duration (estimated time).
-* [ ] **MapLibre Rendering:** Feed the parsed LineString directly into MapLibre as a GeoJsonSource and draw it using a LineLayer. This gives the user a visual path to follow.
+* [x] **MapLibre Rendering:** Feed the parsed LineString directly into MapLibre as a GeoJsonSource and draw it using a LineLayer. This gives the user a visual path to follow.
 
 ## Phase 3: The Engine Room (Spatial Math & Predictive ETA)
 This is where the application becomes intelligent. It leans heavily into data science principles, processing real-time streams to make predictions.
@@ -37,9 +37,9 @@ The background service must evolve from a simple trigger to a continuous recordi
 Finally, align the Jetpack Compose layer with the new backend reality.
 
 * [x] **Scrub Old Terminology:** Search and replace all instances of "Guard" and "Backup Alarm". Rename them to Distance Alarm and Time Alarm in the UI strings and ViewModel states.
-* [ ] **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
-* **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
-* **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
+* [x] **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
+* [x] **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
+* [x] **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
 
 ## The Onboarding Brief (Read this first)
 **The Big Pivot:**

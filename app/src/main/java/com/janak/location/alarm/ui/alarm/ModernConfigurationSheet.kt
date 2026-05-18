@@ -48,8 +48,8 @@ fun ModernConfigurationSheet(
     // Form States
     var distanceMeters by remember { mutableStateOf(initialSettings.distanceMeters.toFloat()) }
     val timePickerState = rememberTimePickerState(
-        initialHour = 0,
-        initialMinute = 0,
+        initialHour = initialSettings.timeAlarmHour,
+        initialMinute = initialSettings.timeAlarmMinute,
         is24Hour = true
     )
     var vibrateEnabled by remember { mutableStateOf(initialSettings.isVibrateEnabled) }
@@ -375,7 +375,7 @@ fun PrimaryActionButton(onClick: () -> Unit) {
             Icon(Icons.Default.Shield, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "ACTIVATE ALARM",
+                text = "Activate Alarm",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

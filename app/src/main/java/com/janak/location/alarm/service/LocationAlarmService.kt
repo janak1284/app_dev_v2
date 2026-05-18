@@ -24,7 +24,7 @@ import com.mapbox.geojson.Point
 import kotlinx.coroutines.*
 import kotlin.math.roundToInt
 
- class LocationAlarmService : Service() {
+class LocationAlarmService : Service() {
 
     enum class ServiceState {
         IDLE, TRACKING, ALARM_RINGING
@@ -55,6 +55,7 @@ import kotlin.math.roundToInt
         const val ACTION_END_JOURNEY = "com.janak.location.alarm.ACTION_END_JOURNEY"
         const val ACTION_UPDATE_ROUTE = "com.janak.location.alarm.ACTION_UPDATE_ROUTE"
         const val ACTION_RE_ROUTE = "com.janak.location.alarm.ACTION_RE_ROUTE"
+        const val JOURNEY_COMPLETED_BROADCAST = "com.janak.location.alarm.JOURNEY_COMPLETED"
         const val NOTIFICATION_ID = 1
         const val CHANNEL_ID = "LocationAlarmChannel"
     }
@@ -82,7 +83,9 @@ import kotlin.math.roundToInt
                 stopAlarmRinging()
                 return START_STICKY
             }
-            ACTION_END_JOURNEY -> {
+            ACTION_END_JOURNEY, "STOP_ALARM" -> {
+                // Signal journey completion for UI dialog
+                sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST))
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -321,4 +324,3 @@ import kotlin.math.roundToInt
 
     override fun onBind(intent: Intent?): IBinder? = null
 }
-

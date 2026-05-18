@@ -50,8 +50,8 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Alarm!")
-            .setContentText("Wake up! You've reached your destination or time is up.")
+            .setContentTitle("Time Alarm!")
+            .setContentText("Wake up! Your backup timer has expired.")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(pendingIntent, true)

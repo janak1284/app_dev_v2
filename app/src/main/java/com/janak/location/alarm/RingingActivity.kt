@@ -1,5 +1,6 @@
 package com.janak.location.alarm
 
+import android.R.attr.action
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.janak.location.alarm.service.LocationAlarmService
 
 class RingingActivity : ComponentActivity() {
     private var ringtone: Ringtone? = null
@@ -135,6 +137,17 @@ class RingingActivity : ComponentActivity() {
     private fun stopAlarmAndFinish() {
         ringtone?.stop()
         vibrator?.cancel()
+        
+        // 1. Clear the notification
+        val notificationManager = getSystemService(android.app.NotificationManager::class.java)
+        notificationManager.cancel(1001) // Matches the ID in LocationAlarmService
+        
+        // 2. Stop the location service (which triggers the dialog)
+        val stopServiceIntent = Intent(this, LocationAlarmService::class.java).apply {
+            action = "STOP_ALARM"
+        }
+        startService(stopServiceIntent)
+        
         finish()
     }
 

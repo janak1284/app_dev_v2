@@ -13,7 +13,7 @@ navigationCompose = "2.7.7"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 kotlinxSerializationJson = "1.6.3"
-room = "2.6.1"
+room = "2.7.0-rc01"
 turf = "5.8.0"
 
 [libraries]

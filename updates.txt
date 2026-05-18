@@ -1,64 +1,20 @@
-# Project Updates - Location Alarm MVP
+# Project Updates - Location Alarm V2
 
-## Features Implemented
-- **Visual Countdown Timer (New):**
-    - Implemented a `BackupTimerPill` composable to display a dynamic progress bar and a formatted (MM:SS) timer directly on the map overlay.
-    - Updated `MapViewModel` with coroutine-based countdown logic to track `remainingSeconds` and `totalSeconds` when a backup alarm is set.
-    - Synced the UI countdown state with the Android `AlarmManager` for precise time tracking.
-- **Smart Search Interaction (New):**
-    - Search suggestions and history now follow a focus-driven lifecycle: they appear only when the search field is focused.
-    - Integrated `LocalFocusManager` with the Map UI; tapping the map or selecting a destination automatically clears focus and hides search results.
-    - Added `pointerInput` gesture detection to the map container for a more responsive "tap-to-dismiss" behavior.
-- **Search History & Local Bias (New):**
-    - Search now persists the last 10 selected destinations using `SharedPreferences`.
-    - Local history matches are prioritized and merged with remote Photon API results for faster access.
-    - Integrated history-specific iconography (History vs. Location) in the search dropdown.
-- **Theme Customization & UI Modernization (New):**
-    - Created a dedicated **Settings Screen** accessible from the search bar.
-    - Full support for **Light, Dark, and System Default** theme modes.
-    - Implemented "Deep Dark" color palette for improved battery efficiency on OLED screens.
-- **Enhanced Map Interaction (New):**
-    - **One-Tap Refocus:** Added a dedicated floating button to instantly center the map on the user's current GPS position.
-    - **Active Refresh:** Manual refresh button to restart location tracking collectors.
-    - **Smart Camera:** The map now automatically pans and zooms to the destination upon selection.
-- **Background Readiness (Phase 2):**
-    - Fully implemented `LocationAlarmService` as a Foreground Service with persistent notifications.
-    - Established `RingingActivity` for high-priority wake-up states that survive background execution.
-    - Configured `AndroidManifest.xml` with Foreground Service declarations and necessary permissions (`FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `SCHEDULE_EXACT_ALARM`).
-- **Destination Search:** Integrated the Photon API (OpenStreetMap) for real-time location auto-suggestions.
-- **Networking Foundation:** Setup Retrofit, OkHttp, and Kotlinx Serialization for client-side API communication.
-- **Search Logic:** Implemented 500ms debouncing and location-biasing in the ViewModel to prioritize local search results.
-- **Search UI:** Created a modern `DestinationSearchField` component with loading indicators and animated suggestion lists.
-- **Map Integration:**
-    - **Camera Animation:** The map now smoothly flys to the selected destination.
-    - **Destination Markers:** Visual markers are placed at the selected coordinates.
-    - **Style Safety:** Implemented listeners to ensure markers persist across map style reloads.
-- **Alarm Engine:**
-    - Created `AlarmEngine.kt` to handle hardware interactions (Sound & Haptics).
-    - Integrated `AlarmEngine` into `MapViewModel` and `MainActivity`.
-    - Connected distance-trigger logic to start the alarm hardware.
-    - Added vibration preference support, allowing users to toggle haptics on/off from the UI.
-- **Advanced Configuration (Modern Configuration Sheet):**
-    - **Material 3 Time Integration:** Replaced the custom scroll wheel with the official Jetpack Compose `TimeInput` for faster, keyboard-friendly time selection.
-    - **Backup Time-Based Alarm:** Integrated a secondary backup alarm using `AlarmManager` for specific arrival times.
-    - **Custom Ringtones:** Added a system ringtone picker allowing users to select their preferred alert sound.
+## Connection Phase & Service Overhaul (Dev 1)
+- **Service State Machine:** Refactored `LocationAlarmService` with a robust state machine (`TRACKING`, `ALARM_RINGING`). The service now remains active post-alarm for continuous breadcrumb recording.
+- **Dynamic Re-routing Handshake:** Implemented a bi-directional loop where the service signals deviations (>100m) and `MapViewModel` pushes updated OSRM paths.
+- **Spatial Math Engine:** Integrated `Turf-Java` for route-based distance calculation, route snapping, and cross-track deviation detection.
+- **Predictive ETA:** Implemented a sliding window speed algorithm to provide real-time, road-aware ETAs.
+- **Global Terminology Alignment:** Standardized on "Distance Alarm" and "Time Alarm" across the service and logic layers.
 
-- **Service State Machine (Connection Phase):**
-    - Refactored `LocationAlarmService` with a robust state machine (`TRACKING`, `ALARM_RINGING`).
-    - The service now remains active post-alarm, continuing GPS tracking until the user explicitly ends the journey.
-    - Implemented `ACTION_RE_ROUTE` and `ACTION_UPDATE_ROUTE` for a seamless handshake between the background engine and the UI.
-- **Dynamic Re-routing Handshake (Connection Phase):**
-    - Implemented a bi-directional communication loop: the service signals route deviations (>100m) and the `MapViewModel` fetches and pushes updated OSRM paths.
-    - Ensures spatial calculations always use the most accurate road-snapped data.
-- **Global Terminology Alignment (Connection Phase):**
-    - Scrubbed "Guard" and "Guardian" from the entire codebase, including UI, notifications, and code comments.
-    - Standardized on **Distance Alarm** and **Time Alarm** as per the V2 pivot requirements.
-    - Renamed application to **Location Alarm V2** in resources.
-- **Enhanced Alarm Interaction (Connection Phase):**
-    - Redesigned `RingingActivity` with dual-action feedback: "Dismiss (Keep Tracking)" and "End Journey".
-    - Connected alarm UI buttons directly to the service lifecycle, allowing for proper journey persistence and data saving.
+## UI/UX Refinement & Phase 5 Completion (Dev 2)
+- **Home Screen:** Built a new landing screen displaying past `SavedRoute` cards from the Room database.
+- **Journey Summary:** Integrated a "Save Route" dialog triggered upon journey completion.
+- **Map Interaction:** Refined focus behavior (fully manual focus) and cleaned up camera-fighting logic.
+- **Theme Support:** Verified Dark Mode / Light Mode consistency across all new UI components.
+- **Alarm Configuration:** Finalized the setup sheet for selecting Distance vs. Predictive Time thresholds.
 
-## Technical Fixes
-- **Handshake Synchronization:** Fixed a critical gap where the service wouldn't observe route changes; now supports real-time OSRM path updates via intents.
-- **Resource Management:** Ensured proper `BroadcastReceiver` unregistration in `MapViewModel` to prevent memory leaks during re-routing.
-- **Service Lifecycle:** Resolved premature service termination after the alarm trigger; implemented persistent tracking for complete breadcrumb trails.
+## Technical Foundation
+- **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.
+- **Retrofit Client:** Dual-service configuration for Photon (Search) and OSRM (Routing).
+- **Lifecycle Management:** Fixed memory leaks related to `BroadcastReceiver` unregistration and ensured foreground service persistence.
