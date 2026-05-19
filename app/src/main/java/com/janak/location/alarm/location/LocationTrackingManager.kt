@@ -3,6 +3,7 @@ package com.janak.location.alarm.location
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
+import android.os.HandlerThread
 import android.os.Looper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -18,6 +19,10 @@ class LocationTrackingManager(
     private val context: Context
 ) {
     private val client: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+    
+    // Background thread for handling location callbacks
+    private val handlerThread = HandlerThread("LocationHandlerThread").apply { start() }
+    private val backgroundLooper = handlerThread.looper
 
     @SuppressLint("MissingPermission") // Permissions are handled in UI
     fun getLocationUpdates(): Flow<Location> = callbackFlow {
@@ -37,7 +42,7 @@ class LocationTrackingManager(
 
         try {
             android.util.Log.d("LocationTracker", "requestLocationUpdates: Requesting updates...")
-            client.requestLocationUpdates(request, callback, Looper.getMainLooper())
+            client.requestLocationUpdates(request, callback, backgroundLooper)
         } catch (e: Exception) {
             android.util.Log.e("LocationTracker", "requestLocationUpdates Error", e)
             close(e)

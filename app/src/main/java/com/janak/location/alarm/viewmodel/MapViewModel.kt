@@ -13,12 +13,14 @@ import com.janak.location.alarm.api.PhotonApiService
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.PhotonFeature
 import com.janak.location.alarm.service.LocationAlarmService
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -29,6 +31,7 @@ import org.maplibre.geojson.Point
 import kotlin.math.roundToInt
 
 import com.janak.location.alarm.data.repository.RouteRepository
+import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import androidx.core.content.edit
 
@@ -38,10 +41,23 @@ class MapViewModel(
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
     private val routeRepository: RouteRepository,
+    private val historyRepository: HistoryRepository,
     private val context: Context
 ) : ViewModel() {
     
     val savedRoutes = routeRepository.allSavedRoutes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val journeyHistory = historyRepository.allHistory
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun logJourney(
+        journey: com.janak.location.alarm.data.entity.JourneyHistoryEntity,
+        breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>
+    ) {
+        viewModelScope.launch {
+            historyRepository.saveJourneyLog(journey, breadcrumbs)
+        }
+    }
 
     private val sharedPrefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -273,14 +289,16 @@ class MapViewModel(
         if (!_isAlarmSet.value) {
             _destination.value = latLng
             _destinationName.value = name
+            android.util.Log.d("MapViewModel", "setDestination: $name, location: ${_userLocation.value}")
             _userLocation.value?.let { 
                 checkDistance(it)
                 fetchRoute(it, latLng)
-            }
+            } ?: android.util.Log.d("MapViewModel", "setDestination: Waiting for user location to fetch route")
         }
     }
 
     private fun fetchRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
+        android.util.Log.d("MapViewModel", "fetchRoute: start=$start, end=$end")
         viewModelScope.launch {
             try {
                 val coords = "${start.longitude},${start.latitude};${end.longitude},${end.latitude}"
@@ -302,6 +320,7 @@ class MapViewModel(
                         }
                         if (coordinates != null) {
                             _routeLine.value = LineString.fromLngLats(coordinates)
+                            android.util.Log.d("MapViewModel", "fetchRoute: routeLine updated, size=${coordinates.size}")
                         }
 
                         if (pushToService && _isAlarmSet.value) {
@@ -391,13 +410,39 @@ class MapViewModel(
         }
     }
     
-    fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>) {
+    fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>, alarmSettings: com.janak.location.alarm.model.AlarmSettings) {
+        val dest = _destination.value ?: return
         viewModelScope.launch {
             val route = SavedRouteEntity(
-                destinationName = destinationName,
-                dateSaved = System.currentTimeMillis()
+                destinationName = destinationName.ifBlank { "Unknown Destination" },
+                mapDestinationName = null,
+                destinationLat = dest.latitude,
+                destinationLng = dest.longitude,
+                alarmSettings = alarmSettings,
+                dateSaved = System.currentTimeMillis(),
+                lastTakenTimestamp = System.currentTimeMillis()
             )
             routeRepository.saveJourney(route, breadcrumbs)
+        }
+    }
+
+    fun updateRoute(route: SavedRouteEntity) {
+        viewModelScope.launch {
+            routeRepository.updateSavedRoute(route)
+        }
+    }
+
+    fun deleteJourneys(journeys: List<com.janak.location.alarm.data.entity.JourneyHistoryEntity>) {
+        viewModelScope.launch {
+            historyRepository.deleteJourneys(journeys)
+        }
+    }
+
+    fun deleteRoutes(routes: List<SavedRouteEntity>) {
+        viewModelScope.launch {
+            routes.forEach { route ->
+                routeRepository.deleteRoute(route)
+            }
         }
     }
 
@@ -411,6 +456,16 @@ class MapViewModel(
         viewModelScope.launch {
             routeRepository.deleteAllRoutes()
         }
+    }
+
+    fun clearJourneyHistory() {
+        viewModelScope.launch {
+            historyRepository.clearAllHistory()
+        }
+    }
+
+    fun getBreadcrumbsForHistory(historyId: Long): kotlinx.coroutines.flow.Flow<List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>> {
+        return historyRepository.getBreadcrumbsForHistory(historyId)
     }
 
     fun startJourneyFromHistory(route: SavedRouteEntity) {
@@ -441,6 +496,7 @@ class MapViewModelFactory(
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
     private val routeRepository: RouteRepository,
+    private val historyRepository: com.janak.location.alarm.data.repository.HistoryRepository,
     private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -448,7 +504,7 @@ class MapViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return MapViewModel(
                 locationTrackingManager, alarmEngine, 
-                photonApiService, osrmApiService, routeRepository, context
+                photonApiService, osrmApiService, routeRepository, historyRepository, context
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -4,6 +4,7 @@
 * **Strict State Observation:** The UI must be a pure function of state. Use `collectAsStateWithLifecycle()` to observe ViewModel `StateFlow`s and Room `Flow`s.
 * **No Business Logic:** Composables should only emit user intents (e.g., `viewModel.onActivateAlarmClicked()`). Never perform spatial math, date formatting, or network calls inside a Composable.
 * **MapLibre Delegation:** The map UI purely consumes the `LineString` (GeoJSON) provided by the ViewModel. It does not calculate routes.
+* **Experimental API Opt-In:** Always annotate with `@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, …)` for any experimental Compose APIs used.
 
 ## 2. ViewModel Layer
 * **The Orchestrator:** The ViewModel coordinates between the UI, the Room Repository, and the Service.
@@ -18,7 +19,7 @@
 ## 4. Network Layer (OSRM & Retrofit)
 * **Single Source of Truth for Paths:** Always request paths via Retrofit to the `router.project-osrm.org` API.
 * **Serialization:** Use `kotlinx.serialization` to cleanly parse the GeoJSON `LineString` response.
-* **Failure Handling:** Implement robust `try/catch` and fallback logic. If the network drops, the app must gracefully revert to local Haversine distance until the connection returns.
+* **Failure Handling:** Implement robust `try/catch` and fallback logic. If the network drops, the app must gracefully revert to local Haversine distance until the connection results.
 
 ## 5. Spatial Engine (Turf-Java)
 * **Offload the Math:** Never write raw Haversine or cross-track formulas manually. Rely on `Turf-Java`.

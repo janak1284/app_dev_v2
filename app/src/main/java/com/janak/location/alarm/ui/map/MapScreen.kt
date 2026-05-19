@@ -69,7 +69,8 @@ fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
         showJourneyHistory -> {
             com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
                 viewModel = viewModel,
-                onBackClick = { showJourneyHistory = false }
+                onBackClick = { showJourneyHistory = false },
+                onHistoryItemClick = { /* Handle click if needed */ }
             )
         }
         showSettings -> {
@@ -77,7 +78,8 @@ fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
                 viewModel = viewModel,
                 onBackClick = { showSettings = false },
                 onNavigateToSearchHistory = { showSearchHistory = true },
-                onNavigateToJourneyHistory = { showJourneyHistory = true }
+                onNavigateToJourneyHistory = { showJourneyHistory = true },
+                onNavigateToSavedRoutes = { /* Add navigation logic if needed */ }
             )
         }
         else -> {
@@ -473,7 +475,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     viewModel.resetJourneyCompleted()
                 },
                 onSaveJourney = { routeName ->
-                    viewModel.saveRoute(routeName, emptyList()) 
+                    viewModel.saveRoute(routeName, emptyList(), alarmSettings) 
                     showSaveDialog = false
                     viewModel.resetJourneyCompleted()
                 }

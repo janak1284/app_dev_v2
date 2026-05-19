@@ -9,7 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,33 +18,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.viewmodel.MapViewModel
-import com.janak.location.alarm.data.entity.JourneyHistoryEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun JourneyHistoryScreen(
+fun SavedRoutesScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
-    onHistoryItemClick: (Long) -> Unit
+    onEditRouteClick: (SavedRouteEntity) -> Unit
 ) {
-    val historyEntries by viewModel.journeyHistory.collectAsState(initial = emptyList())
-    val selectedJourneys = remember { mutableStateMapOf<Long, JourneyHistoryEntity>() }
+    val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
+    val selectedRoutes = remember { mutableStateMapOf<Long, SavedRouteEntity>() }
     var isSelectionMode by remember { mutableStateOf(false) }
-    var showClearAllDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isSelectionMode) "${selectedJourneys.size} selected" else "Saved Journeys") },
+                title = { Text(if (isSelectionMode) "${selectedRoutes.size} selected" else "Saved Routes") },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (isSelectionMode) {
                             isSelectionMode = false
-                            selectedJourneys.clear()
+                            selectedRoutes.clear()
                         } else {
                             onBackClick()
                         }
@@ -54,29 +54,25 @@ fun JourneyHistoryScreen(
                 actions = {
                     if (isSelectionMode) {
                         IconButton(onClick = {
-                            viewModel.deleteJourneys(selectedJourneys.values.toList())
+                            viewModel.deleteRoutes(selectedRoutes.values.toList())
                             isSelectionMode = false
-                            selectedJourneys.clear()
+                            selectedRoutes.clear()
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Selected")
-                        }
-                    } else if (historyEntries.isNotEmpty()) {
-                        IconButton(onClick = { showClearAllDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Clear All")
                         }
                     }
                 }
             )
         }
     ) { padding ->
-        if (historyEntries.isEmpty()) {
+        if (savedRoutes.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No journey logs yet.", color = MaterialTheme.colorScheme.outline)
+                Text("No saved routes yet.", color = MaterialTheme.colorScheme.outline)
             }
         } else {
             LazyColumn(
@@ -84,22 +80,40 @@ fun JourneyHistoryScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                items(historyEntries) { entry ->
-                    val isSelected = selectedJourneys.containsKey(entry.historyId)
+                items(savedRoutes) { route ->
+                    val isSelected = selectedRoutes.containsKey(route.routeId)
+                    
                     ListItem(
                         headlineContent = {
                             Text(
-                                text = entry.destinationName,
+                                text = route.destinationName,
                                 fontWeight = FontWeight.Bold
                             )
                         },
                         supportingContent = {
                             Text(
-                                text = SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()).format(Date(entry.timestamp))
+                                text = "Last taken: ${SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()).format(Date(route.lastTakenTimestamp))}"
                             )
                         },
                         leadingContent = {
-                            Icon(Icons.Default.History, contentDescription = null, tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                            Icon(Icons.Default.Route, contentDescription = null, tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                        },
+                        trailingContent = {
+                            if (!isSelectionMode) {
+                                Row {
+                                    IconButton(onClick = { onEditRouteClick(route) }) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                    }
+                                    IconButton(onClick = { viewModel.deleteRoute(route) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                    }
+                                }
+                            } else {
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = null
+                                )
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -107,45 +121,20 @@ fun JourneyHistoryScreen(
                             .combinedClickable(
                                 onClick = {
                                     if (isSelectionMode) {
-                                        if (isSelected) selectedJourneys.remove(entry.historyId) else selectedJourneys[entry.historyId] = entry
-                                        if (selectedJourneys.isEmpty()) isSelectionMode = false
-                                    } else {
-                                        onHistoryItemClick(entry.historyId)
+                                        if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
+                                        if (selectedRoutes.isEmpty()) isSelectionMode = false
                                     }
                                 },
                                 onLongClick = {
                                     isSelectionMode = true
-                                    if (isSelected) selectedJourneys.remove(entry.historyId) else selectedJourneys[entry.historyId] = entry
-                                    if (selectedJourneys.isEmpty()) isSelectionMode = false
+                                    if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
+                                    if (selectedRoutes.isEmpty()) isSelectionMode = false
                                 }
                             )
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
-        }
-        
-        if (showClearAllDialog) {
-            AlertDialog(
-                onDismissRequest = { showClearAllDialog = false },
-                title = { Text("Clear All Logs") },
-                text = { Text("Are you sure you want to clear your entire journey log history?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            viewModel.clearJourneyHistory()
-                            showClearAllDialog = false
-                        }
-                    ) {
-                        Text("Clear All")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showClearAllDialog = false }) {
-                        Text("Cancel")
-                    }
-                }
-            )
         }
     }
 }

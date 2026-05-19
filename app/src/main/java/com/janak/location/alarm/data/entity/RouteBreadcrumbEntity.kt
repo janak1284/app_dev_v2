@@ -9,18 +9,25 @@ import androidx.room.PrimaryKey
     tableName = "route_breadcrumbs",
     foreignKeys = [
         ForeignKey(
+            entity = JourneyHistoryEntity::class,
+            parentColumns = ["historyId"],
+            childColumns = ["historyId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
             entity = SavedRouteEntity::class,
             parentColumns = ["routeId"],
             childColumns = ["routeId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("routeId")]
+    indices = [Index("historyId"), Index("routeId")]
 )
 data class RouteBreadcrumbEntity(
     @PrimaryKey(autoGenerate = true)
     val pointId: Long = 0,
-    val routeId: Long,
+    val historyId: Long? = null,
+    val routeId: Long? = null,
     val latitude: Double,
     val longitude: Double,
     val speed: Float,

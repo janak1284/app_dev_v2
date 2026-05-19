@@ -19,6 +19,7 @@
     * Do NOT block the Main Thread with spatial math or DB inserts.
 5. **Plan Before Coding:** Propose a short architectural plan and wait for the user's approval.
 6. **Implement Incrementally:** Deliver ONE feature or file at a time. Do not dump massive multi-file refactors in a single prompt.
+7. **Clean up daemons** After running a test build and if succeeds or the task is done, **stop the daemon** before concluding the task/conversation/etc.
 
 ---
 

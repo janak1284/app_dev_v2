@@ -40,6 +40,7 @@ Finally, align the Jetpack Compose layer with the new backend reality.
 * [x] **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
 * [x] **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
 * [x] **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
+* [x] **Saved Journeys & History UI:** Implemented `SavedRoutesScreen` for managing/editing routes and `JourneyHistoryScreen` for viewing past logs, including history pruning.
 
 ## Phase 6: Journey Preview & Speed-Adjusted ETA
 Enhance the transition from Home to Map with a preview state and a more robust predictive engine.

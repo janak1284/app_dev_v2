@@ -15,8 +15,10 @@ import com.janak.location.alarm.R
 import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.data.AppDatabase
+import com.janak.location.alarm.data.entity.JourneyHistoryEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import com.janak.location.alarm.data.entity.SavedRouteEntity
+import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.domain.RouteDistanceEngine
 import com.mapbox.geojson.LineString
@@ -36,6 +38,7 @@ class LocationAlarmService : Service() {
     private lateinit var alarmEngine: AlarmEngine
     private lateinit var routeDistanceEngine: RouteDistanceEngine
     private lateinit var routeRepository: RouteRepository
+    private lateinit var historyRepository: HistoryRepository
     
     private var trackingJob: Job? = null
     private var wakeLock: android.os.PowerManager.WakeLock? = null
@@ -70,6 +73,7 @@ class LocationAlarmService : Service() {
         routeDistanceEngine = RouteDistanceEngine()
         val database = AppDatabase.getDatabase(this)
         routeRepository = RouteRepository(database)
+        historyRepository = HistoryRepository(database)
         
         createNotificationChannels()
         
@@ -110,7 +114,11 @@ class LocationAlarmService : Service() {
 
         destinationLat = intent?.getDoubleExtra("DEST_LAT", 0.0) ?: 0.0
         destinationLng = intent?.getDoubleExtra("DEST_LNG", 0.0) ?: 0.0
-        destinationName = intent?.getStringExtra("DEST_NAME") ?: "Unknown Destination"
+        
+        val passedName = intent?.getStringExtra("DEST_NAME")
+        android.util.Log.d("LocationAlarmService", "Received DEST_NAME: $passedName")
+        destinationName = if (!passedName.isNullOrBlank()) passedName else "Unknown Destination"
+        
         distanceThreshold = intent?.getFloatExtra("DISTANCE_THRESHOLD", 500f) ?: 500f
         isDistanceAlarmEnabled = intent?.getBooleanExtra("DISTANCE_ALARM_ENABLED", true) ?: true
         predictiveMinutesThreshold = intent?.getIntExtra("PREDICTIVE_MINUTES", 10) ?: 10
@@ -191,12 +199,8 @@ class LocationAlarmService : Service() {
             distance = results[0].toDouble()
         }
         
-        val etaText = if (etaMinutes != Double.MAX_VALUE) {
-            " | ETA: ${etaMinutes.roundToInt()} min"
-        } else ""
-        
-        val notificationContent = "Distance: ${formatDistance(distance.toInt())}$etaText"
-        updateNotification("Distance Alarm Active", notificationContent)
+        val etaText = if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.roundToInt()} min" else ""
+        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}$etaText")
 
         if (currentState == ServiceState.TRACKING) {
             val shouldTriggerDistance = isDistanceAlarmEnabled && distance <= distanceThreshold
@@ -287,11 +291,7 @@ class LocationAlarmService : Service() {
     }
 
     private fun formatDistance(meters: Int): String {
-        return if (meters >= 1000) {
-            String.format("%.1fkm", meters / 1000f)
-        } else {
-            "${meters}m"
-        }
+        return if (meters >= 1000) String.format("%.1fkm", meters / 1000f) else "${meters}m"
     }
 
     override fun onDestroy() {
@@ -310,14 +310,35 @@ class LocationAlarmService : Service() {
         
         serviceScope.launch(NonCancellable) {
             try {
-                val routeMetadata = SavedRouteEntity(
-                    destinationName = destinationName,
-                    dateSaved = System.currentTimeMillis()
+                // Generate a robust name
+                val robustName = if (!destinationName.isBlank() && destinationName != "Unknown Destination") {
+                    destinationName
+                } else {
+                    "Lat: ${destinationLat.roundTo(4)}, Lng: ${destinationLng.roundTo(4)}"
+                }
+
+                val history = JourneyHistoryEntity(
+                    routeId = null,
+                    startingPointLat = finalLocations.first().latitude,
+                    startingPointLng = finalLocations.first().longitude,
+                    destinationLat = destinationLat,
+                    destinationLng = destinationLng,
+                    destinationName = robustName,
+                    mapDestinationName = null,
+                    alarmConfigAtTime = com.janak.location.alarm.model.AlarmSettings(
+                        distanceMeters = distanceThreshold.toInt(),
+                        isDistanceAlarmEnabled = isDistanceAlarmEnabled,
+                        predictiveMinutes = predictiveMinutesThreshold,
+                        isPredictiveAlarmEnabled = isPredictiveAlarmEnabled,
+                        ringtoneUri = ringtoneUri?.let { android.net.Uri.parse(it) },
+                        isVibrateEnabled = isVibrateEnabled
+                    ),
+                    timestamp = System.currentTimeMillis()
                 )
                 
                 val breadcrumbs = finalLocations.map { loc ->
                     RouteBreadcrumbEntity(
-                        routeId = 0,
+                        historyId = 0,
                         latitude = loc.latitude,
                         longitude = loc.longitude,
                         speed = loc.speed,
@@ -325,12 +346,18 @@ class LocationAlarmService : Service() {
                     )
                 }
                 
-                routeRepository.saveJourney(routeMetadata, breadcrumbs)
-                android.util.Log.d("LocationAlarmService", "Journey saved successfully: ${breadcrumbs.size} points")
+                historyRepository.saveJourneyLog(history, breadcrumbs)
+                android.util.Log.d("LocationAlarmService", "Journey logged successfully: $robustName")
             } catch (e: Exception) {
-                android.util.Log.e("LocationAlarmService", "Failed to save journey", e)
+                android.util.Log.e("LocationAlarmService", "Failed to log journey", e)
             }
         }
+    }
+
+    private fun Double.roundTo(decimals: Int): Double {
+        var multiplier = 1.0
+        repeat(decimals) { multiplier *= 10 }
+        return kotlin.math.round(this * multiplier) / multiplier
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

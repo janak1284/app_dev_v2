@@ -63,15 +63,15 @@ If no automated tests:
 * [x] V2 Routing engine connected (OSRM + Retrofit)
 * [x] V2 Spatial math active (Turf-Java route slicing)
 * [x] V2 Dynamic ETA working
-* [x] V2 UI (Home screen & History) implemented
+* [x] V2 UI (Home screen & Saved Journeys/Journey History Logs) implemented
 
 ---
 
 ## Current State (Update During Development)
 
 **Last Updated:** May 2026
-**Working On:** **Final V2 Verification & Field Testing**
-**Recently Completed:** Phase 5 (UI Refactoring, Home Screen, and Journey Summary Implementation)
+**Working On:** **Phase 6: Final V2 Verification & Field Testing**
+**Recently Completed:** Phase 5 (UI Refactor, Home Screen, and Saved Journeys/Journey History Logs)
 **Blocked By:** None.
 
 ---
@@ -81,8 +81,9 @@ If no automated tests:
 ### Phase 1: The Data Foundation (Room DB)
 * [x] Add Room dependencies.
 * [x] Create `SavedRoute` (Metadata) and `RouteBreadcrumb` (GPS Trail) Entities.
+* [x] Create `JourneyHistory` (Logs) and `RouteBreadcrumb` (GPS Trail) Entities.
 * [x] Build DAOs for bulk inserts and Flow observations.
-* [x] Build Repository layer.
+* [x] Build Repository layer for both `SavedRoutes` and `JourneyHistory`.
 
 ### Phase 2: Network & Visuals (OSRM + MapLibre)
 * [x] Setup Retrofit for OSRM public API.
@@ -98,12 +99,13 @@ If no automated tests:
 ### Phase 4: Service State Machine Overhaul
 * [x] Update `LocationAlarmService` to buffer GPS points into a `MutableList`.
 * [x] Shift states to keep tracking post-alarm until "End Journey".
-* [x] Bulk insert buffered route to Room on journey end.
+* [x] Bulk insert buffered route to Room on journey end (Mutable and Immutable logs).
 
 ### Phase 5: UI Refactoring & Terminology
 * [x] Change UI terminology to **Distance Alarm** and **Time Alarm**.
-* [x] Build Home Screen (Saved Routes list).
+* [x] Build Home Screen (Saved Routes and Journey History lists).
 * [x] Build "Save Journey" Bottom Sheet prompt.
+* [x] Implement separate "Saved Journeys" and "Journey History" management pages.
 
 ---
 
