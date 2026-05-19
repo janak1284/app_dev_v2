@@ -122,7 +122,16 @@ fun HomeScreen(
                         }
                         item { Spacer(modifier = Modifier.height(8.dp)) }
                     }
-
+                    
+                    item {
+                        OutlinedButton(
+                            onClick = onManageJourneysClick,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("View All Saved Routes")
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                     // Recent Searches
                     if (searchHistory.isNotEmpty()) {
                         item {
@@ -163,14 +172,27 @@ fun HomeScreen(
                                     ListItem(
                                         headlineContent = {
                                             Text(
-                                                text = feature.properties.name ?: "Unknown Location",
+                                                text = feature.properties.name
+                                                    ?: "Unknown Location",
                                                 fontWeight = FontWeight.Bold
                                             )
                                         },
-                                        leadingContent = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                                        leadingContent = {
+                                            Icon(
+                                                Icons.Default.LocationOn,
+                                                contentDescription = null
+                                            )
+                                        },
                                         trailingContent = {
-                                            IconButton(onClick = { viewModel.removeFromHistory(feature) }) {
-                                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                            IconButton(onClick = {
+                                                viewModel.removeFromHistory(
+                                                    feature
+                                                )
+                                            }) {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = "Delete"
+                                                )
                                             }
                                         },
                                         modifier = Modifier
@@ -299,7 +321,11 @@ fun RouteCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = SimpleDateFormat("EEEE, MMM d • HH:mm", Locale.getDefault()).format(Date(route.dateSaved)),
+                    text = SimpleDateFormat("EEEE, MMM d • HH:mm", Locale.getDefault()).format(
+                        Date(
+                            route.dateSaved
+                        )
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

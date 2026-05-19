@@ -26,7 +26,8 @@ fun SettingsScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
     onNavigateToSearchHistory: () -> Unit,
-    onNavigateToJourneyHistory: () -> Unit
+    onNavigateToJourneyHistory: () -> Unit,
+    onNavigateToSavedRoutes: () -> Unit
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     
@@ -86,9 +87,26 @@ fun SettingsScreen(
                 }
             }
 
-            // --- Section: Saved Journeys ---
-            SettingsSection(title = "Saved Journeys", icon = Icons.Default.Route) {
-                Column {
+            // --- Section: Saved Routes ---
+            SettingsSection(title = "Saved Routes", icon = Icons.Default.Route) {
+                Button(
+                    onClick = onNavigateToSavedRoutes,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Default.Route, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Manage Saved Routes")
+                }
+            }
+
+            // --- Section: History Management ---
+            SettingsSection(title = "History Management", icon = Icons.Default.History) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = onNavigateToJourneyHistory,
                         modifier = Modifier.fillMaxWidth(),
@@ -98,16 +116,10 @@ fun SettingsScreen(
                         ),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Icon(Icons.Default.Route, contentDescription = null)
+                        Icon(Icons.Default.History, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Manage Saved Journeys")
+                        Text("Manage Journey History")
                     }
-                }
-            }
-
-            // --- Section: Search Management ---
-            SettingsSection(title = "Search Management", icon = Icons.Default.Search) {
-                Column {
                     Button(
                         onClick = onNavigateToSearchHistory,
                         modifier = Modifier.fillMaxWidth(),
@@ -117,30 +129,29 @@ fun SettingsScreen(
                         ),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Icon(Icons.Default.History, contentDescription = null)
+                        Icon(Icons.Default.Search, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Manage Search History")
                     }
                 }
             }
 
-
             // --- Section: About ---
             SettingsSection(title = "About", icon = Icons.Default.Info) {
                 Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                     Text(
-                        text = "Location Alarm MVP",
+                        text = "Location Alarm V2",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "A simple GPS-based alarm to wake you up before you reach your destination.",
+                        text = "An intelligent, route-based commuter navigation engine.",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Version: 1.0.0",
+                        text = "Version: 2.0.0",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

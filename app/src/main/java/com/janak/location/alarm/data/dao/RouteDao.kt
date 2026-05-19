@@ -20,6 +20,9 @@ interface RouteDao {
     @Query("SELECT * FROM route_breadcrumbs WHERE routeId = :routeId ORDER BY timestamp ASC")
     fun getBreadcrumbsForRoute(routeId: Long): Flow<List<RouteBreadcrumbEntity>>
 
+    @Update
+    suspend fun updateSavedRoute(route: SavedRouteEntity): Int
+
     @Delete
     suspend fun deleteRoute(route: SavedRouteEntity): Int
 

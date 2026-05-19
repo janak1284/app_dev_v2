@@ -26,9 +26,9 @@ The "Location Alarm" is an intelligent, route-based Android commuter application
   - **Service Overhaul:** `LocationAlarmService` now supports route-based tracking, OSRM GeoJSON parsing, GPS buffering, and automatic journey persistence to Room.
   - **Network Handshake:** `MapViewModel` successfully fetches OSRM routes and communicates them to the background service.
   - **Terminology Scrub:** Core logic renamed to "Distance/Time Alarm".
-  - **Phase 5 Implementation:** Built the new Home Screen for saved routes, integrated the "Save Journey" prompt, and standardized UI terminology.
+  - **Phase 6 Implementation:** Implemented Search History Preview and Selection Mode (Bulk Deletion) for both Saved Routes and Journey History. Currently finalizing pending tasks.
 - **Currently in Development:**
-  - **Final Verification:** Field testing and spatial math tuning.
+  - **Phase 6:** Journey Preview, Speed-Adjusted ETA, and Final Field Testing.
 
 ## 4. Database Architecture (Room)
 The data layer treats journeys as first-class relational entities:
@@ -42,7 +42,7 @@ The project is actively developed by two engineers using a lightweight feature-b
 - **Handshake Protocol:** Parallel development is unblocked by agreeing on Data Classes (`SavedRoute`, `LineString`) and creating mock repositories while backend wires up the actual logic.
 
 ## 6. Goals Remaining (Execution Roadmap)
-- **Phase 5 (UI Refactor):** Build the new Home Screen for saved routes, and the Bottom Sheet prompt to save breadcrumb trails upon journey completion.
+- **Phase 6 (Verification & Enhancement):** Implement Journey Preview, refine OSRM Speed Calibration, and perform field testing.
 - **Verification:** Full field testing and spatial math tuning.
 
 ## 7. Assumptions & Constraints
