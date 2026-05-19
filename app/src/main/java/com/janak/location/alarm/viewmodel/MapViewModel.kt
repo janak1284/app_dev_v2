@@ -30,6 +30,7 @@ import kotlin.math.roundToInt
 
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.data.entity.SavedRouteEntity
+import androidx.core.content.edit
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
@@ -147,12 +148,12 @@ class MapViewModel(
 
     private fun saveSearchHistory(history: List<PhotonFeature>) {
         val historyJson = Json.encodeToString(history)
-        sharedPrefs.edit().putString("search_history", historyJson).apply()
+        sharedPrefs.edit { putString("search_history", historyJson) }
     }
 
     fun setThemeMode(mode: Int) {
         _themeMode.value = mode
-        sharedPrefs.edit().putInt("theme_mode", mode).apply()
+        sharedPrefs.edit { putInt("theme_mode", mode) }
     }
 
     private fun setupSearchDebounce() {
@@ -403,6 +404,12 @@ class MapViewModel(
     fun deleteRoute(route: SavedRouteEntity) {
         viewModelScope.launch {
             routeRepository.deleteRoute(route)
+        }
+    }
+
+    fun clearSavedRoutes() {
+        viewModelScope.launch {
+            routeRepository.deleteAllRoutes()
         }
     }
 

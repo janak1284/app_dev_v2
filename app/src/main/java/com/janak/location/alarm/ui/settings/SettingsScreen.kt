@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,7 +25,8 @@ import com.janak.location.alarm.viewmodel.MapViewModel
 fun SettingsScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToSearchHistory: () -> Unit,
+    onNavigateToJourneyHistory: () -> Unit
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     
@@ -84,11 +86,30 @@ fun SettingsScreen(
                 }
             }
 
+            // --- Section: Journey History ---
+            SettingsSection(title = "Journey History", icon = Icons.Default.Route) {
+                Column {
+                    Button(
+                        onClick = onNavigateToJourneyHistory,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Icon(Icons.Default.Route, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Manage Journey History")
+                    }
+                }
+            }
+
             // --- Section: Search Management ---
             SettingsSection(title = "Search Management", icon = Icons.Default.Search) {
                 Column {
                     Button(
-                        onClick = onNavigateToHistory,
+                        onClick = onNavigateToSearchHistory,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),

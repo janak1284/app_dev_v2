@@ -51,25 +51,33 @@ import kotlin.math.roundToInt
 @Composable
 fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
     var showSettings by remember { mutableStateOf(false) }
-    var showHistory by remember { mutableStateOf(false) }
+    var showSearchHistory by remember { mutableStateOf(false) }
+    var showJourneyHistory by remember { mutableStateOf(false) }
 
     when {
-        showHistory -> {
+        showSearchHistory -> {
             com.janak.location.alarm.ui.settings.SearchHistoryScreen(
                 viewModel = viewModel,
-                onBackClick = { showHistory = false },
+                onBackClick = { showSearchHistory = false },
                 onItemClick = { feature ->
                     viewModel.selectSearchResult(feature)
-                    showHistory = false
+                    showSearchHistory = false
                     showSettings = false
                 }
+            )
+        }
+        showJourneyHistory -> {
+            com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
+                viewModel = viewModel,
+                onBackClick = { showJourneyHistory = false }
             )
         }
         showSettings -> {
             SettingsScreen(
                 viewModel = viewModel,
                 onBackClick = { showSettings = false },
-                onNavigateToHistory = { showHistory = true }
+                onNavigateToSearchHistory = { showSearchHistory = true },
+                onNavigateToJourneyHistory = { showJourneyHistory = true }
             )
         }
         else -> {
