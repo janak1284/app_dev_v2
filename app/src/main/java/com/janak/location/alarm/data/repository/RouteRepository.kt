@@ -27,4 +27,8 @@ class RouteRepository(private val database: AppDatabase) {
     suspend fun deleteRoute(route: SavedRouteEntity) {
         routeDao.deleteRoute(route)
     }
+
+    suspend fun deleteAllRoutes() {
+        routeDao.deleteAllRoutes()
+    }
 }
