@@ -30,7 +30,7 @@ fun JourneyHistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Journey History") },
+                title = { Text("Saved Journeys") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

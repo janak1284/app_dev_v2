@@ -64,14 +64,46 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     when (currentScreen) {
-                        "home" -> HomeScreen(
-                            viewModel = viewModel,
-                            onNewJourneyClick = { currentScreen = "map" }
-                        )
-                        "map" -> MapScreen(
-                            viewModel = viewModel,
-                            onNavigateHome = { currentScreen = "home" }
-                        )
+                        "home" -> {
+                            HomeScreen(
+                                viewModel = viewModel,
+                                onNewJourneyClick = { currentScreen = "map" },
+                                onSettingsClick = { currentScreen = "settings" },
+                                onManageJourneysClick = { currentScreen = "journey_history" },
+                                onManageSearchesClick = { currentScreen = "search_history" }
+                            )
+                        }
+                        "map" -> {
+                            androidx.activity.compose.BackHandler { currentScreen = "home" }
+                            MapScreen(
+                                viewModel = viewModel,
+                                onNavigateHome = { currentScreen = "home" }
+                            )
+                        }
+                        "settings" -> {
+                            androidx.activity.compose.BackHandler { currentScreen = "home" }
+                            com.janak.location.alarm.ui.settings.SettingsScreen(
+                                viewModel = viewModel,
+                                onBackClick = { currentScreen = "home" },
+                                onNavigateToSearchHistory = { currentScreen = "search_history" },
+                                onNavigateToJourneyHistory = { currentScreen = "journey_history" }
+                            )
+                        }
+                        "journey_history" -> {
+                            androidx.activity.compose.BackHandler { currentScreen = "settings" }
+                            com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
+                                viewModel = viewModel,
+                                onBackClick = { currentScreen = "settings" }
+                            )
+                        }
+                        "search_history" -> {
+                            androidx.activity.compose.BackHandler { currentScreen = "settings" }
+                            com.janak.location.alarm.ui.settings.SearchHistoryScreen(
+                                viewModel = viewModel,
+                                onBackClick = { currentScreen = "settings" },
+                                onItemClick = { /* Handle item click if needed */ }
+                            )
+                        }
                     }
                 }
             }

@@ -13,9 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,15 +33,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-import androidx.compose.material.icons.filled.PlayCircle
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: MapViewModel,
-    onNewJourneyClick: () -> Unit
+    onNewJourneyClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onManageJourneysClick: () -> Unit,
+    onManageSearchesClick: () -> Unit
 ) {
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
+    val searchHistory by viewModel.searchHistory.collectAsState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -61,9 +63,9 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            HomeHeader()
+            HomeHeader(onSettingsClick = onSettingsClick)
 
-            if (savedRoutes.isEmpty()) {
+            if (savedRoutes.isEmpty() && searchHistory.isEmpty()) {
                 EmptyState(onNewJourneyClick)
             } else {
                 LazyColumn(
@@ -71,116 +73,202 @@ fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    item {
-                        Text(
-                            text = "Recent Journeys",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-                    items(
-                        items = savedRoutes,
-                        key = { it.routeId }
-                    ) { route ->
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = {
-                                if (it == SwipeToDismissBoxValue.EndToStart) {
-                                    viewModel.deleteRoute(route)
-                                    true
-                                } else false
-                            }
-                        )
-
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            enableDismissFromStartToEnd = false,
-                            backgroundContent = {
-                                val isSwiping = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart
-                                val color = if (isSwiping) {
-                                    MaterialTheme.colorScheme.errorContainer
-                                } else Color.Transparent
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(color)
-                                        .padding(horizontal = 20.dp),
-                                    contentAlignment = Alignment.CenterEnd
-                                ) {
-                                    if (isSwiping) {
-                                        Icon(
-                                            Icons.Default.Delete,
-                                            contentDescription = "Delete",
-                                            tint = MaterialTheme.colorScheme.onErrorContainer
-                                        )
-                                    }
+                    // Recent Journeys
+                    if (savedRoutes.isNotEmpty()) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Recent Journeys",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                TextButton(onClick = onManageJourneysClick) {
+                                    Text("Manage")
                                 }
                             }
-                        ) {
-                            RouteCard(
-                                route = route,
-                                onClick = {
-                                    viewModel.startJourneyFromHistory(route)
-                                    onNewJourneyClick()
+                        }
+                        items(
+                            items = savedRoutes.take(3),
+                            key = { it.routeId }
+                        ) { route ->
+                            val dismissState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = {
+                                    if (it == SwipeToDismissBoxValue.EndToStart) {
+                                        viewModel.deleteRoute(route)
+                                        true
+                                    } else false
+                                }
+                            )
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = false,
+                                backgroundContent = { DismissBackground(dismissState) },
+                                content = {
+                                    RouteCard(
+                                        route = route,
+                                        onClick = {
+                                            viewModel.startJourneyFromHistory(route)
+                                            onNewJourneyClick()
+                                        }
+                                    )
                                 }
                             )
                         }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
+                        item { Spacer(modifier = Modifier.height(8.dp)) }
+                    }
 
-                        @Composable
-                        fun HomeHeader() {
-                        Column(
-                        modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                        brush = Brush.verticalGradient(
-                        colors = listOf(
+                    // Recent Searches
+                    if (searchHistory.isNotEmpty()) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Recent Searches",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                TextButton(onClick = onManageSearchesClick) {
+                                    Text("Manage")
+                                }
+                            }
+                        }
+                        items(
+                            items = searchHistory.take(3),
+                            key = { "${it.geometry.coordinates[0]},${it.geometry.coordinates[1]}" }
+                        ) { feature ->
+                            val dismissState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = {
+                                    if (it == SwipeToDismissBoxValue.EndToStart) {
+                                        viewModel.removeFromHistory(feature)
+                                        true
+                                    } else false
+                                }
+                            )
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = false,
+                                backgroundContent = { DismissBackground(dismissState) },
+                                content = {
+                                    ListItem(
+                                        headlineContent = {
+                                            Text(
+                                                text = feature.properties.name ?: "Unknown Location",
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        },
+                                        leadingContent = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                                        trailingContent = {
+                                            IconButton(onClick = { viewModel.removeFromHistory(feature) }) {
+                                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .clickable {
+                                                viewModel.selectSearchResult(feature)
+                                                onNewJourneyClick()
+                                            }
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DismissBackground(dismissState: SwipeToDismissBoxState) {
+    val isSwiping = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart
+    val color = if (isSwiping) MaterialTheme.colorScheme.errorContainer else Color.Transparent
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(24.dp))
+            .background(color)
+            .padding(horizontal = 20.dp),
+        contentAlignment = Alignment.CenterEnd
+    ) {
+        if (isSwiping) {
+            Icon(
+                Icons.Default.Delete,
+                contentDescription = "Delete",
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeHeader(onSettingsClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                         Color.Transparent
-                        )
-                        )
-                        )
-                        .padding(horizontal = 24.dp, vertical = 32.dp)
-                        ) {
-                        Text(
-                        text = "Commuter",
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-1).sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                        text = "Smart Location Alarms",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Medium
-                        )
-                        }
-                        }
+                    )
+                )
+            )
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Commuter",
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-1).sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "Smart Location Alarms",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        IconButton(onClick = onSettingsClick) {
+            Icon(Icons.Default.Settings, contentDescription = "Settings")
+        }
+    }
+}
 
-                        @Composable
-                        fun RouteCard(
-                        route: SavedRouteEntity,
-                        onClick: () -> Unit
-                        ) {
-                        Surface(
-                        onClick = onClick,
-                        shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant, // Opaque background
-                        border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                        ) {        Row(
+@Composable
+fun RouteCard(
+    route: SavedRouteEntity,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
             modifier = Modifier
                 .padding(20.dp)
                 .fillMaxWidth(),

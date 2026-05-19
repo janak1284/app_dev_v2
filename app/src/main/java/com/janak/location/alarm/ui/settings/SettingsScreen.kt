@@ -86,8 +86,8 @@ fun SettingsScreen(
                 }
             }
 
-            // --- Section: Journey History ---
-            SettingsSection(title = "Journey History", icon = Icons.Default.Route) {
+            // --- Section: Saved Journeys ---
+            SettingsSection(title = "Saved Journeys", icon = Icons.Default.Route) {
                 Column {
                     Button(
                         onClick = onNavigateToJourneyHistory,
@@ -100,7 +100,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Default.Route, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Manage Journey History")
+                        Text("Manage Saved Journeys")
                     }
                 }
             }
@@ -123,6 +123,7 @@ fun SettingsScreen(
                     }
                 }
             }
+
 
             // --- Section: About ---
             SettingsSection(title = "About", icon = Icons.Default.Info) {
