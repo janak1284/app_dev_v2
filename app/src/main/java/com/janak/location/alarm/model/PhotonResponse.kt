@@ -25,7 +25,8 @@ data class PhotonProperties(
     val city: String? = null,
     val country: String? = null,
     val state: String? = null,
-    val postcode: String? = null
+    val postcode: String? = null,
+    val roadDistance: Double? = null
 ) {
     val displayName: String
         get() = listOfNotNull(name, street, city, country)

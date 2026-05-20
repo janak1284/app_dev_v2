@@ -292,8 +292,7 @@ class MapViewModel(
 
     fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
         _alarmSettings.value = settings
-        if (_isAlarmSet.value) {
-            // If alarm is already running, restart service with new settings
+        if (_isAlarmSet.value || _isPreviewMode.value) {
             startAlarm()
         }
     }
@@ -345,9 +344,25 @@ class MapViewModel(
                         _currentRouteGeoJson.value = geoJson
                         
                         // Extract duration and distance
+                        val distance = firstRoute.get("distance")?.toString()?.toDoubleOrNull() ?: 0.0
                         _expectedDuration.value = firstRoute.get("duration")?.toString()?.toDoubleOrNull() ?: 0.0
-                        _expectedDistance.value = firstRoute.get("distance")?.toString()?.toDoubleOrNull() ?: 0.0
+                        _expectedDistance.value = distance
                         android.util.Log.d("MapViewModel", "fetchRoute: duration=${_expectedDuration.value}, distance=${_expectedDistance.value}")
+
+                        // Update search history with road distance if this destination was just selected
+                        val currentDest = _destination.value
+                        if (currentDest != null) {
+                            val updatedHistory = _searchHistory.value.map { feature ->
+                                val coords = feature.geometry.coordinates
+                                if (coords[1] == currentDest.latitude && coords[0] == currentDest.longitude) {
+                                    feature.copy(properties = feature.properties.copy(roadDistance = distance))
+                                } else {
+                                    feature
+                                }
+                            }
+                            _searchHistory.value = updatedHistory
+                            saveSearchHistory(updatedHistory)
+                        }
 
                         // Also update _routeLine for map rendering
                         val coordinates = firstRoute.get("geometry")?.jsonObject?.get("coordinates")?.jsonArray?.map {
@@ -436,9 +451,15 @@ class MapViewModel(
     private fun checkDistance(currentLocation: Location) {
         val dest = _destination.value ?: return
         
-        // 1. Try route-based distance first (SMART LOGIC)
+        // 1. If in Preview Mode, prioritize the OSRM expected distance (FULL ROAD DISTANCE)
+        if (_isPreviewMode.value && _expectedDistance.value > 0) {
+            _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
+            return
+        }
+
+        // 2. If Alarm is Active, use high-precision road-snapping logic
         val route = _routeLine.value
-        if (route != null) {
+        if (route != null && _isAlarmSet.value) {
             val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
             val mbRoute = route.toMapbox()
             val distance = routeDistanceEngine.calculateRemainingDistance(mbRoute, userPoint)
@@ -447,7 +468,7 @@ class MapViewModel(
             return
         }
 
-        // 2. Fallback to Haversine (OLD LOGIC)
+        // 3. Fallback to Haversine (ONLY if OSRM is unavailable)
         val results = FloatArray(1)
         Location.distanceBetween(
             currentLocation.latitude, currentLocation.longitude,

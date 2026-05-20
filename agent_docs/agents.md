@@ -109,12 +109,13 @@ If no automated tests:
 * [x] Implement separate "Saved Journeys" and "Journey History" management pages.
 
 ### Phase 6: Journey Preview & Speed-Adjusted ETA
-* [x] Implement "PREVIEW" mode in MapScreen.
-* [x] Add "CONTINUE TO ALARM" confirmation flow.
+* [x] Implement "PREVIEW" mode in MapScreen (Consolidated into "DESTINATION SET").
 * [x] Implement OSRM Speed Calibration and Speed Ratio ETA logic.
 * [x] Implement "One-Click" direct journey start from history/saved routes.
 * [x] Implement "Edit Mode" for Saved Routes (Rename/Re-configure).
 * [x] Keyboard Input Optimization (imePadding).
+* [x] Road-based distance persistence for "Recent Searches" history.
+* [x] Unified UI flow for Destination Selection and Alarm Setup.
 
 ### Phase 7: Final Verification & Field Testing
 * [ ] GPX Simulation for Calibrated ETA accuracy verification.
