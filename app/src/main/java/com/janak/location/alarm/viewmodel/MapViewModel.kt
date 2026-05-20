@@ -508,10 +508,14 @@ class MapViewModel(
                 
                 if (etaMinutes != Double.MAX_VALUE) {
                     _remainingEta.value = etaMinutes.roundToInt()
+                    android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps")
                 } else {
                     _remainingEta.value = null
+                    android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED")
                 }
                 return
+            } else {
+                android.util.Log.w("MapViewModel", "checkDistance: Could not snap user to route line")
             }
         }
 
