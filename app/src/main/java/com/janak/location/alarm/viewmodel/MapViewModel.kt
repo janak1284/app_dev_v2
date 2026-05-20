@@ -53,6 +53,11 @@ class MapViewModel(
 
     private fun org.maplibre.geojson.LineString.toMapbox(): com.mapbox.geojson.LineString =
         com.mapbox.geojson.LineString.fromLngLats(coordinates().map { it.toMapbox() })
+
+    private fun com.mapbox.geojson.LineString.toMapLibre(): org.maplibre.geojson.LineString =
+        org.maplibre.geojson.LineString.fromLngLats(coordinates().map { 
+            org.maplibre.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+        })
     
     val savedRoutes = routeRepository.allSavedRoutes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -94,6 +99,11 @@ class MapViewModel(
 
     private val _distanceToDestination = MutableStateFlow<String?>(null)
     val distanceToDestination: StateFlow<String?> = _distanceToDestination.asStateFlow()
+
+    private val _remainingEta = MutableStateFlow<Int?>(null)
+    val remainingEta: StateFlow<Int?> = _remainingEta.asStateFlow()
+
+    private var fullRouteLine: com.mapbox.geojson.LineString? = null
 
     private val _alarmSettings = MutableStateFlow(com.janak.location.alarm.model.AlarmSettings())
     val alarmSettings: StateFlow<com.janak.location.alarm.model.AlarmSettings> = _alarmSettings.asStateFlow()
@@ -370,6 +380,10 @@ class MapViewModel(
                             Point.fromLngLat(point[0].toString().toDouble(), point[1].toString().toDouble())
                         }
                         if (coordinates != null) {
+                            val mbRoute = com.mapbox.geojson.LineString.fromLngLats(coordinates.map { 
+                                com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+                            })
+                            fullRouteLine = mbRoute
                             _routeLine.value = LineString.fromLngLats(coordinates)
                             android.util.Log.d("MapViewModel", "fetchRoute: routeLine updated, size=${coordinates.size}")
                         }
@@ -428,9 +442,12 @@ class MapViewModel(
         _isAlarmSet.value = false
         _isPreviewMode.value = false
         _distanceToDestination.value = null
+        _remainingEta.value = null
         _destinationName.value = null
         _currentRouteGeoJson.value = null
         _routeLine.value = null
+        fullRouteLine = null
+        routeDistanceEngine.resetStats()
         alarmEngine.stop()
         
         val serviceIntent = Intent(context, LocationAlarmService::class.java)
@@ -443,8 +460,11 @@ class MapViewModel(
             _destinationName.value = null
             _isPreviewMode.value = false
             _distanceToDestination.value = null
+            _remainingEta.value = null
             _currentRouteGeoJson.value = null
             _routeLine.value = null
+            fullRouteLine = null
+            routeDistanceEngine.resetStats()
         }
     }
 
@@ -454,18 +474,45 @@ class MapViewModel(
         // 1. If in Preview Mode, prioritize the OSRM expected distance (FULL ROAD DISTANCE)
         if (_isPreviewMode.value && _expectedDistance.value > 0) {
             _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
+            _remainingEta.value = (_expectedDuration.value / 60.0).roundToInt()
             return
         }
 
         // 2. If Alarm is Active, use high-precision road-snapping logic
-        val route = _routeLine.value
-        if (route != null && _isAlarmSet.value) {
+        val route = fullRouteLine
+        if (route != null && (_isAlarmSet.value || _isPreviewMode.value)) {
             val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
-            val mbRoute = route.toMapbox()
-            val distance = routeDistanceEngine.calculateRemainingDistance(mbRoute, userPoint)
             
-            _distanceToDestination.value = formatDistance(distance.toInt())
-            return
+            // Snapping & Slicing
+            val feature = com.mapbox.turf.TurfMisc.nearestPointOnLine(userPoint, route.coordinates())
+            val snappedPoint = feature.geometry() as? com.mapbox.geojson.Point
+            
+            if (snappedPoint != null) {
+                val slicedLine = com.mapbox.turf.TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
+                
+                // Update map route line (sliced version)
+                _routeLine.value = slicedLine.toMapLibre()
+                
+                // Calculate distance along route
+                val distance = com.mapbox.turf.TurfMeasurement.length(slicedLine, com.mapbox.turf.TurfConstants.UNIT_METERS)
+                _distanceToDestination.value = formatDistance(distance.toInt())
+                
+                // Update speed and calculate ETA
+                routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
+                val expectedSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
+                
+                val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
+                    remainingDistanceMeters = distance,
+                    expectedSpeedMps = expectedSpeed
+                )
+                
+                if (etaMinutes != Double.MAX_VALUE) {
+                    _remainingEta.value = etaMinutes.roundToInt()
+                } else {
+                    _remainingEta.value = null
+                }
+                return
+            }
         }
 
         // 3. Fallback to Haversine (ONLY if OSRM is unavailable)
@@ -482,6 +529,7 @@ class MapViewModel(
         } else {
             null
         }
+        _remainingEta.value = null
     }
 
     private fun formatDistance(meters: Int): String {

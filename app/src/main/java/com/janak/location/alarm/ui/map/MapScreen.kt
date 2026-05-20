@@ -106,6 +106,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val isPreviewMode by viewModel.isPreviewMode.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
+    val remainingEta by viewModel.remainingEta.collectAsState()
     val alarmSettings by viewModel.alarmSettings.collectAsState()
 
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -545,6 +546,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.Bold
                             )
+                            remainingEta?.let { eta ->
+                                Text(
+                                    text = "ETA: $eta min",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                             Text(
                                 text = "DISTANCE TO TARGET",
                                 style = MaterialTheme.typography.labelLarge,
@@ -573,6 +582,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.Bold
                             )
+                            remainingEta?.let { eta ->
+                                Text(
+                                    text = "ETA: $eta min",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                             Text(
                                 text = destinationName ?: "Selected Destination",
                                 style = MaterialTheme.typography.bodyMedium,
