@@ -54,6 +54,7 @@ class LocationAlarmService : Service() {
     private var isVibrateEnabled: Boolean = true
     
     private var currentRoute: LineString? = null
+    private var expectedSpeedMps: Double = 0.0
     private val locationBuffer = mutableListOf<Location>()
 
     companion object {
@@ -98,10 +99,16 @@ class LocationAlarmService : Service() {
             }
             ACTION_UPDATE_ROUTE -> {
                 val routeGeoJson = intent.getStringExtra("ROUTE_GEOJSON")
+                val duration = intent.getDoubleExtra("EXPECTED_DURATION", 0.0)
+                val distance = intent.getDoubleExtra("EXPECTED_DISTANCE", 0.0)
+                
                 if (routeGeoJson != null) {
                     try {
                         currentRoute = LineString.fromJson(routeGeoJson)
-                        android.util.Log.d("LocationAlarmService", "Route updated successfully")
+                        if (duration > 0 && distance > 0) {
+                            expectedSpeedMps = distance / duration
+                            android.util.Log.d("LocationAlarmService", "Route and speed updated: ${expectedSpeedMps}mps")
+                        }
                     } catch (e: Exception) {
                         android.util.Log.e("LocationAlarmService", "Failed to parse updated GeoJSON", e)
                     }
@@ -116,7 +123,6 @@ class LocationAlarmService : Service() {
         destinationLng = intent?.getDoubleExtra("DEST_LNG", 0.0) ?: 0.0
         
         val passedName = intent?.getStringExtra("DEST_NAME")
-        android.util.Log.d("LocationAlarmService", "Received DEST_NAME: $passedName")
         destinationName = if (!passedName.isNullOrBlank()) passedName else "Unknown Destination"
         
         distanceThreshold = intent?.getFloatExtra("DISTANCE_THRESHOLD", 500f) ?: 500f
@@ -127,9 +133,15 @@ class LocationAlarmService : Service() {
         isVibrateEnabled = intent?.getBooleanExtra("VIBRATE", true) ?: true
         
         val routeGeoJson = intent?.getStringExtra("ROUTE_GEOJSON")
+        val initialDuration = intent?.getDoubleExtra("EXPECTED_DURATION", 0.0) ?: 0.0
+        val initialDistance = intent?.getDoubleExtra("EXPECTED_DISTANCE", 0.0) ?: 0.0
+
         if (routeGeoJson != null) {
             try {
                 currentRoute = LineString.fromJson(routeGeoJson)
+                if (initialDuration > 0 && initialDistance > 0) {
+                    expectedSpeedMps = initialDistance / initialDuration
+                }
             } catch (e: Exception) {
                 android.util.Log.e("LocationAlarmService", "Failed to parse GeoJSON", e)
             }
@@ -184,9 +196,12 @@ class LocationAlarmService : Service() {
                 sendBroadcast(reRouteIntent)
             }
             
-            // 3. Update speed and calculate ETA
-            routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
-            etaMinutes = routeDistanceEngine.calculateDynamicETA(distance)
+            // 3. Update speed and calculate calibrated ETA
+            val userAvgSpeed = routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
+            etaMinutes = routeDistanceEngine.calculateCalibratedETA(
+                remainingDistanceMeters = distance,
+                expectedSpeedMps = expectedSpeedMps
+            )
             
         } else {
             // Fallback to Haversine if no route is available

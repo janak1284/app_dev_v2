@@ -70,7 +70,8 @@ fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
             com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
                 viewModel = viewModel,
                 onBackClick = { showJourneyHistory = false },
-                onHistoryItemClick = { /* Handle click if needed */ }
+                onHistoryItemClick = { /* Handle click if needed */ },
+                onReactivateClick = { showJourneyHistory = false }
             )
         }
         showSettings -> {
@@ -102,6 +103,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val destination by viewModel.destination.collectAsState()
     val destinationName by viewModel.destinationName.collectAsState()
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
+    val isPreviewMode by viewModel.isPreviewMode.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val alarmSettings by viewModel.alarmSettings.collectAsState()
 
@@ -557,6 +559,43 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 Icon(Icons.Default.Stop, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("TURN OFF")
+                            }
+                        } else if (isPreviewMode) {
+                            StatusHeader(
+                                title = "JOURNEY PREVIEW",
+                                icon = Icons.Default.Route,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = destinationName ?: "Selected Destination",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { showBottomSheet = true },
+                                    modifier = Modifier.weight(1f).height(56.dp),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Icon(Icons.Default.Settings, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("CONFIG")
+                                }
+                                Button(
+                                    onClick = { viewModel.startAlarm() },
+                                    modifier = Modifier.weight(1f).height(56.dp),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("CONTINUE")
+                                }
                             }
                         } else {
                             StatusHeader(

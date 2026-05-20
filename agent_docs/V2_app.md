@@ -45,10 +45,15 @@ Finally, align the Jetpack Compose layer with the new backend reality.
 ## Phase 6: Journey Preview & Speed-Adjusted ETA
 Enhance the transition from Home to Map with a preview state and a more robust predictive engine.
 
-* [ ] **Journey Preview State:** When a user selects a route from HomeScreen, navigate to MapScreen but stay in a "PREVIEW" mode. Show the route line, distance, and initial OSRM ETA.
-* [ ] **The "Continue" Confirmation:** Add a "CONTINUE TO ALARM" button in the preview mode. The alarm and background service should only start after this confirmation.
-* [ ] **OSRM Speed Calibration:** Capture the initial `duration` from the OSRM response. Calculate the "Expected Speed" ($Distance / Duration$).
-* [ ] **Dynamic Speed Ratio ETA:** Instead of relying purely on current speed, calculate a "Speed Ratio" ($\text{User Avg Speed} / \text{OSRM Expected Speed}$). Multiply the remaining OSRM duration by this ratio to provide an ETA that respects road-specific speed limits while adapting to the user's relative pace.
+* [x] **Journey Preview State:** When a user selects a route from HomeScreen, navigate to MapScreen but stay in a "PREVIEW" mode. Show the route line, distance, and initial OSRM ETA.
+* [x] **The "Continue" Confirmation:** Add a "CONTINUE TO ALARM" button in the preview mode. The alarm and background service should only start after this confirmation.
+* [x] **OSRM Speed Calibration:** Capture the initial `duration` from the OSRM response. Calculate the "Expected Speed" ($Distance / Duration$).
+* [x] **Dynamic Speed Ratio ETA:** Instead of relying purely on current speed, calculate a "Speed Ratio" ($\text{User Avg Speed} / \text{OSRM Expected Speed}$). Multiply the remaining OSRM duration by this ratio to provide an ETA that respects road-specific speed limits while adapting to the user's relative pace.
+
+## Phase 7: Final Verification & Field Testing
+* [ ] **Edit Mode Implementation:** Finish the UI and ViewModel logic to allow users to rename and re-configure saved routes.
+* [ ] **GPX Simulation:** Use Android Studio's location emulator to run simulated trips with varying speeds to verify calibrated ETA accuracy.
+* [ ] **WakeLock & Doze Verification:** Ensure the service stays active during long periods of device inactivity.
 
 ## The Onboarding Brief (Read this first)
 **The Big Pivot:**
@@ -64,7 +69,7 @@ We are integrating Open Source Routing Machine (OSRM) to get actual road paths (
 
 **1. The Room Database Foundation:**
 * Setup the Room dependencies.
-* Create the SavedRoute (metadata) and RouteBreadcrumb (GPS points) Entities.
+* Create the SavedRoute (metadata) and RouteBreadcrumb (GPS trails) Entities.
 * Write the DAOs for batch inserting GPS trails and fetching saved routes.
 * Expose this data to the ViewModel layer via a Repository.
 

@@ -61,13 +61,37 @@ class RouteDistanceEngine {
     }
 
     /**
-     * Predicts the dynamic ETA in minutes.
+     * Predicts the dynamic ETA in minutes, calibrated by the ratio of user speed vs OSRM expected speed.
      * 
      * @param remainingDistanceMeters Distance left along the route.
+     * @param expectedSpeedMps The speed OSRM expects for this road segment.
      * @return ETA in minutes.
      */
+    fun calculateCalibratedETA(remainingDistanceMeters: Double, expectedSpeedMps: Double): Double {
+        if (averageSpeedMps <= 0.5) { // User is stationary
+            return Double.MAX_VALUE
+        }
+
+        return if (expectedSpeedMps > 0) {
+            // Speed Ratio = Current User Speed / Road's Expected Speed
+            val speedRatio = averageSpeedMps / expectedSpeedMps
+            
+            // Expected Duration = Remaining Distance / Road's Expected Speed
+            val baseDurationSeconds = remainingDistanceMeters / expectedSpeedMps
+            
+            // Calibrated ETA = Base Duration / Speed Ratio
+            (baseDurationSeconds / speedRatio) / 60.0
+        } else {
+            // Fallback to simple dynamic ETA
+            (remainingDistanceMeters / averageSpeedMps) / 60.0
+        }
+    }
+
+    /**
+     * Predicts the simple dynamic ETA in minutes.
+     */
     fun calculateDynamicETA(remainingDistanceMeters: Double): Double {
-        if (averageSpeedMps <= 0.5) { // User is stationary or moving very slowly (~1.8 km/h)
+        if (averageSpeedMps <= 0.5) {
             return Double.MAX_VALUE
         }
         val secondsRemaining = remainingDistanceMeters / averageSpeedMps

@@ -111,14 +111,14 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             "saved_routes" -> {
-                                androidx.activity.compose.BackHandler { currentScreen = "settings" }
-                                com.janak.location.alarm.ui.settings.SavedRoutesScreen(
-                                    viewModel = viewModel,
-                                    onBackClick = { currentScreen = "settings" },
-                                    onEditRouteClick = { route -> /* Add edit logic/navigation */ }
-                                )
-                            }
-                            "journey_history" -> {
+                                 androidx.activity.compose.BackHandler { currentScreen = "settings" }
+                                 com.janak.location.alarm.ui.settings.SavedRoutesScreen(
+                                     viewModel = viewModel,
+                                     onBackClick = { currentScreen = "settings" },
+                                     onEditRouteClick = { route -> /* Add edit logic/navigation */ },
+                                     onRouteClick = { currentScreen = "map" }
+                                 )
+                             }                            "journey_history" -> {
                                 androidx.activity.compose.BackHandler { currentScreen = "settings" }
                                 com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
                                     viewModel = viewModel,
@@ -126,10 +126,10 @@ class MainActivity : ComponentActivity() {
                                     onHistoryItemClick = { historyId ->
                                         selectedHistoryId = historyId
                                         currentScreen = "journey_details"
-                                    }
+                                    },
+                                    onReactivateClick = { currentScreen = "home" }
                                 )
-                            }
-                            "journey_details" -> {
+                            }                            "journey_details" -> {
                                 androidx.activity.compose.BackHandler { currentScreen = "journey_history" }
                                 com.janak.location.alarm.ui.settings.JourneyHistoryDetailsScreen(
                                     viewModel = viewModel,

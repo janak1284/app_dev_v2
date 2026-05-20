@@ -64,14 +64,15 @@ If no automated tests:
 * [x] V2 Spatial math active (Turf-Java route slicing)
 * [x] V2 Dynamic ETA working
 * [x] V2 UI (Home screen & Saved Journeys/Journey History Logs) implemented
+* [x] V2 Preview Mode & Calibrated ETA (Phase 6)
 
 ---
 
 ## Current State (Update During Development)
 
 **Last Updated:** May 2026
-**Working On:** **Phase 6: Final V2 Verification & Field Testing**
-**Recently Completed:** Phase 5 (UI Refactor, Home Screen, and Saved Journeys/Journey History Logs)
+**Working On:** **Phase 7: Final Verification & Field Testing**
+**Recently Completed:** Phase 6 (Journey Preview & Speed-Adjusted ETA)
 **Blocked By:** None.
 
 ---
@@ -106,6 +107,17 @@ If no automated tests:
 * [x] Build Home Screen (Saved Routes and Journey History lists).
 * [x] Build "Save Journey" Bottom Sheet prompt.
 * [x] Implement separate "Saved Journeys" and "Journey History" management pages.
+
+### Phase 6: Journey Preview & Speed-Adjusted ETA
+* [x] Implement "PREVIEW" mode in MapScreen.
+* [x] Add "CONTINUE TO ALARM" confirmation flow.
+* [x] Implement OSRM Speed Calibration and Speed Ratio ETA logic.
+* [x] Implement "One-Click" direct journey start from history/saved routes.
+
+### Phase 7: Final Verification & Field Testing
+* [ ] Implement "Edit Mode" for Saved Routes (Rename/Re-configure).
+* [ ] GPX Simulation for Calibrated ETA accuracy verification.
+* [ ] WakeLock & Battery Optimization verification.
 
 ---
 
