@@ -24,10 +24,14 @@ class RouteDistanceEngine {
         val snappedPoint = feature.geometry() as? Point ?: return Double.MAX_VALUE
         
         // 2. Slice the line from the snapped point to the end
-        val slicedLine = TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
-        
-        // 3. Measure the length of the sliced line in meters
-        return TurfMeasurement.length(slicedLine, TurfConstants.UNIT_METERS)
+        return try {
+            val slicedLine = TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
+            // 3. Measure the length of the sliced line in meters
+            TurfMeasurement.length(slicedLine, TurfConstants.UNIT_METERS)
+        } catch (e: Exception) {
+            // Slicing fails if start == stop (we are exactly at the destination point)
+            0.0
+        }
     }
 
     /**
@@ -100,5 +104,23 @@ class RouteDistanceEngine {
 
     fun resetStats() {
         averageSpeedMps = 0.0
+    }
+
+    /**
+     * Calculates the total distance of a traversed path from a list of locations.
+     */
+    fun calculateTotalDistance(locations: List<android.location.Location>): Double {
+        if (locations.size < 2) return 0.0
+        var total = 0.0
+        for (i in 0 until locations.size - 1) {
+            val results = FloatArray(1)
+            android.location.Location.distanceBetween(
+                locations[i].latitude, locations[i].longitude,
+                locations[i + 1].latitude, locations[i + 1].longitude,
+                results
+            )
+            total += results[0]
+        }
+        return total
     }
 }

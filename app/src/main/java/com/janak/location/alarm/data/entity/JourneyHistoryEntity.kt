@@ -15,5 +15,8 @@ data class JourneyHistoryEntity(
     val destinationName: String,
     val mapDestinationName: String?,
     val alarmConfigAtTime: AlarmSettings,
-    val timestamp: Long
+    val timestamp: Long,
+    val durationMillis: Long = 0,
+    val actualDistanceMeters: Double = 0.0,
+    val actualRouteGeoJson: String? = null
 )

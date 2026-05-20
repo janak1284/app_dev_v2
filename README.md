@@ -21,18 +21,21 @@ Standard GPS alarms often fail because they use a straight line to measure dista
 
 ### 🛣️ Smart Routing & Alarms
 - **Road-Aware Distance:** High-precision tracking that follows the curves of the road using the OSRM (Open Source Routing Machine) engine.
+- **Real-Time Route Slicing:** The map route line dynamically shortens (slices) as you move, providing immediate visual feedback of your progress.
 - **Smart ETA Alarms:** Set an alarm to wake you up exactly **10 minutes before you arrive**, regardless of traffic or distance.
 - **Distance Alarms:** Traditional wake-up calls based on road mileage (e.g., "Wake me 500m before the stop").
 
 ### 🗺️ Advanced Map Experience
+- **Center Lock (Auto-Follow):** Toggle a "locked" mode that keeps the user centered on the map. It automatically disengages if you manually pan the map.
 - **Interactive MapLibre Interface:** A smooth, battery-efficient map using OpenStreetMap data.
 - **Journey Preview:** See your entire route line and total distance before you even start the trip.
 - **One-Tap Search:** Instant destination search with history and "smart suggestions."
 
 ### 📂 History & Management
-- **Journey Logs:** Automatically saves a "breadcrumb trail" (GPS path) of your completed trips so you can review your route later.
-- **Saved Routes:** Bookmark your frequent commutes (Home, Work, Gym) with custom alarm settings for each.
-- **Edit Mode:** Easily rename saved routes or adjust alarm distances without starting over.
+- **High-Fidelity Saving:** Automatically captures your **actual path taken**, total distance, and duration.
+- **Improved UI/UX:** Data-rich cards for Saved Routes and History, displaying real-world metrics (KM, minutes) and active alarm settings.
+- **Route Reuse:** When you reuse a saved journey, the app uses your previously traversed high-precision path instead of the OSRM API, ensuring 100% consistency.
+- **Reliable Background Engine:** Enhanced with state recovery and deep-sleep optimization (WakeLocks) to ensure long journeys are recorded without interruption.
 
 ### 🛡️ Reliability (The "Guardian" System)
 - **Background Tracking:** A dedicated service keeps the app alive and monitoring your location even when you are using other apps or the phone is locked.
@@ -74,9 +77,10 @@ The app is built using **Clean Architecture**, which means the code is separated
 ## 🗺️ Roadmap
 - [x] **Phase 5:** Home Screen, Saved Routes, and Journey History.
 - [x] **Phase 6:** Predictive Routing Engine & Road-Snapping logic.
-- [x] **Phase 6:** "Edit Mode" for routes and Keyboard optimizations.
-- [ ] **Phase 7:** Battery-saver mode (Smart Polling based on distance).
-- [ ] **Phase 7:** Real-world field testing and accuracy calibration.
+- [x] **Phase 7:** High-Fidelity Path Saving & Route Slicing.
+- [x] **Phase 8:** Refinement Phase: Skeleton loaders, History Gists, Home Screen updates, Persistent Tracking (1.3km limit fix) and Stability fixes.
+- [ ] **Phase 9:** Battery-saver mode (Smart Polling based on distance).
+- [ ] **Phase 9:** Real-world field testing and accuracy calibration.
 
 ---
 

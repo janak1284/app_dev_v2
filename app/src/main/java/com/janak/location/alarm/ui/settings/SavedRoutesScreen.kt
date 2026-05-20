@@ -24,6 +24,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.vector.ImageVector
+
+import com.janak.location.alarm.ui.components.SavedRouteCard
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SavedRoutesScreen(
@@ -79,66 +85,44 @@ fun SavedRoutesScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
+                    .padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(savedRoutes) { route ->
                     val isSelected = selectedRoutes.containsKey(route.routeId)
                     
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                text = route.destinationName,
-                                fontWeight = FontWeight.Bold
-                            )
+                    SavedRouteCard(
+                        route = route,
+                        isSelected = isSelected,
+                        isSelectionMode = isSelectionMode,
+                        onEditClick = { onEditRouteClick(route) },
+                        onDeleteClick = { viewModel.deleteRoute(route) },
+                        onStartClick = {
+                            viewModel.startJourneyFromSavedRoute(route)
+                            onRouteClick()
                         },
-                        supportingContent = {
-                            Text(
-                                text = "Last taken: ${SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()).format(Date(route.lastTakenTimestamp))}"
-                            )
+                        onLongClick = {
+                            isSelectionMode = true
+                            if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
+                            if (selectedRoutes.isEmpty()) isSelectionMode = false
                         },
-                        leadingContent = {
-                            Icon(Icons.Default.Route, contentDescription = null, tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                        },
-                        trailingContent = {
-                            if (!isSelectionMode) {
-                                Row {
-                                    IconButton(onClick = { onEditRouteClick(route) }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit")
-                                    }
-                                    IconButton(onClick = { viewModel.deleteRoute(route) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
-                                    }
-                                }
+                        onClick = {
+                            if (isSelectionMode) {
+                                if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
+                                if (selectedRoutes.isEmpty()) isSelectionMode = false
                             } else {
-                                Checkbox(
-                                    checked = isSelected,
-                                    onCheckedChange = null
-                                )
+                                viewModel.startJourneyFromSavedRoute(route)
+                                onRouteClick()
                             }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                            .combinedClickable(
-                                onClick = {
-                                    if (isSelectionMode) {
-                                        if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
-                                        if (selectedRoutes.isEmpty()) isSelectionMode = false
-                                    } else {
-                                        viewModel.startJourneyFromSavedRoute(route)
-                                        onRouteClick()
-                                    }
-                                },
-                                onLongClick = {
-                                    isSelectionMode = true
-                                    if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
-                                    if (selectedRoutes.isEmpty()) isSelectionMode = false
-                                }
-                            )
+                        }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
         }
     }
+}
+
+private fun formatDistance(meters: Int): String {
+    return if (meters >= 1000) String.format("%.1f km", meters / 1000f) else "${meters}m"
 }

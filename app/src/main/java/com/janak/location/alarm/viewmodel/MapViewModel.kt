@@ -34,6 +34,7 @@ import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import androidx.core.content.edit
+import androidx.core.content.ContextCompat
 import com.janak.location.alarm.domain.RouteDistanceEngine
 
 class MapViewModel(
@@ -53,6 +54,11 @@ class MapViewModel(
 
     private fun org.maplibre.geojson.LineString.toMapbox(): com.mapbox.geojson.LineString =
         com.mapbox.geojson.LineString.fromLngLats(coordinates().map { it.toMapbox() })
+
+    private fun com.mapbox.geojson.LineString.toMapLibre(): org.maplibre.geojson.LineString =
+        org.maplibre.geojson.LineString.fromLngLats(coordinates().map { 
+            org.maplibre.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+        })
     
     val savedRoutes = routeRepository.allSavedRoutes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -94,6 +100,11 @@ class MapViewModel(
 
     private val _distanceToDestination = MutableStateFlow<String?>(null)
     val distanceToDestination: StateFlow<String?> = _distanceToDestination.asStateFlow()
+
+    private val _remainingEta = MutableStateFlow<Int?>(null)
+    val remainingEta: StateFlow<Int?> = _remainingEta.asStateFlow()
+
+    private var fullRouteLine: com.mapbox.geojson.LineString? = null
 
     private val _alarmSettings = MutableStateFlow(com.janak.location.alarm.model.AlarmSettings())
     val alarmSettings: StateFlow<com.janak.location.alarm.model.AlarmSettings> = _alarmSettings.asStateFlow()
@@ -154,13 +165,8 @@ class MapViewModel(
         val reRouteFilter = android.content.IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
         val journeyFilter = android.content.IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(reRouteReceiver, reRouteFilter, Context.RECEIVER_NOT_EXPORTED)
-            context.registerReceiver(journeyCompletedReceiver, journeyFilter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            context.registerReceiver(reRouteReceiver, reRouteFilter)
-            context.registerReceiver(journeyCompletedReceiver, journeyFilter)
-        }
+        ContextCompat.registerReceiver(context, reRouteReceiver, reRouteFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(context, journeyCompletedReceiver, journeyFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
     fun checkLocationSettings() {
@@ -370,6 +376,10 @@ class MapViewModel(
                             Point.fromLngLat(point[0].toString().toDouble(), point[1].toString().toDouble())
                         }
                         if (coordinates != null) {
+                            val mbRoute = com.mapbox.geojson.LineString.fromLngLats(coordinates.map { 
+                                com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+                            })
+                            fullRouteLine = mbRoute
                             _routeLine.value = LineString.fromLngLats(coordinates)
                             android.util.Log.d("MapViewModel", "fetchRoute: routeLine updated, size=${coordinates.size}")
                         }
@@ -420,19 +430,29 @@ class MapViewModel(
     private val _journeyCompleted = MutableStateFlow<Boolean>(false)
     val journeyCompleted: StateFlow<Boolean> = _journeyCompleted.asStateFlow()
     
+    private var hasTriggeredArrival = false
+
     fun resetJourneyCompleted() {
         _journeyCompleted.value = false
+        hasTriggeredArrival = false
+        // Clear journey state
+        _destination.value = null
+        _destinationName.value = null
+        _distanceToDestination.value = null
+        _remainingEta.value = null
+        _currentRouteGeoJson.value = null
+        _routeLine.value = null
+        fullRouteLine = null
     }
 
     fun stopAlarm() {
         _isAlarmSet.value = false
         _isPreviewMode.value = false
-        _distanceToDestination.value = null
-        _destinationName.value = null
-        _currentRouteGeoJson.value = null
-        _routeLine.value = null
+        // Keep destinationName and distance for the summary sheet
+
+        routeDistanceEngine.resetStats()
         alarmEngine.stop()
-        
+
         val serviceIntent = Intent(context, LocationAlarmService::class.java)
         context.stopService(serviceIntent)
     }
@@ -443,8 +463,11 @@ class MapViewModel(
             _destinationName.value = null
             _isPreviewMode.value = false
             _distanceToDestination.value = null
+            _remainingEta.value = null
             _currentRouteGeoJson.value = null
             _routeLine.value = null
+            fullRouteLine = null
+            routeDistanceEngine.resetStats()
         }
     }
 
@@ -454,18 +477,58 @@ class MapViewModel(
         // 1. If in Preview Mode, prioritize the OSRM expected distance (FULL ROAD DISTANCE)
         if (_isPreviewMode.value && _expectedDistance.value > 0) {
             _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
+            _remainingEta.value = (_expectedDuration.value / 60.0).roundToInt()
             return
         }
 
         // 2. If Alarm is Active, use high-precision road-snapping logic
-        val route = _routeLine.value
-        if (route != null && _isAlarmSet.value) {
+        val route = fullRouteLine
+        if (route != null && (_isAlarmSet.value || _isPreviewMode.value)) {
             val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
-            val mbRoute = route.toMapbox()
-            val distance = routeDistanceEngine.calculateRemainingDistance(mbRoute, userPoint)
             
-            _distanceToDestination.value = formatDistance(distance.toInt())
-            return
+            // Snapping & Slicing
+            val feature = com.mapbox.turf.TurfMisc.nearestPointOnLine(userPoint, route.coordinates())
+            val snappedPoint = feature.geometry() as? com.mapbox.geojson.Point
+            
+            if (snappedPoint != null) {
+                try {
+                    val slicedLine = com.mapbox.turf.TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
+                    
+                    // Update map route line (sliced version) if it has at least 2 points
+                    if (slicedLine.coordinates().size >= 2) {
+                        _routeLine.value = slicedLine.toMapLibre()
+                    }
+                    
+                    // Calculate distance along route
+                    val distance = com.mapbox.turf.TurfMeasurement.length(slicedLine, com.mapbox.turf.TurfConstants.UNIT_METERS)
+                    _distanceToDestination.value = formatDistance(distance.toInt())
+                    
+                    // Update speed and calculate ETA
+                    routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
+                    val expectedSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
+                    
+                    val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
+                        remainingDistanceMeters = distance,
+                        expectedSpeedMps = expectedSpeed
+                    )
+                    
+                    if (etaMinutes != Double.MAX_VALUE) {
+                        _remainingEta.value = etaMinutes.roundToInt()
+                        android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps")
+                    } else {
+                        _remainingEta.value = null
+                        android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED")
+                    }
+                    return
+                } catch (e: Exception) {
+                    // Turf lineSlice throws exception if start and end are the same point (arrived)
+                    _distanceToDestination.value = formatDistance(0)
+                    _remainingEta.value = 0
+                    android.util.Log.d("MapViewModel", "checkDistance: Arrived at exact destination point")
+                }
+            } else {
+                android.util.Log.w("MapViewModel", "checkDistance: Could not snap user to route line")
+            }
         }
 
         // 3. Fallback to Haversine (ONLY if OSRM is unavailable)
@@ -482,6 +545,24 @@ class MapViewModel(
         } else {
             null
         }
+
+        // Auto-arrival detection (50m threshold)
+        if (distance <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
+            android.util.Log.d("MapViewModel", "Arrival detected at distance: $distance. isAlarmSet: ${_isAlarmSet.value}")
+            hasTriggeredArrival = true
+            _journeyCompleted.value = true
+            
+            if (!_isAlarmSet.value) {
+                // In preview mode, we just clear and stop
+                _isPreviewMode.value = false
+                _routeLine.value = null
+                fullRouteLine = null
+            }
+            // If isAlarmSet is true, we wait for the Service's JOURNEY_COMPLETED_BROADCAST
+            // which will call stopAlarm() and ensure data is saved.
+        }
+
+        _remainingEta.value = null
     }
 
     private fun formatDistance(meters: Int): String {
@@ -491,6 +572,9 @@ class MapViewModel(
     fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>, alarmSettings: com.janak.location.alarm.model.AlarmSettings) {
         val dest = _destination.value ?: return
         viewModelScope.launch {
+            // Get latest history entry to extract actual path metrics
+            val latestHistory = historyRepository.getLatestJourney()
+            
             val route = SavedRouteEntity(
                 destinationName = destinationName.ifBlank { "Unknown Destination" },
                 mapDestinationName = null,
@@ -498,7 +582,10 @@ class MapViewModel(
                 destinationLng = dest.longitude,
                 alarmSettings = alarmSettings,
                 dateSaved = System.currentTimeMillis(),
-                lastTakenTimestamp = System.currentTimeMillis()
+                lastTakenTimestamp = System.currentTimeMillis(),
+                routeGeoJson = latestHistory?.actualRouteGeoJson,
+                actualDistanceMeters = latestHistory?.actualDistanceMeters ?: 0.0,
+                estimatedDurationMillis = latestHistory?.durationMillis ?: 0
             )
             routeRepository.saveJourney(route, breadcrumbs)
         }
@@ -546,24 +633,65 @@ class MapViewModel(
         return historyRepository.getBreadcrumbsForHistory(historyId)
     }
 
-    fun startJourneyDirect(lat: Double, lng: Double, name: String, settings: com.janak.location.alarm.model.AlarmSettings) {
+    fun startJourneyDirect(
+        lat: Double, 
+        lng: Double, 
+        name: String, 
+        settings: com.janak.location.alarm.model.AlarmSettings,
+        preLoadedRouteGeoJson: String? = null,
+        preLoadedDistance: Double = 0.0,
+        preLoadedDuration: Long = 0
+    ) {
         _destination.value = LatLng(lat, lng)
         _destinationName.value = name
         _alarmSettings.value = settings
         _isPreviewMode.value = true
         
+        if (preLoadedRouteGeoJson != null) {
+            _currentRouteGeoJson.value = preLoadedRouteGeoJson
+            _expectedDistance.value = preLoadedDistance
+            _expectedDuration.value = preLoadedDuration.toDouble() / 1000.0
+            
+            try {
+                val mbRoute = com.mapbox.geojson.LineString.fromJson(preLoadedRouteGeoJson)
+                fullRouteLine = mbRoute
+                _routeLine.value = mbRoute.toMapLibre()
+                android.util.Log.d("MapViewModel", "startJourneyDirect: Using pre-loaded route")
+            } catch (e: Exception) {
+                android.util.Log.e("MapViewModel", "Failed to parse pre-loaded GeoJSON", e)
+            }
+        }
+        
         _userLocation.value?.let { 
             checkDistance(it)
-            fetchRoute(it, LatLng(lat, lng))
+            if (preLoadedRouteGeoJson == null) {
+                fetchRoute(it, LatLng(lat, lng))
+            }
         }
     }
 
     fun startJourneyFromSavedRoute(route: SavedRouteEntity) {
-        startJourneyDirect(route.destinationLat, route.destinationLng, route.destinationName, route.alarmSettings)
+        startJourneyDirect(
+            route.destinationLat, 
+            route.destinationLng, 
+            route.destinationName, 
+            route.alarmSettings,
+            preLoadedRouteGeoJson = route.routeGeoJson,
+            preLoadedDistance = route.actualDistanceMeters,
+            preLoadedDuration = route.estimatedDurationMillis
+        )
     }
 
     fun startJourneyFromHistory(history: com.janak.location.alarm.data.entity.JourneyHistoryEntity) {
-        startJourneyDirect(history.destinationLat, history.destinationLng, history.destinationName, history.alarmConfigAtTime)
+        startJourneyDirect(
+            history.destinationLat, 
+            history.destinationLng, 
+            history.destinationName, 
+            history.alarmConfigAtTime,
+            preLoadedRouteGeoJson = history.actualRouteGeoJson,
+            preLoadedDistance = history.actualDistanceMeters,
+            preLoadedDuration = history.durationMillis
+        )
     }
 
     override fun onCleared() {

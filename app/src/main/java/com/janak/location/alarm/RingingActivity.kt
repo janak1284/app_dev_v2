@@ -92,7 +92,7 @@ class RingingActivity : ComponentActivity() {
             action = com.janak.location.alarm.service.LocationAlarmService.ACTION_STOP_ALARM
         }
         startService(intent)
-        stopAlarmAndFinish()
+        stopRingingAndFinish()
     }
 
     private fun endJourney() {
@@ -100,7 +100,13 @@ class RingingActivity : ComponentActivity() {
             action = com.janak.location.alarm.service.LocationAlarmService.ACTION_END_JOURNEY
         }
         startService(intent)
-        stopAlarmAndFinish()
+        stopRingingAndFinish()
+    }
+
+    private fun stopRingingAndFinish() {
+        ringtone?.stop()
+        vibrator?.cancel()
+        finish()
     }
 
     private fun startAlarm(uriString: String?, vibrate: Boolean) {
@@ -132,23 +138,6 @@ class RingingActivity : ComponentActivity() {
                 vibrator?.vibrate(pattern, 0)
             }
         }
-    }
-
-    private fun stopAlarmAndFinish() {
-        ringtone?.stop()
-        vibrator?.cancel()
-        
-        // 1. Clear the notification
-        val notificationManager = getSystemService(android.app.NotificationManager::class.java)
-        notificationManager.cancel(1001) // Matches the ID in LocationAlarmService
-        
-        // 2. Stop the location service (which triggers the dialog)
-        val stopServiceIntent = Intent(this, LocationAlarmService::class.java).apply {
-            action = "STOP_ALARM"
-        }
-        startService(stopServiceIntent)
-        
-        finish()
     }
 
     override fun onDestroy() {

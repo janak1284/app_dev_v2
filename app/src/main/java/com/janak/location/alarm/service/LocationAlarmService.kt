@@ -52,10 +52,13 @@ class LocationAlarmService : Service() {
     private var isPredictiveAlarmEnabled: Boolean = false
     private var ringtoneUri: String? = null
     private var isVibrateEnabled: Boolean = true
+    private var hasSentArrivalBroadcast = false
+    private var isAlarmSilenced = false
+    private var startTimeMillis: Long = 0
     
     private var currentRoute: LineString? = null
     private var expectedSpeedMps: Double = 0.0
-    private val locationBuffer = mutableListOf<Location>()
+    private var historyId: Long = -1L
 
     companion object {
         const val ACTION_STOP_ALARM = "com.janak.location.alarm.ACTION_STOP_ALARM"
@@ -86,14 +89,26 @@ class LocationAlarmService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        if (intent == null) {
+            // Attempt to recover state from preferences or stop
+            val sharedPrefs = getSharedPreferences("service_state", MODE_PRIVATE)
+            val isTracking = sharedPrefs.getBoolean("is_tracking", false)
+            if (isTracking && currentState == ServiceState.IDLE) {
+                recoverState(sharedPrefs)
+                return START_STICKY
+            }
+            if (currentState == ServiceState.IDLE) stopSelf()
+            return START_STICKY
+        }
+
+        when (intent.action) {
             ACTION_STOP_ALARM -> {
                 stopAlarmRinging()
                 return START_STICKY
             }
             ACTION_END_JOURNEY, "STOP_ALARM" -> {
-                // Signal journey completion for UI dialog
-                sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST))
+                android.util.Log.d("LocationAlarmService", "Action End Journey received. Stopping service.")
+                sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST).setPackage(packageName))
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -107,7 +122,6 @@ class LocationAlarmService : Service() {
                         currentRoute = LineString.fromJson(routeGeoJson)
                         if (duration > 0 && distance > 0) {
                             expectedSpeedMps = distance / duration
-                            android.util.Log.d("LocationAlarmService", "Route and speed updated: ${expectedSpeedMps}mps")
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("LocationAlarmService", "Failed to parse updated GeoJSON", e)
@@ -117,52 +131,116 @@ class LocationAlarmService : Service() {
             }
         }
         
-        wakeLock?.acquire(10 * 60 * 1000L) // 10 minutes timeout
+        // Initializing Journey (Only if not already tracking)
+        if (currentState == ServiceState.IDLE) {
+            wakeLock?.acquire(30 * 60 * 1000L)
 
-        destinationLat = intent?.getDoubleExtra("DEST_LAT", 0.0) ?: 0.0
-        destinationLng = intent?.getDoubleExtra("DEST_LNG", 0.0) ?: 0.0
-        
-        val passedName = intent?.getStringExtra("DEST_NAME")
-        destinationName = if (!passedName.isNullOrBlank()) passedName else "Unknown Destination"
-        
-        distanceThreshold = intent?.getFloatExtra("DISTANCE_THRESHOLD", 500f) ?: 500f
-        isDistanceAlarmEnabled = intent?.getBooleanExtra("DISTANCE_ALARM_ENABLED", true) ?: true
-        predictiveMinutesThreshold = intent?.getIntExtra("PREDICTIVE_MINUTES", 10) ?: 10
-        isPredictiveAlarmEnabled = intent?.getBooleanExtra("PREDICTIVE_ALARM_ENABLED", false) ?: false
-        ringtoneUri = intent?.getStringExtra("RINGTONE_URI")
-        isVibrateEnabled = intent?.getBooleanExtra("VIBRATE", true) ?: true
-        
-        val routeGeoJson = intent?.getStringExtra("ROUTE_GEOJSON")
-        val initialDuration = intent?.getDoubleExtra("EXPECTED_DURATION", 0.0) ?: 0.0
-        val initialDistance = intent?.getDoubleExtra("EXPECTED_DISTANCE", 0.0) ?: 0.0
+            destinationLat = intent.getDoubleExtra("DEST_LAT", 0.0)
+            destinationLng = intent.getDoubleExtra("DEST_LNG", 0.0)
+            val passedName = intent.getStringExtra("DEST_NAME")
+            destinationName = if (!passedName.isNullOrBlank()) passedName else "Unknown Destination"
+            
+            distanceThreshold = intent.getFloatExtra("DISTANCE_THRESHOLD", 500f)
+            isDistanceAlarmEnabled = intent.getBooleanExtra("DISTANCE_ALARM_ENABLED", true)
+            predictiveMinutesThreshold = intent.getIntExtra("PREDICTIVE_MINUTES", 10)
+            isPredictiveAlarmEnabled = intent.getBooleanExtra("PREDICTIVE_ALARM_ENABLED", false)
+            ringtoneUri = intent.getStringExtra("RINGTONE_URI")
+            isVibrateEnabled = intent.getBooleanExtra("VIBRATE", true)
+            isAlarmSilenced = false
+            
+            val routeGeoJson = intent.getStringExtra("ROUTE_GEOJSON")
+            val initialDuration = intent.getDoubleExtra("EXPECTED_DURATION", 0.0)
+            val initialDistance = intent.getDoubleExtra("EXPECTED_DISTANCE", 0.0)
 
-        if (routeGeoJson != null) {
-            try {
-                currentRoute = LineString.fromJson(routeGeoJson)
-                if (initialDuration > 0 && initialDistance > 0) {
-                    expectedSpeedMps = initialDistance / initialDuration
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("LocationAlarmService", "Failed to parse GeoJSON", e)
+            if (routeGeoJson != null) {
+                try {
+                    currentRoute = LineString.fromJson(routeGeoJson)
+                    if (initialDuration > 0 && initialDistance > 0) {
+                        expectedSpeedMps = initialDistance / initialDuration
+                    }
+                } catch (e: Exception) {}
             }
-        }
 
-        currentState = ServiceState.TRACKING
-        startForeground(NOTIFICATION_ID, createNotification("Distance Alarm Active", "Monitoring distance to destination..."))
-        startLocationTracking()
+            currentState = ServiceState.TRACKING
+            startTimeMillis = System.currentTimeMillis()
+            
+            saveStateToPrefs()
+            
+            // Create an initial history entry to get an ID for breadcrumbs
+            serviceScope.launch {
+                val initialHistory = JourneyHistoryEntity(
+                    routeId = null,
+                    startingPointLat = 0.0, // Will be updated on first location
+                    startingPointLng = 0.0,
+                    destinationLat = destinationLat,
+                    destinationLng = destinationLng,
+                    destinationName = destinationName,
+                    mapDestinationName = null,
+                    alarmConfigAtTime = com.janak.location.alarm.model.AlarmSettings(
+                        distanceMeters = distanceThreshold.toInt(),
+                        isDistanceAlarmEnabled = isDistanceAlarmEnabled,
+                        predictiveMinutes = predictiveMinutesThreshold,
+                        isPredictiveAlarmEnabled = isPredictiveAlarmEnabled,
+                        ringtoneUri = ringtoneUri?.let { try { android.net.Uri.parse(it) } catch(e: Exception) { null } },
+                        isVibrateEnabled = isVibrateEnabled
+                    ),
+                    timestamp = startTimeMillis
+                )
+                historyId = historyRepository.saveJourneyLog(initialHistory, emptyList())
+                android.util.Log.d("LocationAlarmService", "Initial history created with ID: $historyId")
+            }
+
+            startForeground(NOTIFICATION_ID, createNotification("Distance Alarm Active", "Monitoring distance to destination..."))
+            startLocationTracking()
+        } else {
+            // Update settings
+            distanceThreshold = intent.getFloatExtra("DISTANCE_THRESHOLD", distanceThreshold)
+            isDistanceAlarmEnabled = intent.getBooleanExtra("DISTANCE_ALARM_ENABLED", isDistanceAlarmEnabled)
+            predictiveMinutesThreshold = intent.getIntExtra("PREDICTIVE_MINUTES", predictiveMinutesThreshold)
+            isPredictiveAlarmEnabled = intent.getBooleanExtra("PREDICTIVE_ALARM_ENABLED", isPredictiveAlarmEnabled)
+            saveStateToPrefs()
+        }
 
         return START_STICKY
     }
 
-    private fun startLocationTracking() {
-        if (androidx.core.content.ContextCompat.checkSelfPermission(
-                this, android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
-        ) {
-            stopSelf()
-            return
+    private fun saveStateToPrefs() {
+        getSharedPreferences("service_state", MODE_PRIVATE).edit().apply {
+            putBoolean("is_tracking", true)
+            putLong("start_time", startTimeMillis)
+            putFloat("dest_lat", destinationLat.toFloat())
+            putFloat("dest_lng", destinationLng.toFloat())
+            putString("dest_name", destinationName)
+            putFloat("dist_threshold", distanceThreshold)
+            putBoolean("dist_enabled", isDistanceAlarmEnabled)
+            putInt("pred_threshold", predictiveMinutesThreshold)
+            putBoolean("pred_enabled", isPredictiveAlarmEnabled)
+            putString("ringtone", ringtoneUri)
+            putBoolean("vibrate", isVibrateEnabled)
+            putLong("history_id", historyId)
+            apply()
         }
+    }
 
+    private fun recoverState(prefs: android.content.SharedPreferences) {
+        startTimeMillis = prefs.getLong("start_time", System.currentTimeMillis())
+        destinationLat = prefs.getFloat("dest_lat", 0f).toDouble()
+        destinationLng = prefs.getFloat("dest_lng", 0f).toDouble()
+        destinationName = prefs.getString("dest_name", "Unknown") ?: "Unknown"
+        distanceThreshold = prefs.getFloat("dist_threshold", 500f)
+        isDistanceAlarmEnabled = prefs.getBoolean("dist_enabled", true)
+        predictiveMinutesThreshold = prefs.getInt("pred_threshold", 10)
+        isPredictiveAlarmEnabled = prefs.getBoolean("pred_enabled", false)
+        ringtoneUri = prefs.getString("ringtone", null)
+        isVibrateEnabled = prefs.getBoolean("vibrate", true)
+        historyId = prefs.getLong("history_id", -1L)
+        
+        currentState = ServiceState.TRACKING
+        startForeground(NOTIFICATION_ID, createNotification("Distance Alarm Active", "Recovered tracking..."))
+        startLocationTracking()
+    }
+
+    private fun startLocationTracking() {
         trackingJob?.cancel()
         trackingJob = serviceScope.launch {
             locationTrackingManager.getLocationUpdates().collect { location ->
@@ -172,11 +250,23 @@ class LocationAlarmService : Service() {
     }
 
     private fun processLocationUpdate(location: Location) {
-        // Extend wake lock on each update
-        wakeLock?.acquire(10 * 60 * 1000L)
+        wakeLock?.acquire(60 * 60 * 1000L)
         
-        // Buffer the location for breadcrumbs
-        locationBuffer.add(location)
+        // Persist breadcrumb immediately to database
+        if (historyId != -1L) {
+            serviceScope.launch {
+                historyRepository.saveJourneyLog(
+                    id = historyId,
+                    breadcrumb = RouteBreadcrumbEntity(
+                        historyId = historyId,
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        speed = location.speed,
+                        timestamp = location.time
+                    )
+                )
+            }
+        }
         
         var distance: Double
         var etaMinutes: Double = Double.MAX_VALUE
@@ -184,44 +274,31 @@ class LocationAlarmService : Service() {
         val route = currentRoute
         if (route != null) {
             val userPoint = Point.fromLngLat(location.longitude, location.latitude)
-            
-            // 1. Calculate route-based distance
             distance = routeDistanceEngine.calculateRemainingDistance(route, userPoint)
             
-            // 2. Check for route deviation (> 100m)
             val deviation = routeDistanceEngine.calculateDeviation(route, userPoint)
             if (deviation > 100) {
-                android.util.Log.w("LocationAlarmService", "Route deviation detected: ${deviation}m. Requesting re-route.")
-                val reRouteIntent = Intent(ACTION_RE_ROUTE)
-                sendBroadcast(reRouteIntent)
+                sendBroadcast(Intent(ACTION_RE_ROUTE).setPackage(packageName))
             }
             
-            // 3. Update speed and calculate calibrated ETA
-            val userAvgSpeed = routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
-            etaMinutes = routeDistanceEngine.calculateCalibratedETA(
-                remainingDistanceMeters = distance,
-                expectedSpeedMps = expectedSpeedMps
-            )
-            
+            routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
+            etaMinutes = routeDistanceEngine.calculateCalibratedETA(distance, expectedSpeedMps)
         } else {
-            // Fallback to Haversine if no route is available
             val results = FloatArray(1)
-            Location.distanceBetween(
-                location.latitude, location.longitude,
-                destinationLat, destinationLng,
-                results
-            )
+            Location.distanceBetween(location.latitude, location.longitude, destinationLat, destinationLng, results)
             distance = results[0].toDouble()
         }
         
-        val etaText = if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.roundToInt()} min" else ""
-        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}$etaText")
+        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.roundToInt()} min" else ""}")
 
-        if (currentState == ServiceState.TRACKING) {
-            val shouldTriggerDistance = isDistanceAlarmEnabled && distance <= distanceThreshold
-            val shouldTriggerPredictive = isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold
-            
-            if (shouldTriggerDistance || shouldTriggerPredictive) {
+        if (distance <= 50 && !hasSentArrivalBroadcast) {
+            hasSentArrivalBroadcast = true
+            sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST).setPackage(packageName))
+        }
+
+        if (currentState == ServiceState.TRACKING && !isAlarmSilenced) {
+            if ((isDistanceAlarmEnabled && distance <= distanceThreshold) || 
+                (isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold)) {
                 triggerAlarm()
             }
         }
@@ -229,25 +306,19 @@ class LocationAlarmService : Service() {
 
     private fun triggerAlarm() {
         currentState = ServiceState.ALARM_RINGING
-        
         val ringingIntent = Intent(this, com.janak.location.alarm.RingingActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("RINGTONE_URI", ringtoneUri)
             putExtra("VIBRATE", isVibrateEnabled)
         }
-
-        try {
-            startActivity(ringingIntent)
-        } catch (e: Exception) {
-            android.util.Log.e("LocationAlarmService", "Failed to start RingingActivity", e)
-        }
-
+        try { startActivity(ringingIntent) } catch (e: Exception) {}
         updateNotification("Arrived!", "You are within ${formatDistance(distanceThreshold.toInt())} of $destinationName")
     }
 
     private fun stopAlarmRinging() {
         if (currentState == ServiceState.ALARM_RINGING) {
             currentState = ServiceState.TRACKING
+            isAlarmSilenced = true
             updateNotification("Distance Alarm Active", "Monitoring after arrival...")
         }
     }
@@ -258,50 +329,25 @@ class LocationAlarmService : Service() {
     }
 
     private fun createNotification(title: String, content: String): Notification {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val stopIntent = Intent(this, LocationAlarmService::class.java).apply {
-            action = ACTION_END_JOURNEY
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this, 1, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
+        val intent = Intent(this, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val stopIntent = Intent(this, LocationAlarmService::class.java).apply { action = ACTION_END_JOURNEY }
+        val stopPendingIntent = PendingIntent.getService(this, 1, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(content)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .addAction(R.drawable.ic_location_pin, "End Journey", stopPendingIntent)
-            .build()
+            .setContentTitle(title).setContentText(content).setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(pendingIntent).setOngoing(true)
+            .addAction(R.drawable.ic_location_pin, "End Journey", stopPendingIntent).build()
     }
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
-            
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "Location Alarm Service",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            manager.createNotificationChannel(serviceChannel)
-
-            val alarmChannel = NotificationChannel(
-                "AlarmRingingChannel",
-                "Alarm Triggered",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
+            manager.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Location Alarm Service", NotificationManager.IMPORTANCE_LOW))
+            manager.createNotificationChannel(NotificationChannel("AlarmRingingChannel", "Alarm Triggered", NotificationManager.IMPORTANCE_HIGH).apply {
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 setBypassDnd(true)
-            }
-            manager.createNotificationChannel(alarmChannel)
+            })
         }
     }
 
@@ -312,68 +358,61 @@ class LocationAlarmService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         trackingJob?.cancel()
-        saveJourneyAndCleanup()
+        saveFinalSummary()
+        getSharedPreferences("service_state", MODE_PRIVATE).edit().clear().apply()
         serviceScope.cancel()
         alarmEngine.stop()
         wakeLock?.let { if (it.isHeld) it.release() }
     }
 
-    private fun saveJourneyAndCleanup() {
-        if (locationBuffer.isEmpty()) return
-
-        val finalLocations = locationBuffer.toList()
+    private fun saveFinalSummary() {
+        if (historyId == -1L) return
         
-        serviceScope.launch(NonCancellable) {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Generate a robust name
-                val robustName = if (!destinationName.isBlank() && destinationName != "Unknown Destination") {
-                    destinationName
-                } else {
-                    "Lat: ${destinationLat.roundTo(4)}, Lng: ${destinationLng.roundTo(4)}"
-                }
+                // Fetch all breadcrumbs for this journey to calculate final distance and generate GeoJSON
+                historyRepository.getBreadcrumbsForHistorySync(historyId).let { breadcrumbs ->
+                    if (breadcrumbs.isEmpty()) return@let
+                    
+                    val locations = breadcrumbs.map { 
+                        Location("").apply { 
+                            latitude = it.latitude
+                            longitude = it.longitude
+                            speed = it.speed
+                            time = it.timestamp
+                        }
+                    }
+                    
+                    val actualDistance = routeDistanceEngine.calculateTotalDistance(locations)
+                    val durationMillis = if (startTimeMillis > 0) System.currentTimeMillis() - startTimeMillis else 0
+                    
+                    val actualRouteGeoJson = if (locations.size >= 2) {
+                        try {
+                            LineString.fromLngLats(locations.map { Point.fromLngLat(it.longitude, it.latitude) }).toJson()
+                        } catch (e: Exception) { null }
+                    } else null
 
-                val history = JourneyHistoryEntity(
-                    routeId = null,
-                    startingPointLat = finalLocations.first().latitude,
-                    startingPointLng = finalLocations.first().longitude,
-                    destinationLat = destinationLat,
-                    destinationLng = destinationLng,
-                    destinationName = robustName,
-                    mapDestinationName = null,
-                    alarmConfigAtTime = com.janak.location.alarm.model.AlarmSettings(
-                        distanceMeters = distanceThreshold.toInt(),
-                        isDistanceAlarmEnabled = isDistanceAlarmEnabled,
-                        predictiveMinutes = predictiveMinutesThreshold,
-                        isPredictiveAlarmEnabled = isPredictiveAlarmEnabled,
-                        ringtoneUri = ringtoneUri?.let { android.net.Uri.parse(it) },
-                        isVibrateEnabled = isVibrateEnabled
-                    ),
-                    timestamp = System.currentTimeMillis()
-                )
-                
-                val breadcrumbs = finalLocations.map { loc ->
-                    RouteBreadcrumbEntity(
-                        historyId = 0,
-                        latitude = loc.latitude,
-                        longitude = loc.longitude,
-                        speed = loc.speed,
-                        timestamp = loc.time
+                    historyRepository.updateJourneySummary(
+                        id = historyId,
+                        startLat = locations.first().latitude,
+                        startLng = locations.first().longitude,
+                        distance = actualDistance,
+                        duration = durationMillis,
+                        geoJson = actualRouteGeoJson
                     )
+                    android.util.Log.d("LocationAlarmService", "Final journey summary updated for ID: $historyId")
                 }
-                
-                historyRepository.saveJourneyLog(history, breadcrumbs)
-                android.util.Log.d("LocationAlarmService", "Journey logged successfully: $robustName")
             } catch (e: Exception) {
-                android.util.Log.e("LocationAlarmService", "Failed to log journey", e)
+                android.util.Log.e("LocationAlarmService", "Failed to save final summary", e)
             }
         }
     }
+
+    override fun onBind(intent: Intent?): IBinder? = null
 
     private fun Double.roundTo(decimals: Int): Double {
         var multiplier = 1.0
         repeat(decimals) { multiplier *= 10 }
         return kotlin.math.round(this * multiplier) / multiplier
     }
-
-    override fun onBind(intent: Intent?): IBinder? = null
 }

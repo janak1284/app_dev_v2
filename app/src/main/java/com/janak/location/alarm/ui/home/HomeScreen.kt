@@ -27,6 +27,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import com.janak.location.alarm.ui.components.SavedRouteCard
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -67,7 +69,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Recent Journeys
+                    // Saved Routes Section
                     if (savedRoutes.isNotEmpty()) {
                         item {
                             Row(
@@ -76,7 +78,7 @@ fun HomeScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Recent Journeys",
+                                    text = "Saved Routes",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -87,7 +89,7 @@ fun HomeScreen(
                             }
                         }
                         items(
-                            items = savedRoutes.take(3),
+                            items = savedRoutes.take(5),
                             key = { it.routeId }
                         ) { route ->
                             val dismissState = rememberSwipeToDismissBoxState(
@@ -104,9 +106,13 @@ fun HomeScreen(
                                 enableDismissFromStartToEnd = false,
                                 backgroundContent = { DismissBackground(dismissState) },
                                 content = {
-                                    RouteCard(
+                                    SavedRouteCard(
                                         route = route,
                                         onClick = {
+                                            viewModel.startJourneyFromSavedRoute(route)
+                                            onNewJourneyClick()
+                                        },
+                                        onStartClick = {
                                             viewModel.startJourneyFromSavedRoute(route)
                                             onNewJourneyClick()
                                         }

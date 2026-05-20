@@ -106,17 +106,20 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val isPreviewMode by viewModel.isPreviewMode.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
+    val remainingEta by viewModel.remainingEta.collectAsState()
     val alarmSettings by viewModel.alarmSettings.collectAsState()
 
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
     val searchHistory by viewModel.searchHistory.collectAsState()
+    val journeyCompleted by viewModel.journeyCompleted.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val onDismissSheet = remember { { showBottomSheet = false } }
     var isSearchFocused by remember { mutableStateOf(false) }
     var isMapInteracting by remember { mutableStateOf(false) }
+    var isFollowMode by remember { mutableStateOf(false) }
 
     var hasLocationPermission by remember { 
         mutableStateOf(
@@ -192,14 +195,34 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         }
     }
 
-    // Handle Map Clicks
+    // Handle Map Clicks and Movement
     LaunchedEffect(mapInstance) {
-        mapInstance?.addOnMapClickListener { latLng ->
+        val map = mapInstance ?: return@LaunchedEffect
+        map.addOnMapClickListener { latLng ->
             focusManager.clearFocus()
             if (!isAlarmSet) {
                 viewModel.setDestination(latLng)
             }
             true
+        }
+
+        map.addOnMoveListener(object : MapLibreMap.OnMoveListener {
+            override fun onMoveBegin(detector: org.maplibre.android.gestures.MoveGestureDetector) {
+                isFollowMode = false
+            }
+            override fun onMove(detector: org.maplibre.android.gestures.MoveGestureDetector) {}
+            override fun onMoveEnd(detector: org.maplibre.android.gestures.MoveGestureDetector) {}
+        })
+    }
+
+    // Auto-follow User Location
+    LaunchedEffect(userLocation, isFollowMode) {
+        if (isFollowMode && userLocation != null) {
+            mapInstance?.animateCamera(
+                CameraUpdateFactory.newLatLng(
+                    LatLng(userLocation!!.latitude, userLocation!!.longitude)
+                )
+            )
         }
     }
 
@@ -425,6 +448,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         ) {
             SmallFloatingActionButton(
                 onClick = { 
+                    isFollowMode = true
                     userLocation?.let { loc ->
                         mapInstance?.animateCamera(
                             CameraUpdateFactory.newLatLngZoom(
@@ -434,11 +458,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                         )
                     }
                 },
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = if (isFollowMode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
                 shape = CircleShape
             ) {
-                Icon(Icons.Default.MyLocation, contentDescription = "Focus on User")
+                Icon(
+                    if (isFollowMode) Icons.Default.LocationSearching else Icons.Default.MyLocation, 
+                    contentDescription = "Focus on User"
+                )
             }
 
             SmallFloatingActionButton(
@@ -451,35 +478,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
         }
         
-        // Journey completion state
-        var showSaveDialog by remember { mutableStateOf(false) }
-
-        DisposableEffect(context) {
-            val receiver = object : android.content.BroadcastReceiver() {
-                override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
-                    showSaveDialog = true
-                }
-            }
-            val filter = android.content.IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
-            context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
-            
-            onDispose {
-                try {
-                    context.unregisterReceiver(receiver)
-                } catch (e: Exception) {}
-            }
-        }
-
-        if (showSaveDialog) {
+        if (journeyCompleted) {
             JourneySummarySheet(
                 initialDestinationName = destinationName ?: "",
                 onDismissRequest = { 
-                    showSaveDialog = false
                     viewModel.resetJourneyCompleted()
                 },
                 onSaveJourney = { routeName ->
                     viewModel.saveRoute(routeName, emptyList(), alarmSettings) 
-                    showSaveDialog = false
                     viewModel.resetJourneyCompleted()
                 }
             )
@@ -540,11 +546,30 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = distanceToDestination ?: "Calculating...",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold
-                            )
+                            if (distanceToDestination != null) {
+                                Text(
+                                    text = distanceToDestination!!,
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (remainingEta != null) {
+                                Text(
+                                    text = "ETA: $remainingEta min",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "DISTANCE TO TARGET",
                                 style = MaterialTheme.typography.labelLarge,
@@ -568,11 +593,30 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 color = MaterialTheme.colorScheme.secondary
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = distanceToDestination ?: "Calculating...",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold
-                            )
+                            if (distanceToDestination != null) {
+                                Text(
+                                    text = distanceToDestination!!,
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (remainingEta != null) {
+                                Text(
+                                    text = "ETA: $remainingEta min",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = destinationName ?: "Selected Destination",
                                 style = MaterialTheme.typography.bodyMedium,

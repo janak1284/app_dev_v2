@@ -15,5 +15,8 @@ data class SavedRouteEntity(
     val targetTime: Long? = null,
     val dateSaved: Long = System.currentTimeMillis(),
     val lastTakenTimestamp: Long = System.currentTimeMillis(),
-    val alarmSettings: AlarmSettings
+    val alarmSettings: AlarmSettings,
+    val routeGeoJson: String? = null,
+    val actualDistanceMeters: Double = 0.0,
+    val estimatedDurationMillis: Long = 0
 )

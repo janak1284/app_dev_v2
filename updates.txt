@@ -17,6 +17,17 @@
 - **Navigation Flow:** Unified the transition from journey tracking back to the saved routes list.
 - **Visual Consistency:** Standardized colors and component shapes across the V2 UI layer.
 
+## High-Fidelity Routing & UI (Dev 1 & 2)
+- **Real-Time Route Slicing:** Implemented dynamic map updates where the route line shortens as the user progresses, using Turf-Java for high-precision snapping and slicing.
+- **Calibrated ETA UI:** Exposed real-time ETA minutes to the MapScreen, providing commuters with a road-aware arrival countdown.
+- **Center Lock Mode:** Added an auto-follow camera mode for the user location, complete with visual state feedback on the focus button and automatic disengagement on manual map interaction.
+- **High-Fidelity Journey Backend:** 
+    - Updated entities to store **Actual Path (GeoJSON)**, **Actual Distance**, and **Actual Duration**.
+    - Refactored `LocationAlarmService` to generate GeoJSON trails and calculate total traversed distance from buffered GPS updates.
+    - Implemented **Route Reuse** logic in `MapViewModel` that prioritizes stored high-precision paths over API calls, ensuring consistency for repeated journeys.
+- **Auto-Arrival Save Prompt:** Integrated a 50m arrival detection trigger that automatically prompts the user to save the journey once they reach their destination.
+- **Database Migration:** Bumped Room database to **v6** to support new journey metadata and high-fidelity paths.
+
 ## Technical Foundation
 - **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.
 - **Retrofit Client:** Dual-service configuration for Photon (Search) and OSRM (Routing).
