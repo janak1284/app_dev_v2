@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -399,7 +400,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     .padding(end = 8.dp)
                     .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
             ) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back to Home")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Home")
             }
             DestinationSearchField(
                 query = searchQuery,
@@ -562,46 +563,22 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                             }
                         } else if (isPreviewMode) {
                             StatusHeader(
-                                title = "JOURNEY PREVIEW",
-                                icon = Icons.Default.Route,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = destinationName ?: "Selected Destination",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { showBottomSheet = true },
-                                    modifier = Modifier.weight(1f).height(56.dp),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) {
-                                    Icon(Icons.Default.Settings, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("CONFIG")
-                                }
-                                Button(
-                                    onClick = { viewModel.startAlarm() },
-                                    modifier = Modifier.weight(1f).height(56.dp),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) {
-                                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("CONTINUE")
-                                }
-                            }
-                        } else {
-                            StatusHeader(
                                 title = "DESTINATION SET",
                                 icon = Icons.Default.Route,
                                 color = MaterialTheme.colorScheme.secondary
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = distanceToDestination ?: "Calculating...",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = destinationName ?: "Selected Destination",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                maxLines = 1
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(
@@ -613,6 +590,18 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("SET UP ALARM")
                             }
+                        } else {
+                            StatusHeader(
+                                title = "SELECT DESTINATION",
+                                icon = Icons.Default.LocationOn,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Tap on map or use search",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }

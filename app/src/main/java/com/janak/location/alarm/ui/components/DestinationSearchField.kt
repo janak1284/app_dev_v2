@@ -54,12 +54,19 @@ fun DestinationSearchField(
         val baseResults = if (query.isEmpty()) history else results
         if (userLocation != null) {
             val withDistance = baseResults.map { feature ->
-                val featureLoc = Location("").apply {
-                    latitude = feature.geometry.coordinates[1]
-                    longitude = feature.geometry.coordinates[0]
+                val roadDist = feature.properties.roadDistance
+                if (roadDist != null) {
+                    // Use saved OSRM distance (Road distance)
+                    feature to roadDist.toFloat()
+                } else {
+                    // Fallback to straight line (Aerial distance)
+                    val featureLoc = Location("").apply {
+                        latitude = feature.geometry.coordinates[1]
+                        longitude = feature.geometry.coordinates[0]
+                    }
+                    val distance = userLocation.distanceTo(featureLoc)
+                    feature to distance
                 }
-                val distance = userLocation.distanceTo(featureLoc)
-                feature to distance
             }
             if (sortOrder == SortOrder.NEAREST) {
                 withDistance.sortedBy { it.second }
