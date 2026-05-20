@@ -34,6 +34,7 @@ import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import androidx.core.content.edit
+import com.janak.location.alarm.domain.RouteDistanceEngine
 
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
@@ -44,6 +45,14 @@ class MapViewModel(
     private val historyRepository: HistoryRepository,
     private val context: Context
 ) : ViewModel() {
+
+    private val routeDistanceEngine = RouteDistanceEngine()
+
+    private fun org.maplibre.geojson.Point.toMapbox(): com.mapbox.geojson.Point = 
+        com.mapbox.geojson.Point.fromLngLat(longitude(), latitude())
+
+    private fun org.maplibre.geojson.LineString.toMapbox(): com.mapbox.geojson.LineString =
+        com.mapbox.geojson.LineString.fromLngLats(coordinates().map { it.toMapbox() })
     
     val savedRoutes = routeRepository.allSavedRoutes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -426,6 +435,19 @@ class MapViewModel(
 
     private fun checkDistance(currentLocation: Location) {
         val dest = _destination.value ?: return
+        
+        // 1. Try route-based distance first (SMART LOGIC)
+        val route = _routeLine.value
+        if (route != null) {
+            val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
+            val mbRoute = route.toMapbox()
+            val distance = routeDistanceEngine.calculateRemainingDistance(mbRoute, userPoint)
+            
+            _distanceToDestination.value = formatDistance(distance.toInt())
+            return
+        }
+
+        // 2. Fallback to Haversine (OLD LOGIC)
         val results = FloatArray(1)
         Location.distanceBetween(
             currentLocation.latitude, currentLocation.longitude,
@@ -434,11 +456,15 @@ class MapViewModel(
         )
         val distance = results[0]
 
-        if (_isAlarmSet.value) {
-            _distanceToDestination.value = "${distance.roundToInt()}m"
+        _distanceToDestination.value = if (_isAlarmSet.value || _isPreviewMode.value) {
+            formatDistance(distance.toInt())
         } else {
-            _distanceToDestination.value = null
+            null
         }
+    }
+
+    private fun formatDistance(meters: Int): String {
+        return if (meters >= 1000) String.format("%.1fkm", meters / 1000f) else "${meters}m"
     }
     
     fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>, alarmSettings: com.janak.location.alarm.model.AlarmSettings) {

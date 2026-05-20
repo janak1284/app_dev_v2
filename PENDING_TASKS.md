@@ -5,8 +5,8 @@
 - [x] **Selection Mode (Long Press):** Implement a long-press selection mode in both `SavedRoutesScreen` and `JourneyHistoryScreen` to allow bulk deletion.
 - [x] **Journey Preview State:** Implemented a distinct "PREVIEW" mode where users can see the route and ETA before starting the alarm.
 - [x] **One-Click Reactivation:** Users can now click any History or Saved item to instantly start a journey without searching.
-- [ ] **Edit Mode (Saved Routes):** Implement the edit logic to allow renaming and re-configuring existing `SavedRoute` entries.
-- [ ] **Keyboard Input Optimization:** Adjust UI layouts for text input fields (e.g., naming routes) so they are automatically scrolled into view or positioned above the software keyboard to prevent obscuring.
+- [x] **Edit Mode (Saved Routes):** Implement the edit logic to allow renaming and re-configuring existing `SavedRoute` entries.
+- [x] **Keyboard Input Optimization:** Adjust UI layouts for text input fields (e.g., naming routes) using `imePadding` and scrollable containers to prevent obscuring.
 
 ## Bug Fixes & Verification
 - [x] **Route Line Preview:** Fixed the issue where route lines failed to render when opened from history/saved routes.

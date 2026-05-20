@@ -22,6 +22,8 @@ import com.janak.location.alarm.ui.map.MapScreen
 import com.janak.location.alarm.ui.home.HomeScreen
 import com.janak.location.alarm.data.AppDatabase
 import com.janak.location.alarm.data.repository.RouteRepository
+import com.janak.location.alarm.data.entity.SavedRouteEntity
+import com.janak.location.alarm.ui.settings.EditRouteSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -70,6 +72,7 @@ class MainActivity : ComponentActivity() {
 
                 var currentScreen by remember { mutableStateOf("home") }
                 var selectedHistoryId by remember { mutableStateOf<Long?>(null) }
+                var routeToEdit by remember { mutableStateOf<SavedRouteEntity?>(null) }
 
                 val themeMode by viewModel.themeMode.collectAsState()
                 val darkTheme = when (themeMode) {
@@ -115,7 +118,7 @@ class MainActivity : ComponentActivity() {
                                  com.janak.location.alarm.ui.settings.SavedRoutesScreen(
                                      viewModel = viewModel,
                                      onBackClick = { currentScreen = "settings" },
-                                     onEditRouteClick = { route -> /* Add edit logic/navigation */ },
+                                     onEditRouteClick = { route -> routeToEdit = route },
                                      onRouteClick = { currentScreen = "map" }
                                  )
                              }                            "journey_history" -> {
@@ -148,6 +151,18 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
+                        }
+
+                        // Edit Route Sheet
+                        routeToEdit?.let { route ->
+                            EditRouteSheet(
+                                route = route,
+                                onDismissRequest = { routeToEdit = null },
+                                onSaveRoute = { updatedRoute ->
+                                    viewModel.updateRoute(updatedRoute)
+                                    routeToEdit = null
+                                }
+                            )
                         }
                     }
                 }

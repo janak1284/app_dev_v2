@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.janak.location.alarm.model.AlarmSettings
+import com.janak.location.alarm.ui.components.DistanceSection
+import com.janak.location.alarm.ui.components.PredictiveSection
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -169,124 +171,6 @@ fun ModernConfigurationSheet(
 }
 
 @Composable
-fun DistanceSection(
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit,
-    distanceMeters: Float,
-    onDistanceChange: (Float) -> Unit
-) {
-    AnimatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.MyLocation,
-                        contentDescription = null,
-                        tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Distance Alarm",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (enabled) {
-                            Text(
-                                text = "Wake at ${formatDistance(distanceMeters.toInt())}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-                Switch(checked = enabled, onCheckedChange = onToggle)
-            }
-            
-            AnimatedVisibility(visible = enabled) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Slider(
-                        value = distanceMeters,
-                        onValueChange = onDistanceChange,
-                        valueRange = 100f..5000f,
-                        steps = 48,
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PredictiveSection(
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit,
-    minutes: Float,
-    onMinutesChange: (Float) -> Unit
-) {
-    AnimatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.AutoMode,
-                        contentDescription = null,
-                        tint = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Smart ETA Alarm",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (enabled) {
-                            Text(
-                                text = "Wake ${minutes.toInt()} mins before arrival",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                        }
-                    }
-                }
-                Switch(checked = enabled, onCheckedChange = onToggle)
-            }
-            
-            AnimatedVisibility(visible = enabled) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Slider(
-                        value = minutes,
-                        onValueChange = onMinutesChange,
-                        valueRange = 1f..60f,
-                        steps = 59,
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.secondary,
-                            activeTrackColor = MaterialTheme.colorScheme.secondary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun SoundVibrationSection(
     ringtoneName: String,
     vibrateEnabled: Boolean,
@@ -345,21 +229,6 @@ fun PrimaryActionButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun AnimatedCard(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-    ) {
-        content()
-    }
-}
-
-@Composable
 fun QuickActionPill(
     title: String,
     value: String,
@@ -403,14 +272,6 @@ fun QuickActionPill(
                 )
             }
         }
-    }
-}
-
-private fun formatDistance(meters: Int): String {
-    return if (meters >= 1000) {
-        String.format("%.1fkm", meters / 1000f)
-    } else {
-        "${meters}m"
     }
 }
 

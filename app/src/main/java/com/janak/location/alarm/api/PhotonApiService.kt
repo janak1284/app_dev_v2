@@ -22,7 +22,8 @@ interface PhotonApiService {
     suspend fun getRoute(
         @Path("coordinates") coordinates: String,
         @Query("overview") overview: String = "full",
-        @Query("geometries") geometries: String = "geojson"
+        @Query("geometries") geometries: String = "geojson",
+        @Query("annotations") annotations: String = "duration,distance"
     ): Response<JsonObject>
 
     // Photon Search
