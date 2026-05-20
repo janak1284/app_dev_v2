@@ -108,7 +108,7 @@ class LocationAlarmService : Service() {
             }
             ACTION_END_JOURNEY, "STOP_ALARM" -> {
                 android.util.Log.d("LocationAlarmService", "Action End Journey received. Stopping service.")
-                sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST))
+                sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST).setPackage(packageName))
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -278,7 +278,7 @@ class LocationAlarmService : Service() {
             
             val deviation = routeDistanceEngine.calculateDeviation(route, userPoint)
             if (deviation > 100) {
-                sendBroadcast(Intent(ACTION_RE_ROUTE))
+                sendBroadcast(Intent(ACTION_RE_ROUTE).setPackage(packageName))
             }
             
             routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
@@ -293,7 +293,7 @@ class LocationAlarmService : Service() {
 
         if (distance <= 50 && !hasSentArrivalBroadcast) {
             hasSentArrivalBroadcast = true
-            sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST))
+            sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST).setPackage(packageName))
         }
 
         if (currentState == ServiceState.TRACKING && !isAlarmSilenced) {

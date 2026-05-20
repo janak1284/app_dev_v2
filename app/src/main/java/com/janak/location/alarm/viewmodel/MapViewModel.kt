@@ -34,6 +34,7 @@ import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import androidx.core.content.edit
+import androidx.core.content.ContextCompat
 import com.janak.location.alarm.domain.RouteDistanceEngine
 
 class MapViewModel(
@@ -164,13 +165,8 @@ class MapViewModel(
         val reRouteFilter = android.content.IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
         val journeyFilter = android.content.IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(reRouteReceiver, reRouteFilter, Context.RECEIVER_NOT_EXPORTED)
-            context.registerReceiver(journeyCompletedReceiver, journeyFilter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            context.registerReceiver(reRouteReceiver, reRouteFilter)
-            context.registerReceiver(journeyCompletedReceiver, journeyFilter)
-        }
+        ContextCompat.registerReceiver(context, reRouteReceiver, reRouteFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(context, journeyCompletedReceiver, journeyFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
     fun checkLocationSettings() {

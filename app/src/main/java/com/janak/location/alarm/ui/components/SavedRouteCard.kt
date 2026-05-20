@@ -181,7 +181,3 @@ private fun SmallBadge(icon: ImageVector, text: String) {
         }
     }
 }
-
-private fun formatDistance(meters: Int): String {
-    return if (meters >= 1000) String.format("%.1f km", meters / 1000f) else "${meters}m"
-}
