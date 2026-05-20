@@ -118,6 +118,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val onDismissSheet = remember { { showBottomSheet = false } }
     var isSearchFocused by remember { mutableStateOf(false) }
     var isMapInteracting by remember { mutableStateOf(false) }
+    var isFollowMode by remember { mutableStateOf(false) }
 
     var hasLocationPermission by remember { 
         mutableStateOf(
@@ -193,14 +194,34 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         }
     }
 
-    // Handle Map Clicks
+    // Handle Map Clicks and Movement
     LaunchedEffect(mapInstance) {
-        mapInstance?.addOnMapClickListener { latLng ->
+        val map = mapInstance ?: return@LaunchedEffect
+        map.addOnMapClickListener { latLng ->
             focusManager.clearFocus()
             if (!isAlarmSet) {
                 viewModel.setDestination(latLng)
             }
             true
+        }
+
+        map.addOnMoveListener(object : MapLibreMap.OnMoveListener {
+            override fun onMoveBegin(detector: org.maplibre.android.gestures.MoveGestureDetector) {
+                isFollowMode = false
+            }
+            override fun onMove(detector: org.maplibre.android.gestures.MoveGestureDetector) {}
+            override fun onMoveEnd(detector: org.maplibre.android.gestures.MoveGestureDetector) {}
+        })
+    }
+
+    // Auto-follow User Location
+    LaunchedEffect(userLocation, isFollowMode) {
+        if (isFollowMode && userLocation != null) {
+            mapInstance?.animateCamera(
+                CameraUpdateFactory.newLatLng(
+                    LatLng(userLocation!!.latitude, userLocation!!.longitude)
+                )
+            )
         }
     }
 
@@ -426,6 +447,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         ) {
             SmallFloatingActionButton(
                 onClick = { 
+                    isFollowMode = true
                     userLocation?.let { loc ->
                         mapInstance?.animateCamera(
                             CameraUpdateFactory.newLatLngZoom(
@@ -435,11 +457,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                         )
                     }
                 },
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = if (isFollowMode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
                 shape = CircleShape
             ) {
-                Icon(Icons.Default.MyLocation, contentDescription = "Focus on User")
+                Icon(
+                    if (isFollowMode) Icons.Default.LocationSearching else Icons.Default.MyLocation, 
+                    contentDescription = "Focus on User"
+                )
             }
 
             SmallFloatingActionButton(
