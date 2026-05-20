@@ -113,6 +113,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val searchResults by viewModel.searchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
     val searchHistory by viewModel.searchHistory.collectAsState()
+    val journeyCompleted by viewModel.journeyCompleted.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val onDismissSheet = remember { { showBottomSheet = false } }
@@ -477,35 +478,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
         }
         
-        // Journey completion state
-        var showSaveDialog by remember { mutableStateOf(false) }
-
-        DisposableEffect(context) {
-            val receiver = object : android.content.BroadcastReceiver() {
-                override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
-                    showSaveDialog = true
-                }
-            }
-            val filter = android.content.IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
-            context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
-            
-            onDispose {
-                try {
-                    context.unregisterReceiver(receiver)
-                } catch (e: Exception) {}
-            }
-        }
-
-        if (showSaveDialog) {
+        if (journeyCompleted) {
             JourneySummarySheet(
                 initialDestinationName = destinationName ?: "",
                 onDismissRequest = { 
-                    showSaveDialog = false
                     viewModel.resetJourneyCompleted()
                 },
                 onSaveJourney = { routeName ->
                     viewModel.saveRoute(routeName, emptyList(), alarmSettings) 
-                    showSaveDialog = false
                     viewModel.resetJourneyCompleted()
                 }
             )

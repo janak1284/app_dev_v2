@@ -52,6 +52,7 @@ class LocationAlarmService : Service() {
     private var isPredictiveAlarmEnabled: Boolean = false
     private var ringtoneUri: String? = null
     private var isVibrateEnabled: Boolean = true
+    private var hasSentArrivalBroadcast = false
     
     private var currentRoute: LineString? = null
     private var expectedSpeedMps: Double = 0.0
@@ -216,6 +217,14 @@ class LocationAlarmService : Service() {
         
         val etaText = if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.roundToInt()} min" else ""
         updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}$etaText")
+
+        // Auto-arrival detection (50m threshold)
+        if (distance <= 50 && !hasSentArrivalBroadcast) {
+            android.util.Log.d("LocationAlarmService", "Arrival detected (within 50m). Sending broadcast.")
+            hasSentArrivalBroadcast = true
+            sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST))
+            updateNotification("Arrived!", "You have reached $destinationName")
+        }
 
         if (currentState == ServiceState.TRACKING) {
             val shouldTriggerDistance = isDistanceAlarmEnabled && distance <= distanceThreshold

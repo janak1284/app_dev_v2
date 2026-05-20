@@ -434,8 +434,11 @@ class MapViewModel(
     private val _journeyCompleted = MutableStateFlow<Boolean>(false)
     val journeyCompleted: StateFlow<Boolean> = _journeyCompleted.asStateFlow()
     
+    private var hasTriggeredArrival = false
+
     fun resetJourneyCompleted() {
         _journeyCompleted.value = false
+        hasTriggeredArrival = false
     }
 
     fun stopAlarm() {
@@ -533,6 +536,15 @@ class MapViewModel(
         } else {
             null
         }
+
+        // Auto-arrival detection (50m threshold)
+        if (distance <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
+            android.util.Log.d("MapViewModel", "Arrival detected (within 50m). Triggering completion.")
+            hasTriggeredArrival = true
+            _journeyCompleted.value = true
+            stopAlarm()
+        }
+
         _remainingEta.value = null
     }
 
