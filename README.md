@@ -21,16 +21,19 @@ Standard GPS alarms often fail because they use a straight line to measure dista
 
 ### 🛣️ Smart Routing & Alarms
 - **Road-Aware Distance:** High-precision tracking that follows the curves of the road using the OSRM (Open Source Routing Machine) engine.
+- **Real-Time Route Slicing:** The map route line dynamically shortens (slices) as you move, providing immediate visual feedback of your progress.
 - **Smart ETA Alarms:** Set an alarm to wake you up exactly **10 minutes before you arrive**, regardless of traffic or distance.
 - **Distance Alarms:** Traditional wake-up calls based on road mileage (e.g., "Wake me 500m before the stop").
 
 ### 🗺️ Advanced Map Experience
+- **Center Lock (Auto-Follow):** Toggle a "locked" mode that keeps the user centered on the map. It automatically disengages if you manually pan the map.
 - **Interactive MapLibre Interface:** A smooth, battery-efficient map using OpenStreetMap data.
 - **Journey Preview:** See your entire route line and total distance before you even start the trip.
 - **One-Tap Search:** Instant destination search with history and "smart suggestions."
 
 ### 📂 History & Management
-- **Journey Logs:** Automatically saves a "breadcrumb trail" (GPS path) of your completed trips so you can review your route later.
+- **High-Fidelity Saving:** Automatically captures your **actual path taken**, total distance, and duration.
+- **Route Reuse:** When you reuse a saved journey, the app uses your previously traversed high-precision path instead of the OSRM API, ensuring 100% consistency.
 - **Saved Routes:** Bookmark your frequent commutes (Home, Work, Gym) with custom alarm settings for each.
 - **Edit Mode:** Easily rename saved routes or adjust alarm distances without starting over.
 

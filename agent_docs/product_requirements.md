@@ -19,8 +19,9 @@ Commuters (students and professionals) taking complex or winding transit routes 
 3. **Smart Alarms:** * **Distance Alarm:** Trigger alert when exactly *X* distance remains on the path.
     * **Time Alarm:** Trigger alert when the dynamic ETA drops below *X* minutes.
 4. **Active Journey Recording:** Buffer GPS breadcrumbs during the trip and prompt the user to save the actual traveled route upon completion.
-5. **Local Database (Room):** Store historical `SavedRoutes` and `RouteBreadcrumbs` for reuse via a new Home Screen interface.
-6. **Robust Background Execution:** Maintain a Foreground Service with WakeLocks to track location, run Turf-Java spatial math, and trigger hardware-level alarms even in deep sleep.
+5. **High-Fidelity Route Reuse:** Automatically store the **Actual Path (GeoJSON)**, **Actual Distance**, and **Actual Duration** for every journey. When a route is reused, the app should leverage this pre-recorded path for maximum precision, bypassing the OSRM API.
+6. **Local Database (Room):** Store historical `SavedRoutes` and `RouteBreadcrumbs` for reuse via a new Home Screen interface.
+7. **Robust Background Execution:** Maintain a Foreground Service with WakeLocks to track location, run Turf-Java spatial math, and trigger hardware-level alarms even in deep sleep.
 
 ---
 

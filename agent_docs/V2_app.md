@@ -51,12 +51,22 @@ Enhance the transition from Home to Map with a preview state and a more robust p
 * [x] **Dynamic Speed Ratio ETA:** Calculate a "Speed Ratio" ($\text{User Avg Speed} / \text{OSRM Expected Speed}$) to provide an accurate, road-aware ETA.
 * [x] **Search History Persistence:** Silently update recent search entries with OSRM road distance for accurate future lookups.
 
-## Phase 7: Final Verification & Field Testing
+## Phase 7: High-Fidelity Routing & User Experience
+Final polish and implementation of "Smart Commuter" features for maximum reliability.
+
+* [x] **Real-Time Route Slicing:** Update the `MapViewModel` to use `TurfMisc.lineSlice` on every location update. This visually shortens the route line as the user moves.
+* [x] **Center Lock (Auto-Follow):** Add a toggleable state in `MapScreen` that centers the camera on the user. Automatically disable it if the user manually pans or zooms.
+* [x] **High-Fidelity Journey Backend:** Update the Room entities (`SavedRouteEntity`, `JourneyHistoryEntity`) to store the actual path (GeoJSON), total distance, and duration of the trip.
+* [x] **Route Reuse Logic:** Modify the `MapViewModel` to check if a saved route has a stored GeoJSON path. If so, load it directly and skip the OSRM API call.
+* [x] **Auto-Arrival Save Prompt:** Add a 50m arrival detection trigger in both the Service and ViewModel to show the "Save Journey" prompt automatically.
+* [x] **Database Migration (v6):** Bump the Room version and handle schema updates for the new journey metadata.
+
+## Phase 8: Final Verification & Field Testing
 * [x] **Edit Mode Implementation:** Added `EditRouteSheet.kt` to allow renaming and re-configuring saved routes.
 * [x] **Keyboard Input Optimization:** Implemented `imePadding` and scroll support for all input sheets.
-* [ ] **GPX Simulation:** Use Android Studio's location emulator to run simulated trips with varying speeds to verify calibrated ETA accuracy.
-* [ ] **WakeLock & Doze Verification:** Ensure the service stays active during long periods of device inactivity.
-* [ ] **Final Field Testing:** Real-world verification of the predictive routing engine.
+* [x] **GPX Simulation:** Use Android Studio's location emulator to run simulated trips with varying speeds to verify calibrated ETA accuracy and route slicing.
+* [ ] **WakeLock & Doze Verification:** Ensure the service stays active during long periods of device inactivity using `adb shell dumpsys deviceidle force-idle`.
+* [ ] **Final Field Testing:** Real-world verification of the predictive routing engine on actual roads.
 
 ## The Onboarding Brief (Read this first)
 **The Big Pivot:**
