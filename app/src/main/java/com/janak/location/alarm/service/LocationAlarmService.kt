@@ -53,6 +53,7 @@ class LocationAlarmService : Service() {
     private var ringtoneUri: String? = null
     private var isVibrateEnabled: Boolean = true
     private var hasSentArrivalBroadcast = false
+    private var startTimeMillis: Long = 0
     
     private var currentRoute: LineString? = null
     private var expectedSpeedMps: Double = 0.0
@@ -149,6 +150,7 @@ class LocationAlarmService : Service() {
         }
 
         currentState = ServiceState.TRACKING
+        startTimeMillis = System.currentTimeMillis()
         startForeground(NOTIFICATION_ID, createNotification("Distance Alarm Active", "Monitoring distance to destination..."))
         startLocationTracking()
 
@@ -331,7 +333,15 @@ class LocationAlarmService : Service() {
         if (locationBuffer.isEmpty()) return
 
         val finalLocations = locationBuffer.toList()
+        val durationMillis = System.currentTimeMillis() - startTimeMillis
+        val actualDistance = routeDistanceEngine.calculateTotalDistance(finalLocations)
         
+        // Generate actual path GeoJSON
+        val actualPath = LineString.fromLngLats(finalLocations.map { 
+            Point.fromLngLat(it.longitude, it.latitude)
+        })
+        val actualRouteGeoJson = actualPath.toJson()
+
         serviceScope.launch(NonCancellable) {
             try {
                 // Generate a robust name
@@ -357,7 +367,10 @@ class LocationAlarmService : Service() {
                         ringtoneUri = ringtoneUri?.let { android.net.Uri.parse(it) },
                         isVibrateEnabled = isVibrateEnabled
                     ),
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    durationMillis = durationMillis,
+                    actualDistanceMeters = actualDistance,
+                    actualRouteGeoJson = actualRouteGeoJson
                 )
                 
                 val breadcrumbs = finalLocations.map { loc ->
@@ -371,7 +384,7 @@ class LocationAlarmService : Service() {
                 }
                 
                 historyRepository.saveJourneyLog(history, breadcrumbs)
-                android.util.Log.d("LocationAlarmService", "Journey logged successfully: $robustName")
+                android.util.Log.d("LocationAlarmService", "Journey logged successfully: $robustName, duration: ${durationMillis/1000}s, distance: ${actualDistance.toInt()}m")
             } catch (e: Exception) {
                 android.util.Log.e("LocationAlarmService", "Failed to log journey", e)
             }

@@ -555,6 +555,9 @@ class MapViewModel(
     fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>, alarmSettings: com.janak.location.alarm.model.AlarmSettings) {
         val dest = _destination.value ?: return
         viewModelScope.launch {
+            // Get latest history entry to extract actual path metrics
+            val latestHistory = historyRepository.getLatestJourney()
+            
             val route = SavedRouteEntity(
                 destinationName = destinationName.ifBlank { "Unknown Destination" },
                 mapDestinationName = null,
@@ -562,7 +565,10 @@ class MapViewModel(
                 destinationLng = dest.longitude,
                 alarmSettings = alarmSettings,
                 dateSaved = System.currentTimeMillis(),
-                lastTakenTimestamp = System.currentTimeMillis()
+                lastTakenTimestamp = System.currentTimeMillis(),
+                routeGeoJson = latestHistory?.actualRouteGeoJson,
+                actualDistanceMeters = latestHistory?.actualDistanceMeters ?: 0.0,
+                estimatedDurationMillis = latestHistory?.durationMillis ?: 0
             )
             routeRepository.saveJourney(route, breadcrumbs)
         }
@@ -610,24 +616,65 @@ class MapViewModel(
         return historyRepository.getBreadcrumbsForHistory(historyId)
     }
 
-    fun startJourneyDirect(lat: Double, lng: Double, name: String, settings: com.janak.location.alarm.model.AlarmSettings) {
+    fun startJourneyDirect(
+        lat: Double, 
+        lng: Double, 
+        name: String, 
+        settings: com.janak.location.alarm.model.AlarmSettings,
+        preLoadedRouteGeoJson: String? = null,
+        preLoadedDistance: Double = 0.0,
+        preLoadedDuration: Long = 0
+    ) {
         _destination.value = LatLng(lat, lng)
         _destinationName.value = name
         _alarmSettings.value = settings
         _isPreviewMode.value = true
         
+        if (preLoadedRouteGeoJson != null) {
+            _currentRouteGeoJson.value = preLoadedRouteGeoJson
+            _expectedDistance.value = preLoadedDistance
+            _expectedDuration.value = preLoadedDuration.toDouble() / 1000.0
+            
+            try {
+                val mbRoute = com.mapbox.geojson.LineString.fromJson(preLoadedRouteGeoJson)
+                fullRouteLine = mbRoute
+                _routeLine.value = mbRoute.toMapLibre()
+                android.util.Log.d("MapViewModel", "startJourneyDirect: Using pre-loaded route")
+            } catch (e: Exception) {
+                android.util.Log.e("MapViewModel", "Failed to parse pre-loaded GeoJSON", e)
+            }
+        }
+        
         _userLocation.value?.let { 
             checkDistance(it)
-            fetchRoute(it, LatLng(lat, lng))
+            if (preLoadedRouteGeoJson == null) {
+                fetchRoute(it, LatLng(lat, lng))
+            }
         }
     }
 
     fun startJourneyFromSavedRoute(route: SavedRouteEntity) {
-        startJourneyDirect(route.destinationLat, route.destinationLng, route.destinationName, route.alarmSettings)
+        startJourneyDirect(
+            route.destinationLat, 
+            route.destinationLng, 
+            route.destinationName, 
+            route.alarmSettings,
+            preLoadedRouteGeoJson = route.routeGeoJson,
+            preLoadedDistance = route.actualDistanceMeters,
+            preLoadedDuration = route.estimatedDurationMillis
+        )
     }
 
     fun startJourneyFromHistory(history: com.janak.location.alarm.data.entity.JourneyHistoryEntity) {
-        startJourneyDirect(history.destinationLat, history.destinationLng, history.destinationName, history.alarmConfigAtTime)
+        startJourneyDirect(
+            history.destinationLat, 
+            history.destinationLng, 
+            history.destinationName, 
+            history.alarmConfigAtTime,
+            preLoadedRouteGeoJson = history.actualRouteGeoJson,
+            preLoadedDistance = history.actualDistanceMeters,
+            preLoadedDuration = history.durationMillis
+        )
     }
 
     override fun onCleared() {

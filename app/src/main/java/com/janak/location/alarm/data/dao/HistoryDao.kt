@@ -25,6 +25,9 @@ interface HistoryDao {
     @Query("DELETE FROM journey_history")
     suspend fun deleteAllHistory(): Int
 
+    @Query("SELECT * FROM journey_history ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLatestJourney(): JourneyHistoryEntity?
+
     @Delete
     suspend fun deleteJourneys(journeys: List<JourneyHistoryEntity>)
 }

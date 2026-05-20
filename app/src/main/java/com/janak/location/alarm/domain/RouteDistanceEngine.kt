@@ -101,4 +101,22 @@ class RouteDistanceEngine {
     fun resetStats() {
         averageSpeedMps = 0.0
     }
+
+    /**
+     * Calculates the total distance of a traversed path from a list of locations.
+     */
+    fun calculateTotalDistance(locations: List<android.location.Location>): Double {
+        if (locations.size < 2) return 0.0
+        var total = 0.0
+        for (i in 0 until locations.size - 1) {
+            val results = FloatArray(1)
+            android.location.Location.distanceBetween(
+                locations[i].latitude, locations[i].longitude,
+                locations[i + 1].latitude, locations[i + 1].longitude,
+                results
+            )
+            total += results[0]
+        }
+        return total
+    }
 }

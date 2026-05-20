@@ -32,4 +32,8 @@ class HistoryRepository(private val database: AppDatabase) {
     suspend fun deleteJourneys(journeys: List<JourneyHistoryEntity>) {
         historyDao.deleteJourneys(journeys)
     }
+
+    suspend fun getLatestJourney(): JourneyHistoryEntity? {
+        return historyDao.getLatestJourney()
+    }
 }
