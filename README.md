@@ -78,7 +78,7 @@ The app is built using **Clean Architecture**, which means the code is separated
 - [x] **Phase 5:** Home Screen, Saved Routes, and Journey History.
 - [x] **Phase 6:** Predictive Routing Engine & Road-Snapping logic.
 - [x] **Phase 7:** High-Fidelity Path Saving & Route Slicing.
-- [x] **Phase 8:** Refinement Phase: Skeleton loaders, History Gists, and Stability fixes.
+- [x] **Phase 8:** Refinement Phase: Skeleton loaders, History Gists, Home Screen updates, Persistent Tracking (1.3km limit fix) and Stability fixes.
 - [ ] **Phase 9:** Battery-saver mode (Smart Polling based on distance).
 - [ ] **Phase 9:** Real-world field testing and accuracy calibration.
 

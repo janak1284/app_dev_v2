@@ -29,3 +29,5 @@
 - [x] **Skeleton Loaders:** Replaced "Calculating..." text with modern shimmering skeleton animations for Distance and ETA.
 - [x] **History Gist:** Refined Journey History to keep only the last 10 items, storing only the destination and timestamp gist.
 - [x] **Explicit Saving:** Enforced separation between automatic "History Gists" and manual "Saved Routes" with full path metrics.
+- [x] **Home Screen Saved Routes:** Replaced "Recent Journeys" with full-featured "Saved Routes" cards on the Home Screen.
+- [x] **Persistent Tracking (1.3km Fix):** Solved the 1.3km route truncation bug by persisting breadcrumbs directly to Room DB in real-time and implementing Service State Recovery to survive unexpected OS kills.

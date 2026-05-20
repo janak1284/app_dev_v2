@@ -13,6 +13,23 @@ interface HistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBreadcrumbs(breadcrumbs: List<RouteBreadcrumbEntity>): List<Long>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBreadcrumb(breadcrumb: RouteBreadcrumbEntity): Long
+
+    @Query("SELECT * FROM route_breadcrumbs WHERE historyId = :historyId ORDER BY timestamp ASC")
+    suspend fun getBreadcrumbsForHistorySync(historyId: Long): List<RouteBreadcrumbEntity>
+
+    @Query("""
+        UPDATE journey_history 
+        SET startingPointLat = :startLat, 
+            startingPointLng = :startLng,
+            actualDistanceMeters = :distance,
+            durationMillis = :duration,
+            actualRouteGeoJson = :geoJson
+        WHERE historyId = :id
+    """)
+    suspend fun updateJourneySummary(id: Long, startLat: Double, startLng: Double, distance: Double, duration: Long, geoJson: String?)
+
     @Query("SELECT * FROM journey_history ORDER BY timestamp DESC")
     fun getAllJourneys(): Flow<List<JourneyHistoryEntity>>
 

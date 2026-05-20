@@ -26,6 +26,18 @@ class HistoryRepository(private val database: AppDatabase) {
         }
     }
 
+    suspend fun saveJourneyLog(id: Long, breadcrumb: RouteBreadcrumbEntity) {
+        historyDao.insertBreadcrumb(breadcrumb.copy(historyId = id))
+    }
+
+    suspend fun getBreadcrumbsForHistorySync(historyId: Long): List<RouteBreadcrumbEntity> {
+        return historyDao.getBreadcrumbsForHistorySync(historyId)
+    }
+
+    suspend fun updateJourneySummary(id: Long, startLat: Double, startLng: Double, distance: Double, duration: Long, geoJson: String?) {
+        historyDao.updateJourneySummary(id, startLat, startLng, distance, duration, geoJson)
+    }
+
     fun getBreadcrumbsForHistory(historyId: Long): Flow<List<RouteBreadcrumbEntity>> {
         return historyDao.getBreadcrumbsForHistory(historyId)
     }

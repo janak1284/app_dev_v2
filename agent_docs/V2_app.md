@@ -69,6 +69,8 @@ Final polish and implementation of "Smart Commuter" features for maximum reliabi
 * [x] **Persistent Tracking:** Decoupled alarm dismissal from service termination. Tracking now persists until arrival or explicit end.
 * [x] **UI Polish (Skeleton Loaders):** Integrated `SkeletonLoader.kt` for a smoother experience during asynchronous data fetching.
 * [x] **History Optimization:** Capped `JourneyHistory` at 10 items and simplified the UI to a lightweight "gist" of past trips.
+* [x] **Home Screen Saved Routes:** Replaced "Recent Journeys" with full-featured "Saved Routes" cards on the Home Screen using a shared `SavedRouteCard` component.
+* [x] **Persistent Tracking (1.3km Fix):** Solved the 1.3km route truncation bug by persisting breadcrumbs directly to Room DB in real-time and implementing Service State Recovery to survive unexpected OS kills.
 * [ ] **WakeLock & Doze Verification:** Ensure the service stays active during long periods of device inactivity using `adb shell dumpsys deviceidle force-idle`.
 * [x] **Final Field Testing:** Real-world verification of the predictive routing engine on actual roads.
 
