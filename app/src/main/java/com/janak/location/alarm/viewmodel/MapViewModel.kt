@@ -77,6 +77,9 @@ class MapViewModel(
     private val _currentRouteGeoJson = MutableStateFlow<String?>(null)
     val currentRouteGeoJson: StateFlow<String?> = _currentRouteGeoJson.asStateFlow()
 
+    private val _expectedDuration = MutableStateFlow(0.0)
+    private val _expectedDistance = MutableStateFlow(0.0)
+
     private val _isAlarmSet = MutableStateFlow(false)
     val isAlarmSet: StateFlow<Boolean> = _isAlarmSet.asStateFlow()
 
@@ -85,6 +88,10 @@ class MapViewModel(
 
     private val _alarmSettings = MutableStateFlow(com.janak.location.alarm.model.AlarmSettings())
     val alarmSettings: StateFlow<com.janak.location.alarm.model.AlarmSettings> = _alarmSettings.asStateFlow()
+
+    // --- Phase 6: Preview State ---
+    private val _isPreviewMode = MutableStateFlow(false)
+    val isPreviewMode: StateFlow<Boolean> = _isPreviewMode.asStateFlow()
 
     // --- Search State ---
     private val _searchQuery = MutableStateFlow("")
@@ -237,19 +244,25 @@ class MapViewModel(
         _searchQuery.value = newQuery
     }
 
-    fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
-        _alarmSettings.value = settings
+    fun startAlarm() {
+        val settings = _alarmSettings.value
         _isAlarmSet.value = true
+        _isPreviewMode.value = false
         
         val dest = _destination.value
         val destName = _destinationName.value ?: "Unknown Destination"
         val routeJson = _currentRouteGeoJson.value
+        val duration = _expectedDuration.value
+        val distance = _expectedDistance.value
+
         if (dest != null) {
             val serviceIntent = Intent(context, LocationAlarmService::class.java).apply {
                 putExtra("DEST_LAT", dest.latitude)
                 putExtra("DEST_LNG", dest.longitude)
                 putExtra("DEST_NAME", destName)
                 putExtra("ROUTE_GEOJSON", routeJson)
+                putExtra("EXPECTED_DURATION", duration)
+                putExtra("EXPECTED_DISTANCE", distance)
                 putExtra("DISTANCE_THRESHOLD", settings.distanceMeters.toFloat())
                 putExtra("DISTANCE_ALARM_ENABLED", settings.isDistanceAlarmEnabled)
                 putExtra("PREDICTIVE_MINUTES", settings.predictiveMinutes)
@@ -266,6 +279,14 @@ class MapViewModel(
         
         _userLocation.value?.let { checkDistance(it) }
         startLocationUpdates()
+    }
+
+    fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
+        _alarmSettings.value = settings
+        if (_isAlarmSet.value) {
+            // If alarm is already running, restart service with new settings
+            startAlarm()
+        }
     }
 
     private var locationJob: kotlinx.coroutines.Job? = null
@@ -289,6 +310,7 @@ class MapViewModel(
         if (!_isAlarmSet.value) {
             _destination.value = latLng
             _destinationName.value = name
+            _isPreviewMode.value = true
             android.util.Log.d("MapViewModel", "setDestination: $name, location: ${_userLocation.value}")
             _userLocation.value?.let { 
                 checkDistance(it)
@@ -313,6 +335,11 @@ class MapViewModel(
                         val geoJson = geometry.toString()
                         _currentRouteGeoJson.value = geoJson
                         
+                        // Extract duration and distance
+                        _expectedDuration.value = firstRoute.get("duration")?.toString()?.toDoubleOrNull() ?: 0.0
+                        _expectedDistance.value = firstRoute.get("distance")?.toString()?.toDoubleOrNull() ?: 0.0
+                        android.util.Log.d("MapViewModel", "fetchRoute: duration=${_expectedDuration.value}, distance=${_expectedDistance.value}")
+
                         // Also update _routeLine for map rendering
                         val coordinates = firstRoute.get("geometry")?.jsonObject?.get("coordinates")?.jsonArray?.map {
                             val point = it.jsonArray
@@ -327,6 +354,8 @@ class MapViewModel(
                             val updateIntent = Intent(context, LocationAlarmService::class.java).apply {
                                 action = LocationAlarmService.ACTION_UPDATE_ROUTE
                                 putExtra("ROUTE_GEOJSON", geoJson)
+                                putExtra("EXPECTED_DURATION", _expectedDuration.value)
+                                putExtra("EXPECTED_DISTANCE", _expectedDistance.value)
                             }
                             context.startService(updateIntent)
                         }
@@ -359,7 +388,7 @@ class MapViewModel(
             stopAlarm()
         } else {
             if (_destination.value != null) {
-                updateAlarmSettings(_alarmSettings.value)
+                startAlarm()
             }
         }
     }
@@ -373,6 +402,7 @@ class MapViewModel(
 
     fun stopAlarm() {
         _isAlarmSet.value = false
+        _isPreviewMode.value = false
         _distanceToDestination.value = null
         _destinationName.value = null
         _currentRouteGeoJson.value = null
@@ -387,6 +417,7 @@ class MapViewModel(
         if (!_isAlarmSet.value) {
             _destination.value = null
             _destinationName.value = null
+            _isPreviewMode.value = false
             _distanceToDestination.value = null
             _currentRouteGeoJson.value = null
             _routeLine.value = null
@@ -468,17 +499,24 @@ class MapViewModel(
         return historyRepository.getBreadcrumbsForHistory(historyId)
     }
 
-    fun startJourneyFromHistory(route: SavedRouteEntity) {
-        viewModelScope.launch {
-            _searchQuery.value = route.destinationName
-            performSearch(route.destinationName)
-            
-            // Auto-select the first result if available
-            val firstResult = _searchResults.value.firstOrNull()
-            if (firstResult != null) {
-                selectSearchResult(firstResult)
-            }
+    fun startJourneyDirect(lat: Double, lng: Double, name: String, settings: com.janak.location.alarm.model.AlarmSettings) {
+        _destination.value = LatLng(lat, lng)
+        _destinationName.value = name
+        _alarmSettings.value = settings
+        _isPreviewMode.value = true
+        
+        _userLocation.value?.let { 
+            checkDistance(it)
+            fetchRoute(it, LatLng(lat, lng))
         }
+    }
+
+    fun startJourneyFromSavedRoute(route: SavedRouteEntity) {
+        startJourneyDirect(route.destinationLat, route.destinationLng, route.destinationName, route.alarmSettings)
+    }
+
+    fun startJourneyFromHistory(history: com.janak.location.alarm.data.entity.JourneyHistoryEntity) {
+        startJourneyDirect(history.destinationLat, history.destinationLng, history.destinationName, history.alarmConfigAtTime)
     }
 
     override fun onCleared() {

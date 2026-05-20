@@ -29,7 +29,8 @@ import java.util.Locale
 fun SavedRoutesScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
-    onEditRouteClick: (SavedRouteEntity) -> Unit
+    onEditRouteClick: (SavedRouteEntity) -> Unit,
+    onRouteClick: () -> Unit
 ) {
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val selectedRoutes = remember { mutableStateMapOf<Long, SavedRouteEntity>() }
@@ -123,6 +124,9 @@ fun SavedRoutesScreen(
                                     if (isSelectionMode) {
                                         if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
                                         if (selectedRoutes.isEmpty()) isSelectionMode = false
+                                    } else {
+                                        viewModel.startJourneyFromSavedRoute(route)
+                                        onRouteClick()
                                     }
                                 },
                                 onLongClick = {

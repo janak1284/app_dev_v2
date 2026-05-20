@@ -8,8 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +27,8 @@ import java.util.Locale
 fun JourneyHistoryScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
-    onHistoryItemClick: (Long) -> Unit
+    onHistoryItemClick: (Long) -> Unit,
+    onReactivateClick: () -> Unit
 ) {
     val historyEntries by viewModel.journeyHistory.collectAsState(initial = emptyList())
     val selectedJourneys = remember { mutableStateMapOf<Long, JourneyHistoryEntity>() }
@@ -100,6 +100,20 @@ fun JourneyHistoryScreen(
                         },
                         leadingContent = {
                             Icon(Icons.Default.History, contentDescription = null, tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                        },
+                        trailingContent = {
+                            if (!isSelectionMode) {
+                                IconButton(onClick = {
+                                    viewModel.startJourneyFromHistory(entry)
+                                    onReactivateClick()
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayCircle,
+                                        contentDescription = "Re-activate",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
