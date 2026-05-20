@@ -27,6 +27,15 @@
 ### Progressive Disclosure
 - Complex settings (Smart ETA) are hidden behind a toggle and revealed only when needed, keeping the initial view "clean and lean".
 
+### Skeleton Loading
+- **Pattern:** Shimmering skeleton animations (1200ms duration, LinearEasing) used for Distance and ETA displays during asynchronous data fetching (OSRM API).
+- **Colors:** LightGray (0.6f to 0.2f alpha) gradient.
+
+### Journey History Design
+- **Concept:** A "Gist" approach. The History Screen displays a simplified summary (Destination Name + Timestamp) to minimize visual noise.
+- **Limit:** Hard cap of 10 items to maintain relevance and storage efficiency.
+- **Icons:** Circle-clipped surface with a subtle background (`primary.copy(alpha = 0.1f)`) for the history icon.
+
 ### Animated Feedback
 - Every major state change (setting destination, arming alarm, expanding settings) uses vertical slide/fade animations (200-300ms) to provide clear visual cues.
 

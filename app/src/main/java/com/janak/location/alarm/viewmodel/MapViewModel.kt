@@ -439,20 +439,24 @@ class MapViewModel(
     fun resetJourneyCompleted() {
         _journeyCompleted.value = false
         hasTriggeredArrival = false
+        // Clear journey state
+        _destination.value = null
+        _destinationName.value = null
+        _distanceToDestination.value = null
+        _remainingEta.value = null
+        _currentRouteGeoJson.value = null
+        _routeLine.value = null
+        fullRouteLine = null
     }
 
     fun stopAlarm() {
         _isAlarmSet.value = false
         _isPreviewMode.value = false
-        _distanceToDestination.value = null
-        _remainingEta.value = null
-        _destinationName.value = null
-        _currentRouteGeoJson.value = null
-        _routeLine.value = null
-        fullRouteLine = null
+        // Keep destinationName and distance for the summary sheet
+
         routeDistanceEngine.resetStats()
         alarmEngine.stop()
-        
+
         val serviceIntent = Intent(context, LocationAlarmService::class.java)
         context.stopService(serviceIntent)
     }
@@ -491,32 +495,41 @@ class MapViewModel(
             val snappedPoint = feature.geometry() as? com.mapbox.geojson.Point
             
             if (snappedPoint != null) {
-                val slicedLine = com.mapbox.turf.TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
-                
-                // Update map route line (sliced version)
-                _routeLine.value = slicedLine.toMapLibre()
-                
-                // Calculate distance along route
-                val distance = com.mapbox.turf.TurfMeasurement.length(slicedLine, com.mapbox.turf.TurfConstants.UNIT_METERS)
-                _distanceToDestination.value = formatDistance(distance.toInt())
-                
-                // Update speed and calculate ETA
-                routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
-                val expectedSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
-                
-                val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
-                    remainingDistanceMeters = distance,
-                    expectedSpeedMps = expectedSpeed
-                )
-                
-                if (etaMinutes != Double.MAX_VALUE) {
-                    _remainingEta.value = etaMinutes.roundToInt()
-                    android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps")
-                } else {
-                    _remainingEta.value = null
-                    android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED")
+                try {
+                    val slicedLine = com.mapbox.turf.TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
+                    
+                    // Update map route line (sliced version) if it has at least 2 points
+                    if (slicedLine.coordinates().size >= 2) {
+                        _routeLine.value = slicedLine.toMapLibre()
+                    }
+                    
+                    // Calculate distance along route
+                    val distance = com.mapbox.turf.TurfMeasurement.length(slicedLine, com.mapbox.turf.TurfConstants.UNIT_METERS)
+                    _distanceToDestination.value = formatDistance(distance.toInt())
+                    
+                    // Update speed and calculate ETA
+                    routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
+                    val expectedSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
+                    
+                    val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
+                        remainingDistanceMeters = distance,
+                        expectedSpeedMps = expectedSpeed
+                    )
+                    
+                    if (etaMinutes != Double.MAX_VALUE) {
+                        _remainingEta.value = etaMinutes.roundToInt()
+                        android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps")
+                    } else {
+                        _remainingEta.value = null
+                        android.util.Log.d("MapViewModel", "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED")
+                    }
+                    return
+                } catch (e: Exception) {
+                    // Turf lineSlice throws exception if start and end are the same point (arrived)
+                    _distanceToDestination.value = formatDistance(0)
+                    _remainingEta.value = 0
+                    android.util.Log.d("MapViewModel", "checkDistance: Arrived at exact destination point")
                 }
-                return
             } else {
                 android.util.Log.w("MapViewModel", "checkDistance: Could not snap user to route line")
             }
@@ -539,10 +552,18 @@ class MapViewModel(
 
         // Auto-arrival detection (50m threshold)
         if (distance <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
-            android.util.Log.d("MapViewModel", "Arrival detected (within 50m). Triggering completion.")
+            android.util.Log.d("MapViewModel", "Arrival detected at distance: $distance. isAlarmSet: ${_isAlarmSet.value}")
             hasTriggeredArrival = true
             _journeyCompleted.value = true
-            stopAlarm()
+            
+            if (!_isAlarmSet.value) {
+                // In preview mode, we just clear and stop
+                _isPreviewMode.value = false
+                _routeLine.value = null
+                fullRouteLine = null
+            }
+            // If isAlarmSet is true, we wait for the Service's JOURNEY_COMPLETED_BROADCAST
+            // which will call stopAlarm() and ensure data is saved.
         }
 
         _remainingEta.value = null

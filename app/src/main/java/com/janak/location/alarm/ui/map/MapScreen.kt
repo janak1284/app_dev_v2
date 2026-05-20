@@ -546,19 +546,30 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = distanceToDestination ?: "Calculating...",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            remainingEta?.let { eta ->
+                            if (distanceToDestination != null) {
                                 Text(
-                                    text = "ETA: $eta min",
+                                    text = distanceToDestination!!,
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (remainingEta != null) {
+                                Text(
+                                    text = "ETA: $remainingEta min",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Medium
                                 )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                             }
+
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "DISTANCE TO TARGET",
                                 style = MaterialTheme.typography.labelLarge,
@@ -582,19 +593,30 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 color = MaterialTheme.colorScheme.secondary
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = distanceToDestination ?: "Calculating...",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            remainingEta?.let { eta ->
+                            if (distanceToDestination != null) {
                                 Text(
-                                    text = "ETA: $eta min",
+                                    text = distanceToDestination!!,
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (remainingEta != null) {
+                                Text(
+                                    text = "ETA: $remainingEta min",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.secondary,
                                     fontWeight = FontWeight.Medium
                                 )
+                            } else {
+                                com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                             }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = destinationName ?: "Selected Destination",
                                 style = MaterialTheme.typography.bodyMedium,

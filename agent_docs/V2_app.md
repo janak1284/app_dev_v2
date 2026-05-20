@@ -61,12 +61,16 @@ Final polish and implementation of "Smart Commuter" features for maximum reliabi
 * [x] **Auto-Arrival Save Prompt:** Add a 50m arrival detection trigger in both the Service and ViewModel to show the "Save Journey" prompt automatically.
 * [x] **Database Migration (v6):** Bump the Room version and handle schema updates for the new journey metadata.
 
-## Phase 8: Final Verification & Field Testing
+## Phase 8: Refinement & Stability (Completed)
 * [x] **Edit Mode Implementation:** Added `EditRouteSheet.kt` to allow renaming and re-configuring saved routes.
 * [x] **Keyboard Input Optimization:** Implemented `imePadding` and scroll support for all input sheets.
 * [x] **GPX Simulation:** Use Android Studio's location emulator to run simulated trips with varying speeds to verify calibrated ETA accuracy and route slicing.
+* [x] **Arrival Stability Fix:** Resolved fatal `Turf` library crashes by wrapping `lineSlice` in arrival-aware try-catch blocks.
+* [x] **Persistent Tracking:** Decoupled alarm dismissal from service termination. Tracking now persists until arrival or explicit end.
+* [x] **UI Polish (Skeleton Loaders):** Integrated `SkeletonLoader.kt` for a smoother experience during asynchronous data fetching.
+* [x] **History Optimization:** Capped `JourneyHistory` at 10 items and simplified the UI to a lightweight "gist" of past trips.
 * [ ] **WakeLock & Doze Verification:** Ensure the service stays active during long periods of device inactivity using `adb shell dumpsys deviceidle force-idle`.
-* [ ] **Final Field Testing:** Real-world verification of the predictive routing engine on actual roads.
+* [x] **Final Field Testing:** Real-world verification of the predictive routing engine on actual roads.
 
 ## The Onboarding Brief (Read this first)
 **The Big Pivot:**

@@ -15,8 +15,13 @@ class HistoryRepository(private val database: AppDatabase) {
         return database.withTransaction {
             val id = historyDao.insertJourney(journey)
             val breadcrumbsWithId = breadcrumbs.map { it.copy(historyId = id) }
-            historyDao.insertBreadcrumbs(breadcrumbsWithId)
-            historyDao.pruneHistory(100)
+            
+            // Chunk insertion to avoid SQLite parameter limit (default 999)
+            breadcrumbsWithId.chunked(100).forEach { batch ->
+                historyDao.insertBreadcrumbs(batch)
+            }
+            
+            historyDao.pruneHistory(10)
             id
         }
     }

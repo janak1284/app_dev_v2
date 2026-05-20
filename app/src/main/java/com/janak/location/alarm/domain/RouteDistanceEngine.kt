@@ -24,10 +24,14 @@ class RouteDistanceEngine {
         val snappedPoint = feature.geometry() as? Point ?: return Double.MAX_VALUE
         
         // 2. Slice the line from the snapped point to the end
-        val slicedLine = TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
-        
-        // 3. Measure the length of the sliced line in meters
-        return TurfMeasurement.length(slicedLine, TurfConstants.UNIT_METERS)
+        return try {
+            val slicedLine = TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
+            // 3. Measure the length of the sliced line in meters
+            TurfMeasurement.length(slicedLine, TurfConstants.UNIT_METERS)
+        } catch (e: Exception) {
+            // Slicing fails if start == stop (we are exactly at the destination point)
+            0.0
+        }
     }
 
     /**

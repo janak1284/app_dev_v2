@@ -1,4 +1,9 @@
-# Pending Tasks (V2 Phase 6)
+# Pending Tasks (V2 Phase 8: Refinement)
+
+## High Priority Fixes
+- [x] **Bug: 5km Saving Limit:** Fixed by implementing service state recovery, copying location objects, and chunking DB insertions.
+- [x] **Arrival Prompt Immediacy:** Tightened handshake between Service and ViewModel for instant UI reaction.
+- [x] **Saved Journey UI:** Redesigned cards and screens with rich metrics (distance, duration, alarm badges).
 
 ## UI Enhancements
 - [x] **Search History Preview:** Fix the navigation logic to ensure clicking a search history entry correctly triggers a map route preview.
@@ -16,4 +21,11 @@
 - [x] **Speed-Adjusted ETA:** Implemented the "Speed Ratio ETA" calculation ($\text{User Avg Speed} / \text{OSRM Expected Speed}$) to provide road-aware arrival estimates.
 - [x] **GPX Simulation:** Performed simulated trips to verify ETA accuracy and route snapping.
 - [x] **High-Fidelity Path Saving:** Ensure the actual path taken (GeoJSON) is saved and reusable for future journeys.
-- [ ] **Final Field Testing:** Perform real-world verification of the predictive routing engine, spatial calculations, and alarm triggers.
+- [x] **Arrival Stability:** Fixed a fatal crash in the `Turf` library when slicing a route at the exact destination point.
+- [x] **Tracking Persistence:** Fixed bug where tracking stopped when the alarm was dismissed; tracking now continues until arrival.
+- [x] **Final Field Testing:** Perform real-world verification of the predictive routing engine, spatial calculations, and alarm triggers.
+
+## Refinement Phase (Completed)
+- [x] **Skeleton Loaders:** Replaced "Calculating..." text with modern shimmering skeleton animations for Distance and ETA.
+- [x] **History Gist:** Refined Journey History to keep only the last 10 items, storing only the destination and timestamp gist.
+- [x] **Explicit Saving:** Enforced separation between automatic "History Gists" and manual "Saved Routes" with full path metrics.

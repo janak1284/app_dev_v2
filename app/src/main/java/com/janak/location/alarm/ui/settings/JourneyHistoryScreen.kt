@@ -6,6 +6,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -14,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.viewmodel.MapViewModel
@@ -38,7 +41,7 @@ fun JourneyHistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isSelectionMode) "${selectedJourneys.size} selected" else "Saved Journeys") },
+                title = { Text(if (isSelectionMode) "${selectedJourneys.size} selected" else "Journey History") },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (isSelectionMode) {
@@ -82,59 +85,35 @@ fun JourneyHistoryScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
+                    .padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(historyEntries) { entry ->
                     val isSelected = selectedJourneys.containsKey(entry.historyId)
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                text = entry.destinationName,
-                                fontWeight = FontWeight.Bold
-                            )
+                    
+                    HistoryCard(
+                        entry = entry,
+                        isSelected = isSelected,
+                        isSelectionMode = isSelectionMode,
+                        onReactivateClick = {
+                            viewModel.startJourneyFromHistory(entry)
+                            onReactivateClick()
                         },
-                        supportingContent = {
-                            Text(
-                                text = SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()).format(Date(entry.timestamp))
-                            )
+                        onLongClick = {
+                            isSelectionMode = true
+                            if (isSelected) selectedJourneys.remove(entry.historyId) else selectedJourneys[entry.historyId] = entry
+                            if (selectedJourneys.isEmpty()) isSelectionMode = false
                         },
-                        leadingContent = {
-                            Icon(Icons.Default.History, contentDescription = null, tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                        },
-                        trailingContent = {
-                            if (!isSelectionMode) {
-                                IconButton(onClick = {
-                                    viewModel.startJourneyFromHistory(entry)
-                                    onReactivateClick()
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Default.PlayCircle,
-                                        contentDescription = "Re-activate",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                        onClick = {
+                            if (isSelectionMode) {
+                                if (isSelected) selectedJourneys.remove(entry.historyId) else selectedJourneys[entry.historyId] = entry
+                                if (selectedJourneys.isEmpty()) isSelectionMode = false
+                            } else {
+                                onHistoryItemClick(entry.historyId)
                             }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                            .combinedClickable(
-                                onClick = {
-                                    if (isSelectionMode) {
-                                        if (isSelected) selectedJourneys.remove(entry.historyId) else selectedJourneys[entry.historyId] = entry
-                                        if (selectedJourneys.isEmpty()) isSelectionMode = false
-                                    } else {
-                                        onHistoryItemClick(entry.historyId)
-                                    }
-                                },
-                                onLongClick = {
-                                    isSelectionMode = true
-                                    if (isSelected) selectedJourneys.remove(entry.historyId) else selectedJourneys[entry.historyId] = entry
-                                    if (selectedJourneys.isEmpty()) isSelectionMode = false
-                                }
-                            )
+                        }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
         }
@@ -161,5 +140,109 @@ fun JourneyHistoryScreen(
                 }
             )
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun HistoryCard(
+    entry: JourneyHistoryEntity,
+    isSelected: Boolean,
+    isSelectionMode: Boolean,
+    onReactivateClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) 
+                MaterialTheme.colorScheme.primaryContainer 
+            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                shape = CircleShape,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.History,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = entry.destinationName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+                Text(
+                    text = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault()).format(Date(entry.timestamp)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+            
+            if (isSelectionMode) {
+                Checkbox(checked = isSelected, onCheckedChange = null)
+            } else {
+                IconButton(onClick = onReactivateClick) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Re-activate",
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MetricBadgeSmall(icon: ImageVector, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+    }
+}
+
+private fun formatDistance(meters: Int): String {
+    return if (meters >= 1000) String.format("%.1f km", meters / 1000f) else "${meters}m"
+}
+
+private fun formatDuration(millis: Long): String {
+    val minutes = millis / 60000
+    return if (minutes >= 60) {
+        val hours = minutes / 60
+        val remainingMinutes = minutes % 60
+        "${hours}h ${remainingMinutes}m"
+    } else {
+        "${minutes} min"
     }
 }
