@@ -95,6 +95,10 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [ ] Update `ModernConfigurationSheet` with a toggle/tab for "Road" vs "Transit".
     - [ ] Add granular transit options (e.g., "Minimize Walking", "Wheelchair Accessible").
     - [ ] Implement logic to switch between OSRM and Valhalla/OTP based on selection.
+- [ ] **Alarm Configuration Logic:**
+    - [ ] **Exclusive Alarm Toggling:** Enforce mutual exclusivity between the "Distance Alarm" and "Smart ETA Alarm". 
+        - [ ] If one is toggled ON while the other is already active, the previously active one must automatically toggle OFF.
+        - [ ] Update UI state management in `ModernConfigurationSheet` to reflect this logic.
 - [ ] **Map Rendering Enhancements:**
     - [ ] Implement multi-color/multi-style polyline rendering for different transport modes (e.g., Blue for Walking, Orange for Train).
     - [ ] Display transfer station markers on the map.

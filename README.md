@@ -13,8 +13,8 @@ Standard GPS alarms often fail because they use a straight line to measure dista
 **V2 solves this by:**
 - **Road Snapping:** It "snaps" your GPS position to the actual road path.
 - **Route Tracking:** It knows exactly how much road distance is left, not just how close you are to the dot on the map.
-- **Segment-Aware Speed:** It tracks the specific speed limit of your current road segment (e.g., city vs. highway) to adjust its predictions dynamically.
-- **Predictive Timing:** It calculates your ETA based on your actual real-time speed calibrated against road data.
+- **Performance Ratio Scaling:** It tracks the specific speed limit of your current road segment (e.g., city vs. highway) and calculates your real-time efficiency (Performance Ratio) to adjust the entire remaining journey dynamically.
+- **Predictive Timing:** It calculates your ETA by scaling the OSRM base time by your actual performance ratio, ensuring humanized arrival estimates.
 
 ---
 
@@ -22,7 +22,7 @@ Standard GPS alarms often fail because they use a straight line to measure dista
 
 ### 🛣️ Smart Routing & Alarms
 - **Road-Aware Distance:** High-precision tracking that follows the curves of the road using the OSRM (Open Source Routing Machine) engine.
-- **Segment-Aware ETA:** A stateless correction model that uses segment-specific speed annotations from OSRM to provide highly accurate arrival times on mixed road types.
+- **Performance Ratio ETA:** A sophisticated model that scales OSRM's expected duration by your real-time performance against segment limits. This ensures accurate predictions even when transitioning between slow traffic and fast highways.
 - **Real-Time Route Slicing:** The map route line dynamically shortens (slices) as you move, providing immediate visual feedback of your progress.
 - **Smart ETA Alarms:** Set an alarm to wake you up exactly **10 minutes before you arrive**, regardless of traffic or distance.
 

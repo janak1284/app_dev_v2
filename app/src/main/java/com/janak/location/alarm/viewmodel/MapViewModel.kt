@@ -518,17 +518,14 @@ class MapViewModel(
                         userPoint, 
                         _segmentSpeeds.value
                     )
-                    val expectedSpeed = if (currentSegmentSpeed > 0) {
-                        currentSegmentSpeed
-                    } else if (_expectedDuration.value > 0) {
-                        _expectedDistance.value / _expectedDuration.value
-                    } else {
-                        0.0
-                    }
                     
+                    val globalSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
+                    val segmentSpeed = if (currentSegmentSpeed > 0) currentSegmentSpeed else globalSpeed
+
                     val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
                         remainingDistanceMeters = distance,
-                        expectedSpeedMps = expectedSpeed
+                        globalExpectedSpeedMps = globalSpeed,
+                        currentSegmentSpeedMps = segmentSpeed
                     )
                     
                     if (etaMinutes != Double.MAX_VALUE) {

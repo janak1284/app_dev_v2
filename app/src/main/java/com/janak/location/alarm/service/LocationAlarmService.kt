@@ -296,9 +296,12 @@ class LocationAlarmService : Service() {
             
             // Segment-Aware Speed Correction
             val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(route, userPoint, segmentSpeeds)
-            val speedToUse = if (currentSegmentSpeed > 0) currentSegmentSpeed else expectedSpeedMps
             
-            etaMinutes = routeDistanceEngine.calculateCalibratedETA(distance, speedToUse)
+            etaMinutes = routeDistanceEngine.calculateCalibratedETA(
+                remainingDistanceMeters = distance,
+                globalExpectedSpeedMps = expectedSpeedMps,
+                currentSegmentSpeedMps = if (currentSegmentSpeed > 0) currentSegmentSpeed else expectedSpeedMps
+            )
         } else {
             val results = FloatArray(1)
             Location.distanceBetween(location.latitude, location.longitude, destinationLat, destinationLng, results)

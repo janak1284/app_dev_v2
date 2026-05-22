@@ -89,30 +89,41 @@ class RouteDistanceEngine {
     }
 
     /**
-     * Predicts the dynamic ETA in minutes, calibrated by the ratio of user speed vs OSRM expected speed.
+     * Predicts the dynamic ETA in minutes using the Performance Ratio model.
      * 
      * @param remainingDistanceMeters Distance left along the route.
-     * @param expectedSpeedMps The speed OSRM expects for this road segment.
+     * @param globalExpectedSpeedMps The OSRM expected speed for the entire route (Total Dist / Total Duration).
+     * @param currentSegmentSpeedMps The OSRM expected speed for the specific segment the user is currently on.
      * @return ETA in minutes.
      */
-    fun calculateCalibratedETA(remainingDistanceMeters: Double, expectedSpeedMps: Double): Double {
+    fun calculateCalibratedETA(
+        remainingDistanceMeters: Double, 
+        globalExpectedSpeedMps: Double,
+        currentSegmentSpeedMps: Double
+    ): Double {
         if (averageSpeedMps <= 0.5) { // User is stationary
             return Double.MAX_VALUE
         }
 
-        return if (expectedSpeedMps > 0) {
-            // Speed Ratio = Current User Speed / Road's Expected Speed
-            val speedRatio = averageSpeedMps / expectedSpeedMps
-            
-            // Expected Duration = Remaining Distance / Road's Expected Speed
-            val baseDurationSeconds = remainingDistanceMeters / expectedSpeedMps
-            
-            // Calibrated ETA = Base Duration / Speed Ratio
-            (baseDurationSeconds / speedRatio) / 60.0
-        } else {
-            // Fallback to simple dynamic ETA
-            (remainingDistanceMeters / averageSpeedMps) / 60.0
+        if (globalExpectedSpeedMps <= 0 || currentSegmentSpeedMps <= 0) {
+            // Fallback to simple dynamic ETA if OSRM data is missing
+            return (remainingDistanceMeters / averageSpeedMps) / 60.0
         }
+
+        // 1. Performance Ratio: How are we doing on the CURRENT road type?
+        // e.g., if we are walking 4km/h on a 5km/h path, we are at 80% efficiency (0.8)
+        var performanceRatio = averageSpeedMps / currentSegmentSpeedMps
+        
+        // Clamp ratio to protect against extreme outliers (traffic jam vs speeding)
+        performanceRatio = performanceRatio.coerceIn(0.1, 2.5)
+
+        // 2. Base OSRM Time: How long OSRM thinks the rest of the journey takes
+        val baseRemainingDurationSeconds = remainingDistanceMeters / globalExpectedSpeedMps
+
+        // 3. Calibrated Time: Scale the OSRM prediction by our current performance ratio
+        val calibratedTimeSeconds = baseRemainingDurationSeconds / performanceRatio
+
+        return calibratedTimeSeconds / 60.0
     }
 
     /**

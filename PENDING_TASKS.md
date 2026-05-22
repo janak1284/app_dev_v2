@@ -18,7 +18,7 @@
 
 ## Bug Fixes & Verification
 - [x] **Route Line Preview:** Fixed the issue where route lines failed to render when opened from history/saved routes.
-- [x] **Speed-Adjusted ETA:** Implemented the "Speed Ratio ETA" calculation ($\text{User Avg Speed} / \text{OSRM Expected Speed}$) to provide road-aware arrival estimates.
+- [x] **Performance Ratio ETA:** Implemented the "Performance Ratio" model to scale OSRM base time by real-time efficiency for humanized arrival estimates.
 - [x] **GPX Simulation:** Performed simulated trips to verify ETA accuracy and route snapping.
 - [x] **High-Fidelity Path Saving:** Ensure the actual path taken (GeoJSON) is saved and reusable for future journeys.
 - [x] **Arrival Stability:** Fixed a fatal crash in the `Turf` library when slicing a route at the exact destination point.
@@ -29,8 +29,9 @@
 - [x] **Phase 1: Transit Data Foundation:** Implemented `JourneyLeg` entities, Valhalla API client, and Repository integration.
 - [ ] **Phase 2: The Multi-Modal Engine:** Refactor `RouteDistanceEngine` and `LocationAlarmService` for leg-based tracking.
 - [ ] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
+    - [ ] Implement mutually exclusive toggles for Distance and Smart ETA alarms.
 
 ## Future Improvements (Post-V2)
-- [x] **Segment-Aware Speed Ratio Correction:** Implemented "Stateless Correction" model using OSRM speed annotations to handle mixed road types accurately.
+- [x] **Performance Ratio ETA Model:** Implemented a sophisticated scaling model using OSRM speed annotations to handle mixed road types and traffic accurately.
 - [x] **Battery-saver mode (Smart Polling based on distance):** Implemented dynamic location update intervals (30s to 2s) based on proximity to destination.
 - [ ] **Real-world field testing and accuracy calibration.**

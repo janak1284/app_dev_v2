@@ -64,7 +64,7 @@ If no automated tests:
 * [x] V2 Spatial math active (Turf-Java route slicing)
 * [x] V2 Dynamic ETA working
 * [x] V2 UI (Home screen & Saved Journeys/Journey History Logs) implemented
-* [x] V2 Preview Mode & Calibrated ETA (Phase 6)
+* [x] V2 Preview Mode & Performance Ratio ETA (Phase 6)
 
 ---
 
@@ -72,7 +72,7 @@ If no automated tests:
 
 **Last Updated:** May 2026
 **Working On:** **V3 Phase 2: The Multi-Modal Engine**
-**Recently Completed:** Post-V2 Improvements (Smart Polling, Segment-Aware Speed) and V3 Phase 1 (Data Foundation)
+**Recently Completed:** Post-V2 Improvements (Smart Polling, Performance Ratio ETA) and V3 Phase 1 (Data Foundation)
 **Blocked By:** None.
 
 ---
@@ -108,9 +108,9 @@ If no automated tests:
 * [x] Build "Save Journey" Bottom Sheet prompt.
 * [x] Implement separate "Saved Journeys" and "Journey History" management pages.
 
-### Phase 6: Journey Preview & Speed-Adjusted ETA
+### Phase 6: Journey Preview & Performance Ratio ETA
 * [x] Implement "PREVIEW" mode in MapScreen (Consolidated into "DESTINATION SET").
-* [x] Implement OSRM Speed Calibration and Speed Ratio ETA logic.
+* [x] Implement OSRM Speed Calibration and Performance Ratio ETA logic.
 * [x] Implement "One-Click" direct journey start from history/saved routes.
 * [x] Implement "Edit Mode" for Saved Routes (Rename/Re-configure).
 * [x] Keyboard Input Optimization (imePadding).
