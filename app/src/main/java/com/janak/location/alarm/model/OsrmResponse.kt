@@ -15,7 +15,25 @@ data class OsrmResponse(
 data class OsrmRoute(
     val geometry: OsrmGeometry,
     val duration: Double,
-    val distance: Double
+    val distance: Double,
+    val legs: List<OsrmLeg> = emptyList()
+)
+
+@OptIn(InternalSerializationApi::class)
+@Serializable
+data class OsrmLeg(
+    val annotation: OsrmAnnotation? = null,
+    val duration: Double,
+    val distance: Double,
+    val summary: String = ""
+)
+
+@OptIn(InternalSerializationApi::class)
+@Serializable
+data class OsrmAnnotation(
+    val speed: List<Double> = emptyList(),
+    val duration: List<Double> = emptyList(),
+    val distance: List<Double> = emptyList()
 )
 
 @OptIn(InternalSerializationApi::class)

@@ -94,6 +94,7 @@ class MapViewModel(
 
     private val _expectedDuration = MutableStateFlow(0.0)
     private val _expectedDistance = MutableStateFlow(0.0)
+    private val _segmentSpeeds = MutableStateFlow<List<Double>>(emptyList())
 
     private val _isAlarmSet = MutableStateFlow(false)
     val isAlarmSet: StateFlow<Boolean> = _isAlarmSet.asStateFlow()
@@ -269,6 +270,7 @@ class MapViewModel(
         val routeJson = _currentRouteGeoJson.value
         val duration = _expectedDuration.value
         val distance = _expectedDistance.value
+        val speeds = _segmentSpeeds.value
 
         if (dest != null) {
             val serviceIntent = Intent(context, LocationAlarmService::class.java).apply {
@@ -278,6 +280,7 @@ class MapViewModel(
                 putExtra("ROUTE_GEOJSON", routeJson)
                 putExtra("EXPECTED_DURATION", duration)
                 putExtra("EXPECTED_DISTANCE", distance)
+                putExtra("SEGMENT_SPEEDS", speeds.toDoubleArray())
                 putExtra("DISTANCE_THRESHOLD", settings.distanceMeters.toFloat())
                 putExtra("DISTANCE_ALARM_ENABLED", settings.isDistanceAlarmEnabled)
                 putExtra("PREDICTIVE_MINUTES", settings.predictiveMinutes)
@@ -340,59 +343,62 @@ class MapViewModel(
                 val coords = "${start.longitude},${start.latitude};${end.longitude},${end.latitude}"
                 val response = osrmApiService.getRoute(coords)
                 if (response.isSuccessful) {
-                    val root = response.body()
-                    val routes = root?.get("routes")?.jsonArray
-                    val firstRoute = routes?.getOrNull(0)?.jsonObject
-                    val geometry = firstRoute?.get("geometry")
+                    val root = response.body() ?: return@launch
+                    val firstRoute = root.routes.getOrNull(0) ?: return@launch
                     
-                    if (geometry != null) {
-                        val geoJson = geometry.toString()
-                        _currentRouteGeoJson.value = geoJson
-                        
-                        // Extract duration and distance
-                        val distance = firstRoute.get("distance")?.toString()?.toDoubleOrNull() ?: 0.0
-                        _expectedDuration.value = firstRoute.get("duration")?.toString()?.toDoubleOrNull() ?: 0.0
-                        _expectedDistance.value = distance
-                        android.util.Log.d("MapViewModel", "fetchRoute: duration=${_expectedDuration.value}, distance=${_expectedDistance.value}")
+                    val geoJson = firstRoute.geometry.coordinates.let { coords ->
+                        val pointList = coords.map { Point.fromLngLat(it[0], it[1]) }
+                        val mbLine = com.mapbox.geojson.LineString.fromLngLats(pointList.map { 
+                            com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+                        })
+                        mbLine.toJson()
+                    }
+                    
+                    _currentRouteGeoJson.value = geoJson
+                    _expectedDuration.value = firstRoute.duration
+                    _expectedDistance.value = firstRoute.distance
+                    
+                    // Extract segment speeds from annotations
+                    val speeds = firstRoute.legs.firstOrNull()?.annotation?.speed ?: emptyList()
+                    _segmentSpeeds.value = speeds
+                    
+                    android.util.Log.d("MapViewModel", "fetchRoute: duration=${_expectedDuration.value}, distance=${_expectedDistance.value}, segments=${speeds.size}")
 
-                        // Update search history with road distance if this destination was just selected
-                        val currentDest = _destination.value
-                        if (currentDest != null) {
-                            val updatedHistory = _searchHistory.value.map { feature ->
-                                val coords = feature.geometry.coordinates
-                                if (coords[1] == currentDest.latitude && coords[0] == currentDest.longitude) {
-                                    feature.copy(properties = feature.properties.copy(roadDistance = distance))
-                                } else {
-                                    feature
-                                }
+                    // Update search history with road distance if this destination was just selected
+                    val currentDest = _destination.value
+                    if (currentDest != null) {
+                        val updatedHistory = _searchHistory.value.map { feature ->
+                            val c = feature.geometry.coordinates
+                            if (c[1] == currentDest.latitude && c[0] == currentDest.longitude) {
+                                feature.copy(properties = feature.properties.copy(roadDistance = firstRoute.distance))
+                            } else {
+                                feature
                             }
-                            _searchHistory.value = updatedHistory
-                            saveSearchHistory(updatedHistory)
                         }
+                        _searchHistory.value = updatedHistory
+                        saveSearchHistory(updatedHistory)
+                    }
 
-                        // Also update _routeLine for map rendering
-                        val coordinates = firstRoute.get("geometry")?.jsonObject?.get("coordinates")?.jsonArray?.map {
-                            val point = it.jsonArray
-                            Point.fromLngLat(point[0].toString().toDouble(), point[1].toString().toDouble())
-                        }
-                        if (coordinates != null) {
-                            val mbRoute = com.mapbox.geojson.LineString.fromLngLats(coordinates.map { 
-                                com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
-                            })
-                            fullRouteLine = mbRoute
-                            _routeLine.value = LineString.fromLngLats(coordinates)
-                            android.util.Log.d("MapViewModel", "fetchRoute: routeLine updated, size=${coordinates.size}")
-                        }
+                    // Also update _routeLine for map rendering
+                    val coordinates = firstRoute.geometry.coordinates.map {
+                        Point.fromLngLat(it[0], it[1])
+                    }
+                    val mbRoute = com.mapbox.geojson.LineString.fromLngLats(coordinates.map { 
+                        com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+                    })
+                    fullRouteLine = mbRoute
+                    _routeLine.value = LineString.fromLngLats(coordinates)
+                    android.util.Log.d("MapViewModel", "fetchRoute: routeLine updated, size=${coordinates.size}")
 
-                        if (pushToService && _isAlarmSet.value) {
-                            val updateIntent = Intent(context, LocationAlarmService::class.java).apply {
-                                action = LocationAlarmService.ACTION_UPDATE_ROUTE
-                                putExtra("ROUTE_GEOJSON", geoJson)
-                                putExtra("EXPECTED_DURATION", _expectedDuration.value)
-                                putExtra("EXPECTED_DISTANCE", _expectedDistance.value)
-                            }
-                            context.startService(updateIntent)
+                    if (pushToService && _isAlarmSet.value) {
+                        val updateIntent = Intent(context, LocationAlarmService::class.java).apply {
+                            action = LocationAlarmService.ACTION_UPDATE_ROUTE
+                            putExtra("ROUTE_GEOJSON", geoJson)
+                            putExtra("EXPECTED_DURATION", _expectedDuration.value)
+                            putExtra("EXPECTED_DISTANCE", _expectedDistance.value)
+                            putExtra("SEGMENT_SPEEDS", speeds.toDoubleArray())
                         }
+                        context.startService(updateIntent)
                     }
                 }
             } catch (e: Exception) {
@@ -505,7 +511,20 @@ class MapViewModel(
                     
                     // Update speed and calculate ETA
                     routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
-                    val expectedSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
+                    
+                    // Segment-Aware Speed Correction
+                    val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(
+                        route, 
+                        userPoint, 
+                        _segmentSpeeds.value
+                    )
+                    val expectedSpeed = if (currentSegmentSpeed > 0) {
+                        currentSegmentSpeed
+                    } else if (_expectedDuration.value > 0) {
+                        _expectedDistance.value / _expectedDuration.value
+                    } else {
+                        0.0
+                    }
                     
                     val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
                         remainingDistanceMeters = distance,

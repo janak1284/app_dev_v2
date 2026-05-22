@@ -58,6 +58,7 @@ class LocationAlarmService : Service() {
     
     private var currentRoute: LineString? = null
     private var expectedSpeedMps: Double = 0.0
+    private var segmentSpeeds: List<Double> = emptyList()
     private var historyId: Long = -1L
 
     companion object {
@@ -116,7 +117,12 @@ class LocationAlarmService : Service() {
                 val routeGeoJson = intent.getStringExtra("ROUTE_GEOJSON")
                 val duration = intent.getDoubleExtra("EXPECTED_DURATION", 0.0)
                 val distance = intent.getDoubleExtra("EXPECTED_DISTANCE", 0.0)
+                val speeds = intent.getDoubleArrayExtra("SEGMENT_SPEEDS")
                 
+                if (speeds != null) {
+                    segmentSpeeds = speeds.toList()
+                }
+
                 if (routeGeoJson != null) {
                     try {
                         currentRoute = LineString.fromJson(routeGeoJson)
@@ -151,6 +157,11 @@ class LocationAlarmService : Service() {
             val routeGeoJson = intent.getStringExtra("ROUTE_GEOJSON")
             val initialDuration = intent.getDoubleExtra("EXPECTED_DURATION", 0.0)
             val initialDistance = intent.getDoubleExtra("EXPECTED_DISTANCE", 0.0)
+            val speeds = intent.getDoubleArrayExtra("SEGMENT_SPEEDS")
+
+            if (speeds != null) {
+                segmentSpeeds = speeds.toList()
+            }
 
             if (routeGeoJson != null) {
                 try {
@@ -282,7 +293,12 @@ class LocationAlarmService : Service() {
             }
             
             routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
-            etaMinutes = routeDistanceEngine.calculateCalibratedETA(distance, expectedSpeedMps)
+            
+            // Segment-Aware Speed Correction
+            val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(route, userPoint, segmentSpeeds)
+            val speedToUse = if (currentSegmentSpeed > 0) currentSegmentSpeed else expectedSpeedMps
+            
+            etaMinutes = routeDistanceEngine.calculateCalibratedETA(distance, speedToUse)
         } else {
             val results = FloatArray(1)
             Location.distanceBetween(location.latitude, location.longitude, destinationLat, destinationLng, results)
@@ -290,6 +306,8 @@ class LocationAlarmService : Service() {
         }
         
         updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.roundToInt()} min" else ""}")
+
+        adjustPollingInterval(distance)
 
         if (distance <= 50 && !hasSentArrivalBroadcast) {
             hasSentArrivalBroadcast = true
@@ -302,6 +320,16 @@ class LocationAlarmService : Service() {
                 triggerAlarm()
             }
         }
+    }
+
+    private fun adjustPollingInterval(distanceMeters: Double) {
+        val interval = when {
+            distanceMeters > 10000 -> 30000L // 30 seconds for > 10km
+            distanceMeters > 5000 -> 15000L  // 15 seconds for 5-10km
+            distanceMeters > 2000 -> 5000L   // 5 seconds for 2-5km
+            else -> 2000L                   // 2 seconds for < 2km
+        }
+        locationTrackingManager.updateInterval(interval)
     }
 
     private fun triggerAlarm() {

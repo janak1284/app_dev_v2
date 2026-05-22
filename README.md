@@ -13,7 +13,8 @@ Standard GPS alarms often fail because they use a straight line to measure dista
 **V2 solves this by:**
 - **Road Snapping:** It "snaps" your GPS position to the actual road path.
 - **Route Tracking:** It knows exactly how much road distance is left, not just how close you are to the dot on the map.
-- **Predictive Timing:** It calculates your ETA based on your current speed and road-specific data.
+- **Segment-Aware Speed:** It tracks the specific speed limit of your current road segment (e.g., city vs. highway) to adjust its predictions dynamically.
+- **Predictive Timing:** It calculates your ETA based on your actual real-time speed calibrated against road data.
 
 ---
 
@@ -21,9 +22,14 @@ Standard GPS alarms often fail because they use a straight line to measure dista
 
 ### 🛣️ Smart Routing & Alarms
 - **Road-Aware Distance:** High-precision tracking that follows the curves of the road using the OSRM (Open Source Routing Machine) engine.
+- **Segment-Aware ETA:** A stateless correction model that uses segment-specific speed annotations from OSRM to provide highly accurate arrival times on mixed road types.
 - **Real-Time Route Slicing:** The map route line dynamically shortens (slices) as you move, providing immediate visual feedback of your progress.
 - **Smart ETA Alarms:** Set an alarm to wake you up exactly **10 minutes before you arrive**, regardless of traffic or distance.
-- **Distance Alarms:** Traditional wake-up calls based on road mileage (e.g., "Wake me 500m before the stop").
+
+### 🔋 Efficiency & Reliability
+- **Smart Polling (Battery-Saver):** Dynamically adjusts GPS update frequency based on distance to the destination (e.g., 30s polling when 10km away, 2s polling when within 2km).
+- **WakeLock Management:** Ensures the tracking engine stays active even when the phone enters "Deep Sleep" during long commutes.
+- **State Recovery:** Automatically resumes tracking if the system kills the app or if the device restarts.
 
 ### 🗺️ Advanced Map Experience
 - **Center Lock (Auto-Follow):** Toggle a "locked" mode that keeps the user centered on the map. It automatically disengages if you manually pan the map.
@@ -78,9 +84,9 @@ The app is built using **Clean Architecture**, which means the code is separated
 - [x] **Phase 5:** Home Screen, Saved Routes, and Journey History.
 - [x] **Phase 6:** Predictive Routing Engine & Road-Snapping logic.
 - [x] **Phase 7:** High-Fidelity Path Saving & Route Slicing.
-- [x] **Phase 8:** Refinement Phase: Skeleton loaders, History Gists, Home Screen updates, Persistent Tracking (1.3km limit fix) and Stability fixes.
-- [ ] **Phase 9:** Battery-saver mode (Smart Polling based on distance).
-- [ ] **Phase 9:** Real-world field testing and accuracy calibration.
+- [x] **Phase 8:** Refinement Phase (Stability fixes & UX polish).
+- [x] **Phase 9:** Battery-saver mode (Smart Polling) & Segment-Aware Speed Correction.
+- [ ] **Phase 10:** Multi-Modal Transit Engine (V3).
 
 ---
 

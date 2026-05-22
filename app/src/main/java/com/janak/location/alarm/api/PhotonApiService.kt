@@ -1,5 +1,6 @@
 package com.janak.location.alarm.api
 
+import com.janak.location.alarm.model.OsrmResponse
 import com.janak.location.alarm.model.PhotonResponse
 import kotlinx.serialization.json.JsonObject
 import retrofit2.Response
@@ -23,8 +24,8 @@ interface PhotonApiService {
         @Path("coordinates") coordinates: String,
         @Query("overview") overview: String = "full",
         @Query("geometries") geometries: String = "geojson",
-        @Query("annotations") annotations: String = "duration,distance"
-    ): Response<JsonObject>
+        @Query("annotations") annotations: String = "duration,distance,speed"
+    ): Response<OsrmResponse>
 
     // Photon Search
     @GET("api/")

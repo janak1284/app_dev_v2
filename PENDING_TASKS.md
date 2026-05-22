@@ -25,7 +25,12 @@
 - [x] **Tracking Persistence:** Fixed bug where tracking stopped when the alarm was dismissed; tracking now continues until arrival.
 - [x] **Final Field Testing:** Perform real-world verification of the predictive routing engine, spatial calculations, and alarm triggers.
 
+## V3 Multi-Modal Transition
+- [x] **Phase 1: Transit Data Foundation:** Implemented `JourneyLeg` entities, Valhalla API client, and Repository integration.
+- [ ] **Phase 2: The Multi-Modal Engine:** Refactor `RouteDistanceEngine` and `LocationAlarmService` for leg-based tracking.
+- [ ] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
+
 ## Future Improvements (Post-V2)
-- [ ] **Segment-Aware Speed Ratio Correction:** Instead of using a single global `expectedSpeed`, implement a "Stateless Correction" model. This would involve taking the remaining OSRM duration and dividing it by a locally-calculated `Speed Ratio` (Current User Speed / Current Segment Speed Limit) to handle mixed road types (e.g., city vs. highway) more accurately.
-- [ ] **Battery-saver mode (Smart Polling based on distance).**
+- [x] **Segment-Aware Speed Ratio Correction:** Implemented "Stateless Correction" model using OSRM speed annotations to handle mixed road types accurately.
+- [x] **Battery-saver mode (Smart Polling based on distance):** Implemented dynamic location update intervals (30s to 2s) based on proximity to destination.
 - [ ] **Real-world field testing and accuracy calibration.**

@@ -2,6 +2,7 @@ package com.janak.location.alarm.data.dao
 
 import androidx.room.*
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
+import com.janak.location.alarm.data.entity.JourneyLegEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -15,6 +16,9 @@ interface HistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBreadcrumb(breadcrumb: RouteBreadcrumbEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLegs(legs: List<JourneyLegEntity>): List<Long>
 
     @Query("SELECT * FROM route_breadcrumbs WHERE historyId = :historyId ORDER BY timestamp ASC")
     suspend fun getBreadcrumbsForHistorySync(historyId: Long): List<RouteBreadcrumbEntity>
@@ -35,6 +39,9 @@ interface HistoryDao {
 
     @Query("SELECT * FROM route_breadcrumbs WHERE historyId = :historyId ORDER BY timestamp ASC")
     fun getBreadcrumbsForHistory(historyId: Long): Flow<List<RouteBreadcrumbEntity>>
+
+    @Query("SELECT * FROM journey_legs WHERE historyId = :historyId ORDER BY sequenceIndex ASC")
+    fun getLegsForHistory(historyId: Long): Flow<List<JourneyLegEntity>>
 
     @Query("DELETE FROM journey_history WHERE historyId NOT IN (SELECT historyId FROM journey_history ORDER BY timestamp DESC LIMIT :limit)")
     suspend fun pruneHistory(limit: Int = 100)

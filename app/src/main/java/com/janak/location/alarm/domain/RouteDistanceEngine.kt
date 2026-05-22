@@ -50,6 +50,30 @@ class RouteDistanceEngine {
     }
 
     /**
+     * Finds the expected speed for the current segment the user is on.
+     * 
+     * @param route The planned path.
+     * @param userLocation The raw GPS location.
+     * @param segmentSpeeds List of speeds for each segment from OSRM annotations.
+     * @return Expected speed in meters per second.
+     */
+    fun getCurrentSegmentSpeed(route: LineString, userLocation: Point, segmentSpeeds: List<Double>): Double {
+        if (segmentSpeeds.isEmpty()) return 0.0
+
+        val feature = TurfMisc.nearestPointOnLine(userLocation, route.coordinates())
+        val properties = feature.properties() ?: return segmentSpeeds.first()
+
+        // 'index' property in nearestPointOnLine refers to the segment start point index
+        val segmentIndex = properties.get("index")?.asInt ?: 0
+
+        return if (segmentIndex in segmentSpeeds.indices) {
+            segmentSpeeds[segmentIndex]
+        } else {
+            segmentSpeeds.last()
+        }
+    }
+
+    /**
      * Updates the sliding average speed using Exponential Moving Average (EMA).
      * 
      * @param currentSpeedMps The latest speed from GPS in meters per second.

@@ -38,4 +38,13 @@ object RetrofitClient {
             .build()
             .create(PhotonApiService::class.java)
     }
+
+    val valhallaApiService: ValhallaApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(ValhallaApiService.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(ValhallaApiService::class.java)
+    }
 }

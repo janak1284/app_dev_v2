@@ -23,11 +23,14 @@ class LocationTrackingManager(
     // Background thread for handling location callbacks
     private val handlerThread = HandlerThread("LocationHandlerThread").apply { start() }
     private val backgroundLooper = handlerThread.looper
+    
+    private var currentInterval = 5000L
+    private var currentLocationCallback: LocationCallback? = null
 
     @SuppressLint("MissingPermission") // Permissions are handled in UI
     fun getLocationUpdates(): Flow<Location> = callbackFlow {
         android.util.Log.d("LocationTracker", "getLocationUpdates: Starting flow")
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L)
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, currentInterval)
             .setMinUpdateDistanceMeters(10f)
             .build()
 
@@ -39,6 +42,8 @@ class LocationTrackingManager(
                 }
             }
         }
+        
+        currentLocationCallback = callback
 
         try {
             android.util.Log.d("LocationTracker", "requestLocationUpdates: Requesting updates...")
@@ -51,6 +56,25 @@ class LocationTrackingManager(
         awaitClose {
             android.util.Log.d("LocationTracker", "awaitClose: Removing updates")
             client.removeLocationUpdates(callback)
+            currentLocationCallback = null
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun updateInterval(intervalMillis: Long) {
+        if (currentInterval == intervalMillis) return
+        currentInterval = intervalMillis
+        val callback = currentLocationCallback ?: return
+        
+        android.util.Log.d("LocationTracker", "updateInterval: New interval $intervalMillis ms")
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, currentInterval)
+            .setMinUpdateDistanceMeters(if (intervalMillis > 10000L) 100f else 10f)
+            .build()
+            
+        try {
+            client.requestLocationUpdates(request, callback, backgroundLooper)
+        } catch (e: Exception) {
+            android.util.Log.e("LocationTracker", "updateInterval Error", e)
         }
     }
 }

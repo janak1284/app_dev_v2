@@ -3,6 +3,7 @@ package com.janak.location.alarm.data.repository
 import androidx.room.withTransaction
 import com.janak.location.alarm.data.AppDatabase
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
+import com.janak.location.alarm.data.entity.JourneyLegEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -26,6 +27,22 @@ class HistoryRepository(private val database: AppDatabase) {
         }
     }
 
+    suspend fun saveJourneyLogWithLegs(journey: JourneyHistoryEntity, breadcrumbs: List<RouteBreadcrumbEntity>, legs: List<JourneyLegEntity>): Long {
+        return database.withTransaction {
+            val id = historyDao.insertJourney(journey)
+            val breadcrumbsWithId = breadcrumbs.map { it.copy(historyId = id) }
+            val legsWithId = legs.map { it.copy(historyId = id) }
+            
+            breadcrumbsWithId.chunked(100).forEach { batch ->
+                historyDao.insertBreadcrumbs(batch)
+            }
+            
+            historyDao.insertLegs(legsWithId)
+            historyDao.pruneHistory(10)
+            id
+        }
+    }
+
     suspend fun saveJourneyLog(id: Long, breadcrumb: RouteBreadcrumbEntity) {
         historyDao.insertBreadcrumb(breadcrumb.copy(historyId = id))
     }
@@ -40,6 +57,10 @@ class HistoryRepository(private val database: AppDatabase) {
 
     fun getBreadcrumbsForHistory(historyId: Long): Flow<List<RouteBreadcrumbEntity>> {
         return historyDao.getBreadcrumbsForHistory(historyId)
+    }
+
+    fun getLegsForHistory(historyId: Long): Flow<List<JourneyLegEntity>> {
+        return historyDao.getLegsForHistory(historyId)
     }
 
     suspend fun clearAllHistory() {

@@ -71,8 +71,8 @@ If no automated tests:
 ## Current State (Update During Development)
 
 **Last Updated:** May 2026
-**Working On:** **Phase 7: Final Verification & Field Testing**
-**Recently Completed:** Phase 6 (Journey Preview, Speed Ratio ETA, and Edit Mode)
+**Working On:** **V3 Phase 2: The Multi-Modal Engine**
+**Recently Completed:** Post-V2 Improvements (Smart Polling, Segment-Aware Speed) and V3 Phase 1 (Data Foundation)
 **Blocked By:** None.
 
 ---

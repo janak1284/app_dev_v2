@@ -58,18 +58,18 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
 ### Phase 1: Transit Data Foundation
 *Objective: Establish the data models and network clients required for multi-modal routing.*
 
-- [ ] **Define Transit Data Models:**
-    - [ ] Create `JourneyLeg` domain model (mode, geometry, start/end points, estimated duration).
-    - [ ] Create `TransitItinerary` model to hold a collection of legs.
-- [ ] **Room Database Migration:**
-    - [ ] Update `SavedRouteEntity` to support multi-leg storage by creating a dedicated `JourneyLegEntity` table with a foreign key to the main route.
-    - [ ] Update `JourneyHistoryEntity` for V3 metadata.
-- [ ] **Transit API Client:**
-    - [ ] Implement `ValhallaApiService` or `OtpApiService` using Retrofit.
-    - [ ] Ensure the client requests and parses real-time GTFS data (delays/cancellations) if supported by the provider.
-    - [ ] Implement response parsers for multi-modal GeoJSON outputs.
-- [ ] **Repository Expansion:**
-    - [ ] Update `RouteRepository` to fetch transit itineraries from the new API.
+- [x] **Define Transit Data Models:**
+    - [x] Create `JourneyLeg` domain model (mode, geometry, start/end points, estimated duration).
+    - [x] Create `TransitItinerary` model to hold a collection of legs.
+- [x] **Room Database Migration:**
+    - [x] Update `SavedRouteEntity` to support multi-leg storage by creating a dedicated `JourneyLegEntity` table with a foreign key to the main route.
+    - [x] Update `JourneyHistoryEntity` for V3 metadata.
+- [x] **Transit API Client:**
+    - [x] Implement `ValhallaApiService` or `OtpApiService` using Retrofit.
+    - [x] Ensure the client requests and parses real-time GTFS data (delays/cancellations) if supported by the provider.
+    - [x] Implement response parsers for multi-modal GeoJSON outputs.
+- [x] **Repository Expansion:**
+    - [x] Update `RouteRepository` to fetch transit itineraries from the new API.
 
 ### Phase 2: The Multi-Modal Engine
 *Objective: Refactor the spatial and alarm logic to support leg-by-leg tracking, fallback mechanisms, and dynamic intervals.*
