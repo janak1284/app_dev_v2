@@ -1,4 +1,6 @@
-# REFACTOR APP
+# REFACTOR APP (VERSION 2) - [MOVED TO V3]
+
+> **Note:** As of May 2026, the project has transitioned to **Version 3 (V3)** to support Multi-Modal Transit and Leg-Based Tracking. Please refer to `V3_app.md` for the current roadmap and technical architecture.
 
 ## Phase 1: The Data Foundation (Room DB)
 Before touching the UI or the map, we need to establish where the data lives. Room will act as our single source of truth.
@@ -74,12 +76,15 @@ Final polish and implementation of "Smart Commuter" features for maximum reliabi
 * [ ] **WakeLock & Doze Verification:** Ensure the service stays active during long periods of device inactivity using `adb shell dumpsys deviceidle force-idle`.
 * [x] **Final Field Testing:** Real-world verification of the predictive routing engine on actual roads.
 
+## ~~Phase 9: Multi-Modal Transit & Leg-Based Alarms~~ [MOVED TO V3]
+*The next evolution to support commuters using trains and buses with intermediate transfers is now handled in Version 3.*
+
 ## The Onboarding Brief (Read this first)
 **The Big Pivot:**
-We are shifting the Location Alarm MVP from a simple "proximity trigger" to a smart, predictive routing engine. Previously, the app drew a straight circle around the destination. This caused false positives if the user was on a winding road or a V-shaped junction.
+We are shifting the Location Alarm MVP from a simple "proximity trigger" to a smart, predictive, and multi-modal routing engine. Previously, the app drew a straight circle around the destination. This caused false positives if the user was on a winding road or a V-shaped junction.
 
 **The Solution:**
-We are integrating Open Source Routing Machine (OSRM) to get actual road paths (GeoJSON). As the user moves, we will snap their GPS coordinates to this path, calculate the actual remaining route distance using a spatial library (Turf-Java), and calculate a dynamic ETA based on their real-time sliding average speed. We are also adding a Room Database so users can save and revisit their actual traveled routes.
+We are integrating OSRM for roadway paths and Valhalla/OTP for multi-modal transit paths. For transit, we use "Leg-Based Tracking" to wake the user up before intermediate transfers. As the user moves, we snap their GPS coordinates to the path (or current leg), calculate the actual remaining distance using Turf-Java, and predict dynamic ETAs.
 
 ## Work Division Strategy
 
@@ -87,33 +92,30 @@ We are integrating Open Source Routing Machine (OSRM) to get actual road paths (
 **Focus:** Background Services, Spatial Mathematics, and Database Architecture.
 
 **1. The Room Database Foundation:**
-* Setup the Room dependencies.
-* Create the SavedRoute (metadata) and RouteBreadcrumb (GPS trails) Entities.
-* Write the DAOs for batch inserting GPS trails and fetching saved routes.
-* Expose this data to the ViewModel layer via a Repository.
+* Setup the Room entities (`SavedRoute`, `RouteBreadcrumb`).
+* Expose data via Repository.
 
-**2. The Spatial Math Engine (Turf-Java):**
-* Integrate the Turf-Java dependency.
-* Write the utility to calculate the "cross-track distance" (checking if the user's raw GPS point deviates more than 100m from the OSRM polyline).
-* Write the logic to slice the polyline and calculate the remaining distance along the route.
+**2. The Spatial Math & Leg Engine:**
+* Integrate Turf-Java for cross-track deviation and route slicing.
+* **NEW:** Implement Leg-Based Tracking logic to handle multi-modal journey segments and transfer point alarms.
 
 **3. Service State Machine Overhaul:**
-* Update LocationAlarmService to buffer incoming GPS coordinates into a list. Implement the "Sliding Average Speed" algorithm to calculate dynamic ETAs.
-* Handle the journey lifecycle (saving the buffered list to Room when the user clicks "End Journey").
+* Update `LocationAlarmService` to handle multi-leg transitions and persistent tracking across transfers.
 
 ### Developer 2: The Network & UI Engineer
 **Focus:** External APIs, Map Rendering, and Jetpack Compose Interfaces.
 
-**1. The OSRM API Integration:**
-* Create a Retrofit interface for the OSRM public API (http://router.project-osrm.org).
-* Write the network call to fetch the /driving/route between the user's start and end coordinates.
-* Use Kotlinx Serialization to parse the response and extract the LineString (GeoJSON) and estimated duration.
+**1. The Routing API Integration:**
+* **OSRM:** Roadway routing (Driving/Walking).
+* **NEW (Valhalla/OTP):** Multi-modal transit routing (Rail/Bus/Walk).
+* Parse GeoJSON `LineString` responses into internal `JourneyLeg` models.
 
 **2. MapLibre GeoJSON Rendering:**
-* Take the parsed LineString from the OSRM response and feed it into the MapLibre map. Implement a GeoJsonSource and a LineLayer to visually draw the route line on the screen so the user can see their path.
+* Render multi-leg routes with distinct visual styles for different transport modes.
 
 **3. UI/UX Refactoring:**
-* Terminology Cleanup: Scrub the codebase of "Guard" and "Backup Alarm". Rename them to Distance Alarm and Time Alarm. Home Screen Build: Create a new Jetpack Compose screen that observes the Room Database (once Dev 1 finishes it) to display a list of SavedRoute cards. Journey Summary Sheet: Build a Bottom Sheet that appears when a user ends their trip, prompting them: "Save this route?".
+* **NEW:** Implement the "Transport Mode Selector" (Road vs Transit) in the journey setup flow.
+* Update `JourneySummarySheet` to display leg-by-leg breakdowns.
 
 ## The Handshake (Where your code meets)
 To work in parallel without blocking each other, you need to agree on data contracts.

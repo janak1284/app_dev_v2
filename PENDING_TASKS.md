@@ -25,9 +25,7 @@
 - [x] **Tracking Persistence:** Fixed bug where tracking stopped when the alarm was dismissed; tracking now continues until arrival.
 - [x] **Final Field Testing:** Perform real-world verification of the predictive routing engine, spatial calculations, and alarm triggers.
 
-## Refinement Phase (Completed)
-- [x] **Skeleton Loaders:** Replaced "Calculating..." text with modern shimmering skeleton animations for Distance and ETA.
-- [x] **History Gist:** Refined Journey History to keep only the last 10 items, storing only the destination and timestamp gist.
-- [x] **Explicit Saving:** Enforced separation between automatic "History Gists" and manual "Saved Routes" with full path metrics.
-- [x] **Home Screen Saved Routes:** Replaced "Recent Journeys" with full-featured "Saved Routes" cards on the Home Screen.
-- [x] **Persistent Tracking (1.3km Fix):** Solved the 1.3km route truncation bug by persisting breadcrumbs directly to Room DB in real-time and implementing Service State Recovery to survive unexpected OS kills.
+## Future Improvements (Post-V2)
+- [ ] **Segment-Aware Speed Ratio Correction:** Instead of using a single global `expectedSpeed`, implement a "Stateless Correction" model. This would involve taking the remaining OSRM duration and dividing it by a locally-calculated `Speed Ratio` (Current User Speed / Current Segment Speed Limit) to handle mixed road types (e.g., city vs. highway) more accurately.
+- [ ] **Battery-saver mode (Smart Polling based on distance).**
+- [ ] **Real-world field testing and accuracy calibration.**

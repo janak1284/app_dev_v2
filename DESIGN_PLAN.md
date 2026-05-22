@@ -32,6 +32,22 @@ The finalized design (Variant F) transforms the "bleak" MapScreen into a modern,
 - Use `QuickActionPill` components for Sound and Vibration toggles.
 - Add auto-scroll logic using `scrollState.animateScrollTo(scrollState.maxValue)` inside a `LaunchedEffect` triggered by the section expansion.
 
+## Multi-Modal Architecture (Transit Expansion)
+
+### Transit API Integration
+- **Engine:** Valhalla or OpenTripPlanner (OTP) via Transitland.
+- **Routing:** Fetch multi-modal itineraries including walking, trains, and buses.
+- **Data Model:** Introduce `JourneyLeg` to encapsulate individual segments.
+    - `type`: Walk, Train, Bus, etc.
+    - `geometry`: LineString for the leg.
+    - `arrivalPoint`: Coordinates for the end of the leg (transfer station or destination).
+
+### Leg-Based Tracking Strategy
+1. **Target Leg:** The `AlarmEngine` identifies the current active `JourneyLeg`.
+2. **Dynamic Destination:** Instead of tracking the final destination, `RouteDistanceEngine` slices the polyline against the `arrivalPoint` of the *current* leg.
+3. **Transfer Alarms:** When the user arrives at the end of a non-final leg, a unique "Transfer Alert" is triggered.
+4. **Leg Transition:** Upon alarm dismissal or arrival, the engine automatically advances to the next `JourneyLeg` in the itinerary.
+
 ## Accessibility Checklist
 - [ ] **Touch Targets:** Ensure the "Activate Alarm" button and "TURN OFF" buttons are at least 48dp in height.
 - [ ] **Contrast:** Ensure `displaySmall` text (distance) has a contrast ratio of 4.5:1 against the card background.
