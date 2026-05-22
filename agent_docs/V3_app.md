@@ -81,6 +81,7 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [ ] Introduce `ALARM_TRANSFER` state.
     - [ ] Introduce `WAITING_FOR_CONNECTION` and `RECALCULATING` states to provide a buffer for delays and a safety net for missed trains.
     - [ ] Implement logic to detect arrival at the end of a non-final leg.
+    - [ ] **Dynamic Alarm Reset:** Implement a "reset" mechanism for time-based alarms. If the alarm triggers but the user slows down (e.g., traffic), and the ETA rises above the threshold, the alarm state should reset to allow a second trigger once the ETA drops again.
     - [ ] Implement missed transfer detection (comparing location post-dismissal against the start of the next leg).
 - [ ] **Location Service Updates:**
     - [ ] Update `LocationAlarmService` to manage the active leg index.
@@ -99,6 +100,10 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [ ] **Exclusive Alarm Toggling:** Enforce mutual exclusivity between the "Distance Alarm" and "Smart ETA Alarm". 
         - [ ] If one is toggled ON while the other is already active, the previously active one must automatically toggle OFF.
         - [ ] Update UI state management in `ModernConfigurationSheet` to reflect this logic.
+    - [ ] **Advanced Input UI:** Replace the current slider-based inputs for distance and time with specialized text input fields.
+        - [ ] Support units for distance (meters, kilometers).
+        - [ ] Support minute-based input for the Smart ETA alarm.
+    - [ ] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.
 - [ ] **Map Rendering Enhancements:**
     - [ ] Implement multi-color/multi-style polyline rendering for different transport modes (e.g., Blue for Walking, Orange for Train).
     - [ ] Display transfer station markers on the map.
