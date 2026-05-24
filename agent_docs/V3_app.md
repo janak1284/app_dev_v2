@@ -104,9 +104,6 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
         - [x] Support units for distance (meters, kilometers).
         - [x] Support minute-based input for the Smart ETA alarm.
     - [x] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.
-        - [ ] Support units for distance (meters, kilometers).
-        - [ ] Support minute-based input for the Smart ETA alarm.
-    - [ ] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.
 - [x] **Map Rendering Enhancements:**
     - [x] Implement multi-color/multi-style polyline rendering for different transport modes (e.g., Blue for Walking, Orange for Train).
     - [x] Display transfer station markers on the map.
