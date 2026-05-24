@@ -29,7 +29,9 @@
 - [x] **Phase 1: Transit Data Foundation:** Implemented `JourneyLeg` entities, Valhalla API client, and Repository integration.
 - [x] **Phase 2: The Multi-Modal Engine:** Refactor `RouteDistanceEngine` and `LocationAlarmService` for leg-based tracking.
     - [x] Refactored `RouteDistanceEngine` to accept `JourneyLeg` for remaining distance and deviation calculations.
-    - [ ] **Dynamic Alarm Reset:** Implement logic to reset the ETA alarm if the user's speed drops significantly after it has triggered, causing the ETA to exceed the threshold again.
+    - [x] Enhanced `LocationAlarmService` state machine with `ALARM_TRANSFER`, `WAITING_FOR_CONNECTION`, and `RECALCULATING` states.
+    - [x] Implemented logic to detect arrival at the end of a non-final leg and transition to the next leg.
+    - [x] **Dynamic Alarm Reset:** Implemented logic to reset the alarm state if distance/ETA increases significantly after silencing.
 - [ ] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
     - [ ] Implement mutually exclusive toggles for Distance and Smart ETA alarms.
     - [ ] **Alarm Input UI:** Replace the slider UI with a clean text input UI for Distance (meters/kilometers) and Time (minutes) alarms.

@@ -21,6 +21,7 @@ import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.domain.RouteDistanceEngine
+import com.janak.location.alarm.model.JourneyLeg
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import kotlinx.coroutines.*
@@ -29,7 +30,7 @@ import kotlin.math.roundToInt
 class LocationAlarmService : Service() {
 
     enum class ServiceState {
-        IDLE, TRACKING, ALARM_RINGING
+        IDLE, TRACKING, ALARM_RINGING, ALARM_TRANSFER, WAITING_FOR_CONNECTION, RECALCULATING
     }
 
     private var currentState = ServiceState.IDLE
@@ -57,6 +58,8 @@ class LocationAlarmService : Service() {
     private var startTimeMillis: Long = 0
     
     private var currentRoute: LineString? = null
+    private var currentLegs: List<JourneyLeg> = emptyList()
+    private var currentLegIndex: Int = 0
     private var expectedSpeedMps: Double = 0.0
     private var segmentSpeeds: List<Double> = emptyList()
     private var historyId: Long = -1L
@@ -118,9 +121,17 @@ class LocationAlarmService : Service() {
                 val duration = intent.getDoubleExtra("EXPECTED_DURATION", 0.0)
                 val distance = intent.getDoubleExtra("EXPECTED_DISTANCE", 0.0)
                 val speeds = intent.getDoubleArrayExtra("SEGMENT_SPEEDS")
+                val legsJson = intent.getStringExtra("JOURNEY_LEGS_JSON")
                 
                 if (speeds != null) {
                     segmentSpeeds = speeds.toList()
+                }
+
+                if (legsJson != null) {
+                    try {
+                        currentLegs = kotlinx.serialization.json.Json.decodeFromString(legsJson)
+                        currentLegIndex = 0
+                    } catch (e: Exception) {}
                 }
 
                 if (routeGeoJson != null) {
@@ -158,9 +169,17 @@ class LocationAlarmService : Service() {
             val initialDuration = intent.getDoubleExtra("EXPECTED_DURATION", 0.0)
             val initialDistance = intent.getDoubleExtra("EXPECTED_DISTANCE", 0.0)
             val speeds = intent.getDoubleArrayExtra("SEGMENT_SPEEDS")
+            val legsJson = intent.getStringExtra("JOURNEY_LEGS_JSON")
 
             if (speeds != null) {
                 segmentSpeeds = speeds.toList()
+            }
+
+            if (legsJson != null) {
+                try {
+                    currentLegs = kotlinx.serialization.json.Json.decodeFromString(legsJson)
+                    currentLegIndex = 0
+                } catch (e: Exception) {}
             }
 
             if (routeGeoJson != null) {
@@ -229,6 +248,7 @@ class LocationAlarmService : Service() {
             putString("ringtone", ringtoneUri)
             putBoolean("vibrate", isVibrateEnabled)
             putLong("history_id", historyId)
+            putInt("leg_index", currentLegIndex)
             apply()
         }
     }
@@ -245,6 +265,7 @@ class LocationAlarmService : Service() {
         ringtoneUri = prefs.getString("ringtone", null)
         isVibrateEnabled = prefs.getBoolean("vibrate", true)
         historyId = prefs.getLong("history_id", -1L)
+        currentLegIndex = prefs.getInt("leg_index", 0)
         
         currentState = ServiceState.TRACKING
         startForeground(NOTIFICATION_ID, createNotification("Distance Alarm Active", "Recovered tracking..."))
@@ -282,9 +303,33 @@ class LocationAlarmService : Service() {
         var distance: Double
         var etaMinutes: Double = Double.MAX_VALUE
         
-        val route = currentRoute
-        if (route != null) {
-            val userPoint = Point.fromLngLat(location.longitude, location.latitude)
+        val userPoint = Point.fromLngLat(location.longitude, location.latitude)
+        
+        if (currentLegs.isNotEmpty() && currentLegIndex in currentLegs.indices) {
+            val leg = currentLegs[currentLegIndex]
+            distance = routeDistanceEngine.calculateRemainingDistance(leg, userPoint)
+            
+            val deviation = routeDistanceEngine.calculateDeviation(leg, userPoint)
+            if (deviation > 100) {
+                // If we are significantly off the current leg, we might need recalculation
+                if (currentState != ServiceState.RECALCULATING) {
+                    currentState = ServiceState.RECALCULATING
+                    sendBroadcast(Intent(ACTION_RE_ROUTE).setPackage(packageName))
+                }
+            } else if (currentState == ServiceState.RECALCULATING) {
+                currentState = ServiceState.TRACKING
+            }
+            
+            routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
+            
+            // For transit legs, we might rely on the leg's duration if OSRM segment speeds aren't available
+            etaMinutes = routeDistanceEngine.calculateCalibratedETA(
+                remainingDistanceMeters = distance,
+                globalExpectedSpeedMps = if (leg.durationMillis > 0) leg.distanceMeters / (leg.durationMillis / 1000.0) else expectedSpeedMps,
+                currentSegmentSpeedMps = expectedSpeedMps
+            )
+        } else if (currentRoute != null) {
+            val route = currentRoute!!
             distance = routeDistanceEngine.calculateRemainingDistance(route, userPoint)
             
             val deviation = routeDistanceEngine.calculateDeviation(route, userPoint)
@@ -294,7 +339,6 @@ class LocationAlarmService : Service() {
             
             routeDistanceEngine.updateAverageSpeed(location.speed.toDouble())
             
-            // Segment-Aware Speed Correction
             val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(route, userPoint, segmentSpeeds)
             
             etaMinutes = routeDistanceEngine.calculateCalibratedETA(
@@ -312,16 +356,42 @@ class LocationAlarmService : Service() {
 
         adjustPollingInterval(distance)
 
-        if (distance <= 50 && !hasSentArrivalBroadcast) {
-            hasSentArrivalBroadcast = true
-            sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST).setPackage(packageName))
+        // Dynamic Alarm Reset: If alarm was silenced but we are now far from destination/ETA again, reset it.
+        if (isAlarmSilenced) {
+            val resetDistance = distanceThreshold * 1.5
+            val resetTime = predictiveMinutesThreshold * 1.5
+            if (distance > resetDistance && (!isPredictiveAlarmEnabled || etaMinutes > resetTime)) {
+                isAlarmSilenced = false
+                android.util.Log.d("LocationAlarmService", "Alarm reset due to distance/ETA increase.")
+            }
         }
 
-        if (currentState == ServiceState.TRACKING && !isAlarmSilenced) {
-            if ((isDistanceAlarmEnabled && distance <= distanceThreshold) || 
-                (isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold)) {
-                triggerAlarm()
+        if (distance <= 50) {
+            handleArrivalAtPoint()
+        }
+
+        if ((currentState == ServiceState.TRACKING || currentState == ServiceState.WAITING_FOR_CONNECTION) && !isAlarmSilenced) {
+            val isDistanceTriggered = isDistanceAlarmEnabled && distance <= distanceThreshold
+            val isTimeTriggered = isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold
+            
+            if (isDistanceTriggered || isTimeTriggered) {
+                val isTransfer = currentLegs.isNotEmpty() && currentLegIndex < currentLegs.size - 1
+                triggerAlarm(isTransfer)
             }
+        }
+    }
+
+    private fun handleArrivalAtPoint() {
+        if (currentLegs.isNotEmpty() && currentLegIndex < currentLegs.size - 1) {
+            // Arrived at the end of a non-final leg -> Transition to next leg
+            android.util.Log.d("LocationAlarmService", "Transitioning from leg $currentLegIndex to ${currentLegIndex + 1}")
+            currentLegIndex++
+            isAlarmSilenced = false // Allow alarm for the next leg
+            currentState = ServiceState.WAITING_FOR_CONNECTION
+        } else if (!hasSentArrivalBroadcast) {
+            // Final destination
+            hasSentArrivalBroadcast = true
+            sendBroadcast(Intent(JOURNEY_COMPLETED_BROADCAST).setPackage(packageName))
         }
     }
 
@@ -335,22 +405,34 @@ class LocationAlarmService : Service() {
         locationTrackingManager.updateInterval(interval)
     }
 
-    private fun triggerAlarm() {
-        currentState = ServiceState.ALARM_RINGING
+    private fun triggerAlarm(isTransfer: Boolean) {
+        currentState = if (isTransfer) ServiceState.ALARM_TRANSFER else ServiceState.ALARM_RINGING
         val ringingIntent = Intent(this, com.janak.location.alarm.RingingActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("RINGTONE_URI", ringtoneUri)
             putExtra("VIBRATE", isVibrateEnabled)
+            putExtra("IS_TRANSFER", isTransfer)
+            if (isTransfer && currentLegIndex in currentLegs.indices) {
+                putExtra("TRANSFER_NAME", currentLegs[currentLegIndex].endName ?: "Transfer Point")
+            }
         }
         try { startActivity(ringingIntent) } catch (e: Exception) {}
-        updateNotification("Arrived!", "You are within ${formatDistance(distanceThreshold.toInt())} of $destinationName")
+        
+        val title = if (isTransfer) "Transfer Alert!" else "Arrived!"
+        val content = if (isTransfer) {
+            "Time to change at ${currentLegs[currentLegIndex].endName ?: "Transfer Point"}"
+        } else {
+            "You are within ${formatDistance(distanceThreshold.toInt())} of $destinationName"
+        }
+        updateNotification(title, content)
     }
 
     private fun stopAlarmRinging() {
-        if (currentState == ServiceState.ALARM_RINGING) {
-            currentState = ServiceState.TRACKING
+        if (currentState == ServiceState.ALARM_RINGING || currentState == ServiceState.ALARM_TRANSFER) {
+            val wasTransfer = currentState == ServiceState.ALARM_TRANSFER
+            currentState = if (wasTransfer) ServiceState.WAITING_FOR_CONNECTION else ServiceState.TRACKING
             isAlarmSilenced = true
-            updateNotification("Distance Alarm Active", "Monitoring after arrival...")
+            updateNotification("Distance Alarm Active", "Monitoring progress...")
         }
     }
 

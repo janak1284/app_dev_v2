@@ -49,6 +49,8 @@ class RingingActivity : ComponentActivity() {
 
         val ringtoneUriString = intent.getStringExtra("RINGTONE_URI")
         val shouldVibrate = intent.getBooleanExtra("VIBRATE", true)
+        val isTransfer = intent.getBooleanExtra("IS_TRANSFER", false)
+        val transferName = intent.getStringExtra("TRANSFER_NAME")
 
         startAlarm(ringtoneUriString, shouldVibrate)
 
@@ -63,14 +65,28 @@ class RingingActivity : ComponentActivity() {
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Alarm!", fontSize = 48.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isTransfer) "Transfer!" else "Arrived!", 
+                        fontSize = 48.sp, 
+                        fontWeight = FontWeight.Bold,
+                        color = if (isTransfer) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                    )
+                    
+                    if (isTransfer && !transferName.isNullOrBlank()) {
+                        Text(
+                            text = "Next: $transferName",
+                            fontSize = 24.sp,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(32.dp))
                     
                     Button(
                         onClick = { dismissAlarm() },
                         modifier = Modifier.fillMaxWidth(0.8f).height(64.dp)
                     ) {
-                        Text("Dismiss (Keep Tracking)", fontSize = 18.sp)
+                        Text(if (isTransfer) "Dismiss (Continue Leg)" else "Dismiss (Keep Tracking)", fontSize = 18.sp)
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))

@@ -77,11 +77,11 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
 - [x] **Refactor `RouteDistanceEngine`:**
     - [x] Modify `calculateRemainingDistance` to accept a specific `JourneyLeg`.
     - [x] Update `calculateDeviation` to handle leg-specific geometry.
-- [ ] **Enhance `AlarmEngine` State Machine:**
-    - [ ] Introduce `ALARM_TRANSFER` state.
-    - [ ] Introduce `WAITING_FOR_CONNECTION` and `RECALCULATING` states to provide a buffer for delays and a safety net for missed trains.
-    - [ ] Implement logic to detect arrival at the end of a non-final leg.
-    - [ ] **Dynamic Alarm Reset:** Implement a "reset" mechanism for time-based alarms. If the alarm triggers but the user slows down (e.g., traffic), and the ETA rises above the threshold, the alarm state should reset to allow a second trigger once the ETA drops again.
+- [x] **Enhance `AlarmEngine` State Machine:**
+    - [x] Introduce `ALARM_TRANSFER` state.
+    - [x] Introduce `WAITING_FOR_CONNECTION` and `RECALCULATING` states to provide a buffer for delays and a safety net for missed trains.
+    - [x] Implement logic to detect arrival at the end of a non-final leg.
+    - [x] **Dynamic Alarm Reset:** Implement a "reset" mechanism for time-based alarms. If the alarm triggers but the user slows down (e.g., traffic), and the ETA rises above the threshold, the alarm state should reset to allow a second trigger once the ETA drops again.
     - [ ] Implement missed transfer detection (comparing location post-dismissal against the start of the next leg).
 - [ ] **Location Service Updates:**
     - [ ] Update `LocationAlarmService` to manage the active leg index.
