@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.viewmodel.MapViewModel
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
+import com.janak.location.alarm.model.TransportMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -153,6 +154,13 @@ fun HistoryCard(
     onLongClick: () -> Unit,
     onClick: () -> Unit
 ) {
+    val primaryMode = entry.alarmConfigAtTime.transportMode
+    val modeIcon = when (primaryMode) {
+        TransportMode.ROAD -> Icons.Default.DirectionsCar
+        TransportMode.WALK -> Icons.Default.DirectionsWalk
+        else -> Icons.Default.DirectionsTransit
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,11 +168,11 @@ fun HistoryCard(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) 
                 MaterialTheme.colorScheme.primaryContainer 
-            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
     ) {
         Row(
@@ -174,14 +182,14 @@ fun HistoryCard(
             Surface(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 shape = CircleShape,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(44.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        Icons.Default.History,
+                        modeIcon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -191,15 +199,24 @@ fun HistoryCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = entry.destinationName,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
-                Text(
-                    text = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault()).format(Date(entry.timestamp)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
+                
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MetricBadgeSmall(Icons.Default.Schedule, formatDuration(entry.durationMillis))
+                    MetricBadgeSmall(Icons.Default.Straighten, formatDistance(entry.actualDistanceMeters.toInt()))
+                    Text(
+                        text = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(entry.timestamp)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
             
             if (isSelectionMode) {
@@ -207,10 +224,10 @@ fun HistoryCard(
             } else {
                 IconButton(onClick = onReactivateClick) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        imageVector = Icons.Default.PlayArrow,
                         contentDescription = "Re-activate",
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                        modifier = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

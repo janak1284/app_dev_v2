@@ -43,7 +43,7 @@
     - [x] **Location Services Alert:** Implemented a system-wide alert that triggers if location services are disabled on the device.
     - [x] **Multi-Color Polylines:** Implemented property-based map styling to render different transport modes in distinct colors.
     - [x] **Transfer Station Markers:** Visualized mode transition points on the map with station markers.
-    - [x] **Journey Summary & History:** Updated `JourneySummarySheet` to show a breakdown of all transit legs.
+    - [x] **Journey Summary & History:** Updated `JourneySummarySheet` and `JourneyHistoryScreen` to show leg breakdowns and multi-modal statistics.
 
 ## Future Improvements (Post-V2)
 - [x] **Performance Ratio ETA Model:** Implemented a sophisticated scaling model using OSRM speed annotations to handle mixed road types and traffic accurately.

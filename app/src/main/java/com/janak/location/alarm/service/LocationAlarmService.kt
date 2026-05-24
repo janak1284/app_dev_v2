@@ -17,6 +17,7 @@ import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.data.AppDatabase
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
+import com.janak.location.alarm.data.entity.JourneyLegEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.data.repository.HistoryRepository
@@ -261,8 +262,27 @@ class LocationAlarmService : Service() {
                     ),
                     timestamp = startTimeMillis
                 )
-                historyId = historyRepository.saveJourneyLog(initialHistory, emptyList())
-                android.util.Log.d("LocationAlarmService", "Initial history created with ID: $historyId")
+                
+                val legEntities = currentLegs.mapIndexed { index, leg ->
+                    JourneyLegEntity(
+                        sequenceIndex = index,
+                        mode = leg.mode,
+                        geometry = leg.geometry,
+                        startName = leg.startName,
+                        endName = leg.endName,
+                        startLat = leg.startLat,
+                        startLng = leg.startLng,
+                        endLat = leg.endLat,
+                        endLng = leg.endLng,
+                        distanceMeters = leg.distanceMeters,
+                        durationMillis = leg.durationMillis,
+                        lineName = leg.lineName,
+                        color = leg.color
+                    )
+                }
+                
+                historyId = historyRepository.saveJourneyLogWithLegs(initialHistory, emptyList(), legEntities)
+                android.util.Log.d("LocationAlarmService", "Initial history created with ID: $historyId and ${legEntities.size} legs")
             }
 
             startForeground(NOTIFICATION_ID, createNotification("Distance Alarm Active", "Monitoring distance to destination..."))

@@ -112,7 +112,7 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [x] Display transfer station markers on the map.
 - [x] **Journey Summary & History:**
     - [x] Update `JourneySummarySheet` to show a breakdown of all legs.
-    - [ ] Update history views to reflect multi-modal icons and statistics.
+    - [x] Update history views to reflect multi-modal icons and statistics.
 
 ### Phase 4: Verification & Performance
 *Objective: Ensure reliability across diverse travel scenarios, handling edge cases gracefully.*
