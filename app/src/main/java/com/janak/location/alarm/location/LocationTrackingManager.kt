@@ -25,12 +25,13 @@ class LocationTrackingManager(
     private val backgroundLooper = handlerThread.looper
     
     private var currentInterval = 5000L
+    private var currentPriority = Priority.PRIORITY_HIGH_ACCURACY
     private var currentLocationCallback: LocationCallback? = null
 
     @SuppressLint("MissingPermission") // Permissions are handled in UI
     fun getLocationUpdates(): Flow<Location> = callbackFlow {
         android.util.Log.d("LocationTracker", "getLocationUpdates: Starting flow")
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, currentInterval)
+        val request = LocationRequest.Builder(currentPriority, currentInterval)
             .setMinUpdateDistanceMeters(10f)
             .build()
 
@@ -61,13 +62,14 @@ class LocationTrackingManager(
     }
 
     @SuppressLint("MissingPermission")
-    fun updateInterval(intervalMillis: Long) {
-        if (currentInterval == intervalMillis) return
+    fun updateInterval(intervalMillis: Long, priority: Int = Priority.PRIORITY_HIGH_ACCURACY) {
+        if (currentInterval == intervalMillis && currentPriority == priority) return
         currentInterval = intervalMillis
+        currentPriority = priority
         val callback = currentLocationCallback ?: return
         
-        android.util.Log.d("LocationTracker", "updateInterval: New interval $intervalMillis ms")
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, currentInterval)
+        android.util.Log.d("LocationTracker", "updateInterval: New interval $intervalMillis ms, Priority: $priority")
+        val request = LocationRequest.Builder(currentPriority, currentInterval)
             .setMinUpdateDistanceMeters(if (intervalMillis > 10000L) 100f else 10f)
             .build()
             

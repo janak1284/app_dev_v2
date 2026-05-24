@@ -32,6 +32,8 @@
     - [x] Enhanced `LocationAlarmService` state machine with `ALARM_TRANSFER`, `WAITING_FOR_CONNECTION`, and `RECALCULATING` states.
     - [x] Implemented logic to detect arrival at the end of a non-final leg and transition to the next leg.
     - [x] **Dynamic Alarm Reset:** Implemented logic to reset the alarm state if distance/ETA increases significantly after silencing.
+    - [x] Implemented transport-mode-aware polling intervals (e.g., lower frequency for trains).
+    - [x] Implemented "Dead Reckoning" fallback for tracking during GPS loss (e.g., tunnels).
 - [ ] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
     - [ ] Implement mutually exclusive toggles for Distance and Smart ETA alarms.
     - [ ] **Alarm Input UI:** Replace the slider UI with a clean text input UI for Distance (meters/kilometers) and Time (minutes) alarms.

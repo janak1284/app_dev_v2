@@ -83,11 +83,11 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [x] Implement logic to detect arrival at the end of a non-final leg.
     - [x] **Dynamic Alarm Reset:** Implement a "reset" mechanism for time-based alarms. If the alarm triggers but the user slows down (e.g., traffic), and the ETA rises above the threshold, the alarm state should reset to allow a second trigger once the ETA drops again.
     - [ ] Implement missed transfer detection (comparing location post-dismissal against the start of the next leg).
-- [ ] **Location Service Updates:**
-    - [ ] Update `LocationAlarmService` to manage the active leg index.
-    - [ ] Implement dynamic location request intervals based on transport mode (low-frequency for train rides, high-frequency for transfers).
-    - [ ] Implement "Dead Reckoning" / Time-Based Fallback mechanism for sudden GPS loss.
-    - [ ] Ensure persistence of journey state during app backgrounding or service restarts.
+- [x] **Location Service Updates:**
+    - [x] Update `LocationAlarmService` to manage the active leg index.
+    - [x] Implement dynamic location request intervals based on transport mode (low-frequency for train rides, high-frequency for transfers).
+    - [x] Implement "Dead Reckoning" / Time-Based Fallback mechanism for sudden GPS loss.
+    - [x] Ensure persistence of journey state during app backgrounding or service restarts.
 
 ### Phase 3: UI/UX for Multi-Modal Journeys
 *Objective: Surface multi-modal controls and data to the user.*

@@ -10,6 +10,7 @@ import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.google.android.gms.location.Priority
 import com.janak.location.alarm.MainActivity
 import com.janak.location.alarm.R
 import com.janak.location.alarm.alarm.AlarmEngine
@@ -22,6 +23,7 @@ import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.domain.RouteDistanceEngine
 import com.janak.location.alarm.model.JourneyLeg
+import com.janak.location.alarm.model.TransportMode
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import kotlinx.coroutines.*
@@ -42,6 +44,8 @@ class LocationAlarmService : Service() {
     private lateinit var historyRepository: HistoryRepository
     
     private var trackingJob: Job? = null
+    private var deadReckoningJob: Job? = null
+    private var lastLocationTime: Long = 0
     private var wakeLock: android.os.PowerManager.WakeLock? = null
 
     private var destinationLat: Double = 0.0
@@ -72,6 +76,7 @@ class LocationAlarmService : Service() {
         const val JOURNEY_COMPLETED_BROADCAST = "com.janak.location.alarm.JOURNEY_COMPLETED"
         const val NOTIFICATION_ID = 1
         const val CHANNEL_ID = "LocationAlarmChannel"
+        const val GPS_LOSS_THRESHOLD_MS = 15000L // 15 seconds
     }
 
     override fun onCreate() {
@@ -90,6 +95,46 @@ class LocationAlarmService : Service() {
             android.os.PowerManager.PARTIAL_WAKE_LOCK,
             "LocationAlarmService::WakeLock"
         )
+
+        startDeadReckoningWatchdog()
+    }
+
+    private fun startDeadReckoningWatchdog() {
+        deadReckoningJob?.cancel()
+        deadReckoningJob = serviceScope.launch {
+            while (isActive) {
+                delay(5000)
+                if (currentState != ServiceState.IDLE && lastLocationTime > 0) {
+                    val timeSinceLastUpdate = System.currentTimeMillis() - lastLocationTime
+                    if (timeSinceLastUpdate > GPS_LOSS_THRESHOLD_MS) {
+                        performDeadReckoning()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun performDeadReckoning() {
+        if (currentLegs.isNotEmpty() && currentLegIndex in currentLegs.indices) {
+            val leg = currentLegs[currentLegIndex]
+            // Estimate based on time
+            val elapsedInLeg = System.currentTimeMillis() - (leg.departureTime ?: lastLocationTime)
+            val progress = if (leg.durationMillis > 0) elapsedInLeg.toDouble() / leg.durationMillis else 0.0
+            
+            val estimatedRemainingDistance = leg.distanceMeters * (1.0 - progress).coerceAtLeast(0.0)
+            val estimatedETA = if (leg.durationMillis > 0) (leg.durationMillis - elapsedInLeg).toDouble() / 60000.0 else 0.0
+
+            android.util.Log.w("LocationAlarmService", "GPS Lost. Dead Reckoning: Dist=${estimatedRemainingDistance.toInt()}m, ETA=${estimatedETA.toInt()}min")
+            
+            updateNotification("GPS Lost - Estimating...", "Distance: ${formatDistance(estimatedRemainingDistance.toInt())} | ETA: ${estimatedETA.roundToInt()} min")
+
+            if (!isAlarmSilenced) {
+                if ((isDistanceAlarmEnabled && estimatedRemainingDistance <= distanceThreshold) || 
+                    (isPredictiveAlarmEnabled && estimatedETA <= predictiveMinutesThreshold)) {
+                    triggerAlarm(currentLegIndex < currentLegs.size - 1)
+                }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -282,6 +327,7 @@ class LocationAlarmService : Service() {
     }
 
     private fun processLocationUpdate(location: Location) {
+        lastLocationTime = System.currentTimeMillis()
         wakeLock?.acquire(60 * 60 * 1000L)
         
         // Persist breadcrumb immediately to database
@@ -396,13 +442,24 @@ class LocationAlarmService : Service() {
     }
 
     private fun adjustPollingInterval(distanceMeters: Double) {
-        val interval = when {
-            distanceMeters > 10000 -> 30000L // 30 seconds for > 10km
-            distanceMeters > 5000 -> 15000L  // 15 seconds for 5-10km
-            distanceMeters > 2000 -> 5000L   // 5 seconds for 2-5km
-            else -> 2000L                   // 2 seconds for < 2km
+        val mode = if (currentLegs.isNotEmpty() && currentLegIndex in currentLegs.indices) {
+            currentLegs[currentLegIndex].mode
+        } else {
+            TransportMode.ROAD
         }
-        locationTrackingManager.updateInterval(interval)
+
+        val priority = when (mode) {
+            TransportMode.TRAIN, TransportMode.SUBWAY -> if (distanceMeters > 5000) Priority.PRIORITY_BALANCED_POWER_ACCURACY else Priority.PRIORITY_HIGH_ACCURACY
+            else -> Priority.PRIORITY_HIGH_ACCURACY
+        }
+
+        val interval = when {
+            distanceMeters > 10000 -> if (mode == TransportMode.TRAIN) 60000L else 30000L 
+            distanceMeters > 5000 -> 15000L
+            distanceMeters > 2000 -> 5000L
+            else -> 2000L
+        }
+        locationTrackingManager.updateInterval(interval, priority)
     }
 
     private fun triggerAlarm(isTransfer: Boolean) {
@@ -471,6 +528,7 @@ class LocationAlarmService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         trackingJob?.cancel()
+        deadReckoningJob?.cancel()
         saveFinalSummary()
         getSharedPreferences("service_state", MODE_PRIVATE).edit().clear().apply()
         serviceScope.cancel()
