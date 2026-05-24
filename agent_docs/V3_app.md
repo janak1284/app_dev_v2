@@ -103,7 +103,7 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [x] **Advanced Input UI:** Replace the current slider-based inputs for distance and time with specialized text input fields.
         - [x] Support units for distance (meters, kilometers).
         - [x] Support minute-based input for the Smart ETA alarm.
-    - [ ] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.
+    - [x] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.
         - [ ] Support units for distance (meters, kilometers).
         - [ ] Support minute-based input for the Smart ETA alarm.
     - [ ] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.

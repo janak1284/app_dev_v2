@@ -1,6 +1,7 @@
 package com.janak.location.alarm.ui.map
 
 import android.Manifest
+import android.content.Intent
 import android.location.Location
 import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -114,6 +115,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val isSearching by viewModel.isSearching.collectAsState()
     val searchHistory by viewModel.searchHistory.collectAsState()
     val journeyCompleted by viewModel.journeyCompleted.collectAsState()
+    val isLocationEnabled by viewModel.isLocationEnabled.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val onDismissSheet = remember { { showBottomSheet = false } }
@@ -657,6 +659,55 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                  viewModel = viewModel,
                  onDismiss = onDismissSheet
              )
+         }
+
+         // --- Location Disabled Alert ---
+         AnimatedVisibility(
+            visible = !isLocationEnabled,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+            modifier = Modifier.align(Alignment.Center).padding(horizontal = 32.dp)
+         ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Default.LocationOff, 
+                        contentDescription = null, 
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Location Disabled",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Device location services are turned off. The alarm cannot track your progress.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { 
+                            context.startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Enable GPS")
+                    }
+                }
+            }
          }
     }
 }
