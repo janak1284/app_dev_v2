@@ -10,8 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.api.PhotonApiService
+import com.janak.location.alarm.api.ValhallaApiService
 import com.janak.location.alarm.location.LocationTrackingManager
-import com.janak.location.alarm.model.PhotonFeature
+import com.janak.location.alarm.model.*
 import com.janak.location.alarm.service.LocationAlarmService
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +43,7 @@ class MapViewModel(
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
+    private val valhallaApiService: ValhallaApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: HistoryRepository,
     private val context: Context
@@ -91,6 +93,9 @@ class MapViewModel(
 
     private val _currentRouteGeoJson = MutableStateFlow<String?>(null)
     val currentRouteGeoJson: StateFlow<String?> = _currentRouteGeoJson.asStateFlow()
+
+    private val _journeyLegs = MutableStateFlow<List<JourneyLeg>>(emptyList())
+    val journeyLegs: StateFlow<List<JourneyLeg>> = _journeyLegs.asStateFlow()
 
     private val _expectedDuration = MutableStateFlow(0.0)
     private val _expectedDistance = MutableStateFlow(0.0)
@@ -268,6 +273,7 @@ class MapViewModel(
         val dest = _destination.value
         val destName = _destinationName.value ?: "Unknown Destination"
         val routeJson = _currentRouteGeoJson.value
+        val legsJson = if (_journeyLegs.value.isNotEmpty()) Json.encodeToString(_journeyLegs.value) else null
         val duration = _expectedDuration.value
         val distance = _expectedDistance.value
         val speeds = _segmentSpeeds.value
@@ -278,6 +284,7 @@ class MapViewModel(
                 putExtra("DEST_LNG", dest.longitude)
                 putExtra("DEST_NAME", destName)
                 putExtra("ROUTE_GEOJSON", routeJson)
+                putExtra("JOURNEY_LEGS_JSON", legsJson)
                 putExtra("EXPECTED_DURATION", duration)
                 putExtra("EXPECTED_DISTANCE", distance)
                 putExtra("SEGMENT_SPEEDS", speeds.toDoubleArray())
@@ -300,8 +307,16 @@ class MapViewModel(
     }
 
     fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
+        val oldMode = _alarmSettings.value.transportMode
         _alarmSettings.value = settings
-        if (_isAlarmSet.value || _isPreviewMode.value) {
+        
+        if (settings.transportMode != oldMode) {
+            val start = _userLocation.value
+            val end = _destination.value
+            if (start != null && end != null) {
+                fetchRoute(start, end, pushToService = _isAlarmSet.value)
+            }
+        } else if (_isAlarmSet.value || _isPreviewMode.value) {
             startAlarm()
         }
     }
@@ -337,7 +352,16 @@ class MapViewModel(
     }
 
     private fun fetchRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
-        android.util.Log.d("MapViewModel", "fetchRoute: start=$start, end=$end")
+        val mode = _alarmSettings.value.transportMode
+        if (mode == TransportMode.ROAD) {
+            fetchRoadRoute(start, end, pushToService)
+        } else {
+            fetchTransitRoute(start, end, pushToService)
+        }
+    }
+
+    private fun fetchRoadRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
+        android.util.Log.d("MapViewModel", "fetchRoadRoute: start=$start, end=$end")
         viewModelScope.launch {
             try {
                 val coords = "${start.longitude},${start.latitude};${end.longitude},${end.latitude}"
@@ -355,6 +379,7 @@ class MapViewModel(
                     }
                     
                     _currentRouteGeoJson.value = geoJson
+                    _journeyLegs.value = emptyList()
                     _expectedDuration.value = firstRoute.duration
                     _expectedDistance.value = firstRoute.distance
                     
@@ -362,48 +387,112 @@ class MapViewModel(
                     val speeds = firstRoute.legs.firstOrNull()?.annotation?.speed ?: emptyList()
                     _segmentSpeeds.value = speeds
                     
-                    android.util.Log.d("MapViewModel", "fetchRoute: duration=${_expectedDuration.value}, distance=${_expectedDistance.value}, segments=${speeds.size}")
-
-                    // Update search history with road distance if this destination was just selected
-                    val currentDest = _destination.value
-                    if (currentDest != null) {
-                        val updatedHistory = _searchHistory.value.map { feature ->
-                            val c = feature.geometry.coordinates
-                            if (c[1] == currentDest.latitude && c[0] == currentDest.longitude) {
-                                feature.copy(properties = feature.properties.copy(roadDistance = firstRoute.distance))
-                            } else {
-                                feature
-                            }
-                        }
-                        _searchHistory.value = updatedHistory
-                        saveSearchHistory(updatedHistory)
-                    }
-
-                    // Also update _routeLine for map rendering
-                    val coordinates = firstRoute.geometry.coordinates.map {
-                        Point.fromLngLat(it[0], it[1])
-                    }
-                    val mbRoute = com.mapbox.geojson.LineString.fromLngLats(coordinates.map { 
-                        com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
-                    })
-                    fullRouteLine = mbRoute
-                    _routeLine.value = LineString.fromLngLats(coordinates)
-                    android.util.Log.d("MapViewModel", "fetchRoute: routeLine updated, size=${coordinates.size}")
-
-                    if (pushToService && _isAlarmSet.value) {
-                        val updateIntent = Intent(context, LocationAlarmService::class.java).apply {
-                            action = LocationAlarmService.ACTION_UPDATE_ROUTE
-                            putExtra("ROUTE_GEOJSON", geoJson)
-                            putExtra("EXPECTED_DURATION", _expectedDuration.value)
-                            putExtra("EXPECTED_DISTANCE", _expectedDistance.value)
-                            putExtra("SEGMENT_SPEEDS", speeds.toDoubleArray())
-                        }
-                        context.startService(updateIntent)
-                    }
+                    processRouteSuccess(geoJson, firstRoute.distance, pushToService, speeds)
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MapViewModel", "Failed to fetch route", e)
+                android.util.Log.e("MapViewModel", "Failed to fetch road route", e)
             }
+        }
+    }
+
+    private fun fetchTransitRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
+        android.util.Log.d("MapViewModel", "fetchTransitRoute: start=$start, end=$end")
+        viewModelScope.launch {
+            try {
+                val request = ValhallaRequest(
+                    locations = listOf(
+                        ValhallaLocation(lat = start.latitude, lon = start.longitude),
+                        ValhallaLocation(lat = end.latitude, lon = end.longitude)
+                    ),
+                    costing = "multimodal"
+                )
+                val response = valhallaApiService.getRoute(Json.encodeToString(request))
+                if (response.isSuccessful) {
+                    val root = response.body() ?: return@launch
+                    val trip = root.trip
+                    
+                    // Map Valhalla Trip to JourneyLegs
+                    val legs = trip.legs.mapIndexed { index, valhallaLeg ->
+                        val mode = when (valhallaLeg.maneuvers.firstOrNull()?.travel_mode) {
+                            "bus" -> TransportMode.BUS
+                            "rail", "train" -> TransportMode.TRAIN
+                            "pedestrian" -> TransportMode.WALK
+                            else -> TransportMode.ROAD
+                        }
+                        
+                        // Decode shape (encoded polyline6)
+                        val points = com.mapbox.geojson.utils.PolylineUtils.decode(valhallaLeg.shape, 6)
+                        val mbLine = com.mapbox.geojson.LineString.fromLngLats(points)
+
+                        JourneyLeg(
+                            mode = mode,
+                            geometry = mbLine.toJson(),
+                            startLat = points.first().latitude(),
+                            startLng = points.first().longitude(),
+                            endLat = points.last().latitude(),
+                            endLng = points.last().longitude(),
+                            distanceMeters = valhallaLeg.summary.length * 1000.0,
+                            durationMillis = (valhallaLeg.summary.time * 1000.0).toLong(),
+                            lineName = valhallaLeg.maneuvers.firstOrNull()?.transit_info?.short_name,
+                            endName = if (index < trip.legs.size - 1) trip.locations.getOrNull(index + 1)?.name else null
+                        )
+                    }
+                    
+                    _journeyLegs.value = legs
+                    
+                    val combinedPoints = legs.flatMap { 
+                        com.mapbox.geojson.LineString.fromJson(it.geometry).coordinates() 
+                    }
+                    val fullLine = com.mapbox.geojson.LineString.fromLngLats(combinedPoints)
+                    val geoJson = fullLine.toJson()
+
+                    _currentRouteGeoJson.value = geoJson
+                    _expectedDuration.value = trip.summary.time
+                    _expectedDistance.value = trip.summary.length * 1000.0
+                    _segmentSpeeds.value = emptyList()
+
+                    processRouteSuccess(geoJson, trip.summary.length * 1000.0, pushToService, emptyList())
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MapViewModel", "Failed to fetch transit route", e)
+                // Fallback to road if transit fails? Or just show error
+                fetchRoadRoute(start, end, pushToService)
+            }
+        }
+    }
+
+    private fun processRouteSuccess(geoJson: String, distance: Double, pushToService: Boolean, speeds: List<Double>) {
+        // Update search history with road distance if this destination was just selected
+        val currentDest = _destination.value
+        if (currentDest != null) {
+            val updatedHistory = _searchHistory.value.map { feature ->
+                val c = feature.geometry.coordinates
+                if (c[1] == currentDest.latitude && c[0] == currentDest.longitude) {
+                    feature.copy(properties = feature.properties.copy(roadDistance = distance))
+                } else {
+                    feature
+                }
+            }
+            _searchHistory.value = updatedHistory
+            saveSearchHistory(updatedHistory)
+        }
+
+        // Also update _routeLine for map rendering
+        val mbRoute = com.mapbox.geojson.LineString.fromJson(geoJson)
+        fullRouteLine = mbRoute
+        _routeLine.value = mbRoute.toMapLibre()
+
+        if (pushToService && _isAlarmSet.value) {
+            val legsJson = if (_journeyLegs.value.isNotEmpty()) Json.encodeToString(_journeyLegs.value) else null
+            val updateIntent = Intent(context, LocationAlarmService::class.java).apply {
+                action = LocationAlarmService.ACTION_UPDATE_ROUTE
+                putExtra("ROUTE_GEOJSON", geoJson)
+                putExtra("JOURNEY_LEGS_JSON", legsJson)
+                putExtra("EXPECTED_DURATION", _expectedDuration.value)
+                putExtra("EXPECTED_DISTANCE", _expectedDistance.value)
+                putExtra("SEGMENT_SPEEDS", speeds.toDoubleArray())
+            }
+            context.startService(updateIntent)
         }
     }
 
@@ -447,6 +536,7 @@ class MapViewModel(
         _distanceToDestination.value = null
         _remainingEta.value = null
         _currentRouteGeoJson.value = null
+        _journeyLegs.value = emptyList()
         _routeLine.value = null
         fullRouteLine = null
     }
@@ -471,6 +561,7 @@ class MapViewModel(
             _distanceToDestination.value = null
             _remainingEta.value = null
             _currentRouteGeoJson.value = null
+            _journeyLegs.value = emptyList()
             _routeLine.value = null
             fullRouteLine = null
             routeDistanceEngine.resetStats()
@@ -480,7 +571,7 @@ class MapViewModel(
     private fun checkDistance(currentLocation: Location) {
         val dest = _destination.value ?: return
         
-        // 1. If in Preview Mode, prioritize the OSRM expected distance (FULL ROAD DISTANCE)
+        // 1. If in Preview Mode, prioritize the expected distance
         if (_isPreviewMode.value && _expectedDistance.value > 0) {
             _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
             _remainingEta.value = (_expectedDuration.value / 60.0).roundToInt()
@@ -724,6 +815,7 @@ class MapViewModelFactory(
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
+    private val valhallaApiService: ValhallaApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: com.janak.location.alarm.data.repository.HistoryRepository,
     private val context: Context
@@ -733,7 +825,8 @@ class MapViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return MapViewModel(
                 locationTrackingManager, alarmEngine, 
-                photonApiService, osrmApiService, routeRepository, historyRepository, context
+                photonApiService, osrmApiService, valhallaApiService,
+                routeRepository, historyRepository, context
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

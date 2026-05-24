@@ -92,14 +92,14 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
 ### Phase 3: UI/UX for Multi-Modal Journeys
 *Objective: Surface multi-modal controls and data to the user.*
 
-- [ ] **Transport Mode Selection:**
-    - [ ] Update `ModernConfigurationSheet` with a toggle/tab for "Road" vs "Transit".
-    - [ ] Add granular transit options (e.g., "Minimize Walking", "Wheelchair Accessible").
-    - [ ] Implement logic to switch between OSRM and Valhalla/OTP based on selection.
-- [ ] **Alarm Configuration Logic:**
-    - [ ] **Exclusive Alarm Toggling:** Enforce mutual exclusivity between the "Distance Alarm" and "Smart ETA Alarm". 
-        - [ ] If one is toggled ON while the other is already active, the previously active one must automatically toggle OFF.
-        - [ ] Update UI state management in `ModernConfigurationSheet` to reflect this logic.
+- [x] **Transport Mode Selection:**
+    - [x] Update `ModernConfigurationSheet` with a toggle/tab for "Road" vs "Transit".
+    - [x] Add granular transit options (e.g., "Minimize Walking", "Wheelchair Accessible").
+    - [x] Implement logic to switch between OSRM and Valhalla/OTP based on selection.
+- [x] **Alarm Configuration Logic:**
+    - [x] **Exclusive Alarm Toggling:** Enforce mutual exclusivity between the "Distance Alarm" and "Smart ETA Alarm". 
+        - [x] If one is toggled ON while the other is already active, the previously active one must automatically toggle OFF.
+        - [x] Update UI state management in `ModernConfigurationSheet` to reflect this logic.
     - [ ] **Advanced Input UI:** Replace the current slider-based inputs for distance and time with specialized text input fields.
         - [ ] Support units for distance (meters, kilometers).
         - [ ] Support minute-based input for the Smart ETA alarm.

@@ -57,6 +57,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 val photonApiService = remember { RetrofitClient.photonApiService }
                 val osrmApiService = remember { RetrofitClient.osrmApiService }
+                val valhallaApiService = remember { RetrofitClient.valhallaApiService }
                 
                 val viewModel: MapViewModel = viewModel(
                     factory = MapViewModelFactory(
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
                         alarmEngine!!, 
                         photonApiService,
                         osrmApiService,
+                        valhallaApiService,
                         routeRepository!!,
                         historyRepository!!,
                         context
