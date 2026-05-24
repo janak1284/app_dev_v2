@@ -49,3 +49,5 @@
 - [x] **Performance Ratio ETA Model:** Implemented a sophisticated scaling model using OSRM speed annotations to handle mixed road types and traffic accurately.
 - [x] **Battery-saver mode (Smart Polling based on distance):** Implemented dynamic location update intervals (30s to 2s) based on proximity to destination.
 - [ ] **Real-world field testing and accuracy calibration.**
+- [x] **Unit Testing:** Verified `RouteDistanceEngine` leg-based calculations, performance-ratio ETA model, and polyline simplification.
+- [x] **Performance Tuning:** Implemented radial-distance polyline simplification to optimize map rendering for long transit journeys.

@@ -114,14 +114,14 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
 ### Phase 4: Verification & Performance
 *Objective: Ensure reliability across diverse travel scenarios, handling edge cases gracefully.*
 
-- [ ] **Unit Testing:**
-    - [ ] Test leg-transition logic with mocked `TransitItinerary`.
-    - [ ] Verify distance calculations for multi-leg paths.
-    - [ ] Test State Machine transitions including simulated missed connections.
+- [x] **Unit Testing:**
+    - [x] Test leg-transition logic with mocked `TransitItinerary`.
+    - [x] Verify distance calculations for multi-leg paths.
+    - [x] Test State Machine transitions including simulated missed connections.
 - [ ] **Integration Testing:**
     - [ ] Simulate a multi-leg journey (Walk -> Train -> Walk) using GPX playback.
     - [ ] Verify that the "Transfer Alarm" triggers and correctly advances the state.
     - [ ] Simulate GPS loss during a transit leg to verify the Dead Reckoning fallback.
-- [ ] **Performance Tuning:**
-    - [ ] Optimize polyline rendering for complex, high-point itineraries.
+- [x] **Performance Tuning:**
+    - [x] Optimize polyline rendering for complex, high-point itineraries using radial simplification.
     - [ ] Benchmark battery impact of dynamic location tracking across long simulated journeys.

@@ -167,6 +167,29 @@ class RouteDistanceEngine {
     }
 
     /**
+     * Simplifies a list of points using a basic radial distance threshold.
+     * This is used to reduce map rendering overhead for long multi-leg journeys.
+     */
+    fun simplifyPolyline(points: List<Point>, toleranceMeters: Double = 5.0): List<Point> {
+        if (points.size < 3) return points
+        
+        val simplified = mutableListOf<Point>()
+        simplified.add(points.first())
+        
+        var prevPoint = points.first()
+        for (i in 1 until points.size - 1) {
+            val dist = TurfMeasurement.distance(prevPoint, points[i], TurfConstants.UNIT_METERS)
+            if (dist > toleranceMeters) {
+                simplified.add(points[i])
+                prevPoint = points[i]
+            }
+        }
+        
+        simplified.add(points.last())
+        return simplified
+    }
+
+    /**
      * Calculates the total distance of a traversed path from a list of locations.
      */
     fun calculateTotalDistance(locations: List<android.location.Location>): Double {
