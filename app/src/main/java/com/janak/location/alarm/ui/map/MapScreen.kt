@@ -294,8 +294,11 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
 
     // Observe Route Updates
     val routeLine by viewModel.routeLine.collectAsState()
-    LaunchedEffect(routeLine, mapInstance) {
+    val journeyLegs by viewModel.journeyLegs.collectAsState()
+
+    LaunchedEffect(routeLine, journeyLegs, mapInstance) {
         val line = routeLine
+        val legs = journeyLegs
         val map = mapInstance
         
         if (map?.style?.isFullyLoaded == true) {
@@ -314,14 +317,35 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 if (style.getLayer(layerId) == null) {
                     val layer = org.maplibre.android.style.layers.LineLayer(layerId, sourceId)
                     layer.setProperties(
-                        org.maplibre.android.style.layers.PropertyFactory.lineColor(android.graphics.Color.BLUE),
+                        org.maplibre.android.style.layers.PropertyFactory.lineColor(
+                            org.maplibre.android.style.expressions.Expression.match(
+                                org.maplibre.android.style.expressions.Expression.get("mode"),
+                                org.maplibre.android.style.expressions.Expression.literal(android.graphics.Color.parseColor("#34A853")), // Default Green
+                                org.maplibre.android.style.expressions.Expression.stop("WALK", android.graphics.Color.parseColor("#4285F4")), // Blue
+                                org.maplibre.android.style.expressions.Expression.stop("BUS", android.graphics.Color.parseColor("#EA4335")), // Red
+                                org.maplibre.android.style.expressions.Expression.stop("TRAIN", android.graphics.Color.parseColor("#FBBC05")), // Amber
+                                org.maplibre.android.style.expressions.Expression.stop("SUBWAY", android.graphics.Color.parseColor("#800080")) // Purple
+                            )
+                        ),
                         org.maplibre.android.style.layers.PropertyFactory.lineWidth(5f),
                         org.maplibre.android.style.layers.PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
                         org.maplibre.android.style.layers.PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
                     )
                     style.addLayerBelow(layer, "destination-layer")
                 }
-                source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(org.maplibre.geojson.Feature.fromGeometry(line)))
+
+                if (legs.isNotEmpty()) {
+                    val features = legs.map { leg ->
+                        val feature = org.maplibre.geojson.Feature.fromGeometry(org.maplibre.geojson.LineString.fromJson(leg.geometry))
+                        feature.addStringProperty("mode", leg.mode.name)
+                        feature
+                    }
+                    source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(features))
+                } else {
+                    val feature = org.maplibre.geojson.Feature.fromGeometry(line)
+                    feature.addStringProperty("mode", "ROAD")
+                    source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(feature))
+                }
             } else {
                 if (source != null) {
                     source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
