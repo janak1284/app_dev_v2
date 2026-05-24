@@ -74,9 +74,9 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
 ### Phase 2: The Multi-Modal Engine
 *Objective: Refactor the spatial and alarm logic to support leg-by-leg tracking, fallback mechanisms, and dynamic intervals.*
 
-- [ ] **Refactor `RouteDistanceEngine`:**
-    - [ ] Modify `calculateRemainingDistance` to accept a specific `JourneyLeg`.
-    - [ ] Update `calculateDeviation` to handle leg-specific geometry.
+- [x] **Refactor `RouteDistanceEngine`:**
+    - [x] Modify `calculateRemainingDistance` to accept a specific `JourneyLeg`.
+    - [x] Update `calculateDeviation` to handle leg-specific geometry.
 - [ ] **Enhance `AlarmEngine` State Machine:**
     - [ ] Introduce `ALARM_TRANSFER` state.
     - [ ] Introduce `WAITING_FOR_CONNECTION` and `RECALCULATING` states to provide a buffer for delays and a safety net for missed trains.

@@ -27,7 +27,8 @@
 
 ## V3 Multi-Modal Transition
 - [x] **Phase 1: Transit Data Foundation:** Implemented `JourneyLeg` entities, Valhalla API client, and Repository integration.
-- [ ] **Phase 2: The Multi-Modal Engine:** Refactor `RouteDistanceEngine` and `LocationAlarmService` for leg-based tracking.
+- [x] **Phase 2: The Multi-Modal Engine:** Refactor `RouteDistanceEngine` and `LocationAlarmService` for leg-based tracking.
+    - [x] Refactored `RouteDistanceEngine` to accept `JourneyLeg` for remaining distance and deviation calculations.
     - [ ] **Dynamic Alarm Reset:** Implement logic to reset the ETA alarm if the user's speed drops significantly after it has triggered, causing the ETA to exceed the threshold again.
 - [ ] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
     - [ ] Implement mutually exclusive toggles for Distance and Smart ETA alarms.
