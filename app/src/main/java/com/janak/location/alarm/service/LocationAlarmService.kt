@@ -356,9 +356,14 @@ class LocationAlarmService : Service() {
             distance = routeDistanceEngine.calculateRemainingDistance(leg, userPoint)
             
             val deviation = routeDistanceEngine.calculateDeviation(leg, userPoint)
-            if (deviation > 100) {
-                // If we are significantly off the current leg, we might need recalculation
+            
+            // Missed Transfer Detection: 
+            // If waiting for connection but moving away from the next leg's starting path
+            val isOffTrack = deviation > 150 // Slightly larger threshold for transit
+            
+            if (isOffTrack) {
                 if (currentState != ServiceState.RECALCULATING) {
+                    android.util.Log.w("LocationAlarmService", "Missed transfer or deviation detected. Recalculating...")
                     currentState = ServiceState.RECALCULATING
                     sendBroadcast(Intent(ACTION_RE_ROUTE).setPackage(packageName))
                 }

@@ -34,6 +34,7 @@
     - [x] **Dynamic Alarm Reset:** Implemented logic to reset the alarm state if distance/ETA increases significantly after silencing.
     - [x] Implemented transport-mode-aware polling intervals (e.g., lower frequency for trains).
     - [x] Implemented "Dead Reckoning" fallback for tracking during GPS loss (e.g., tunnels).
+    - [x] **Missed Transfer Detection:** Added logic to detect user deviation during connection waiting and trigger automatic re-routing.
 - [x] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
     - [x] Updated `ModernConfigurationSheet` with "Road" vs "Transit" selection.
     - [x] Implemented mutually exclusive toggles for Distance and Smart ETA alarms.
