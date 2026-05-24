@@ -100,7 +100,10 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [x] **Exclusive Alarm Toggling:** Enforce mutual exclusivity between the "Distance Alarm" and "Smart ETA Alarm". 
         - [x] If one is toggled ON while the other is already active, the previously active one must automatically toggle OFF.
         - [x] Update UI state management in `ModernConfigurationSheet` to reflect this logic.
-    - [ ] **Advanced Input UI:** Replace the current slider-based inputs for distance and time with specialized text input fields.
+    - [x] **Advanced Input UI:** Replace the current slider-based inputs for distance and time with specialized text input fields.
+        - [x] Support units for distance (meters, kilometers).
+        - [x] Support minute-based input for the Smart ETA alarm.
+    - [ ] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.
         - [ ] Support units for distance (meters, kilometers).
         - [ ] Support minute-based input for the Smart ETA alarm.
     - [ ] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.

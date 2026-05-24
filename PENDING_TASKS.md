@@ -38,7 +38,7 @@
     - [x] Updated `ModernConfigurationSheet` with "Road" vs "Transit" selection.
     - [x] Implemented mutually exclusive toggles for Distance and Smart ETA alarms.
     - [x] Integrated `ValhallaApiService` in `MapViewModel` for transit routing.
-    - [ ] **Alarm Input UI:** Replace the slider UI with a clean text input UI for Distance (meters/kilometers) and Time (minutes) alarms.
+    - [x] **Alarm Input UI:** Replaced the slider UI with a clean text input UI for Distance (meters/kilometers) and Time (minutes) alarms.
     - [ ] **Location Services Alert:** Show an alert/prompt when the app is opened but device location services are turned off.
 
 ## Future Improvements (Post-V2)
