@@ -116,6 +116,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val searchHistory by viewModel.searchHistory.collectAsState()
     val journeyCompleted by viewModel.journeyCompleted.collectAsState()
     val isLocationEnabled by viewModel.isLocationEnabled.collectAsState()
+    val routeLine by viewModel.routeLine.collectAsState()
+    val journeyLegs by viewModel.journeyLegs.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val onDismissSheet = remember { { showBottomSheet = false } }
@@ -252,9 +254,10 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     }
 
     // Update Destination Marker
-    LaunchedEffect(mapInstance, destination) {
+    LaunchedEffect(mapInstance, destination, journeyLegs) {
         val map = mapInstance ?: return@LaunchedEffect
         val dest = destination
+        val legs = journeyLegs
         
         if (map.style?.isFullyLoaded == true) {
             val style = map.style!!
@@ -289,12 +292,46 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             } else {
                 source.setGeoJson(Point.fromLngLat(0.0, 0.0)) // Clear marker
             }
+
+            // --- Transfer Markers ---
+            val transferSourceId = "transfer-source"
+            val transferLayerId = "transfer-layer"
+            val transferImageId = "transfer-marker"
+
+            if (style.getImage(transferImageId) == null) {
+                val drawable = androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin) // Using pin for now, can be smaller
+                drawable?.let {
+                    style.addImage(transferImageId, it)
+                }
+            }
+
+            var transferSource = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(transferSourceId)
+            if (transferSource == null) {
+                transferSource = org.maplibre.android.style.sources.GeoJsonSource(transferSourceId)
+                style.addSource(transferSource)
+                
+                val layer = org.maplibre.android.style.layers.SymbolLayer(transferLayerId, transferSourceId)
+                layer.setProperties(
+                    org.maplibre.android.style.layers.PropertyFactory.iconImage(transferImageId),
+                    org.maplibre.android.style.layers.PropertyFactory.iconSize(0.8f),
+                    org.maplibre.android.style.layers.PropertyFactory.iconAnchor(org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM)
+                )
+                style.addLayerAbove(layer, "route-layer")
+            }
+
+            if (journeyLegs.isNotEmpty()) {
+                // End points of non-final legs are transfer points
+                val transferPoints = journeyLegs.dropLast(1).map { leg ->
+                    Point.fromLngLat(leg.endLng, leg.endLat)
+                }
+                transferSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(
+                    transferPoints.map { org.maplibre.geojson.Feature.fromGeometry(it) }
+                ))
+            } else {
+                transferSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
+            }
         }
     }
-
-    // Observe Route Updates
-    val routeLine by viewModel.routeLine.collectAsState()
-    val journeyLegs by viewModel.journeyLegs.collectAsState()
 
     LaunchedEffect(routeLine, journeyLegs, mapInstance) {
         val line = routeLine

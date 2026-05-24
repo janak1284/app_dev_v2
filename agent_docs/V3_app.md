@@ -109,7 +109,7 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
     - [ ] **Location Availability Guard:** Implement a system-wide alert or prompt that triggers if the app is opened but location services are disabled on the device.
 - [x] **Map Rendering Enhancements:**
     - [x] Implement multi-color/multi-style polyline rendering for different transport modes (e.g., Blue for Walking, Orange for Train).
-    - [ ] Display transfer station markers on the map.
+    - [x] Display transfer station markers on the map.
 - [x] **Journey Summary & History:**
     - [x] Update `JourneySummarySheet` to show a breakdown of all legs.
     - [ ] Update history views to reflect multi-modal icons and statistics.
