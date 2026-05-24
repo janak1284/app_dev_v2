@@ -507,6 +507,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         if (journeyCompleted) {
             JourneySummarySheet(
                 initialDestinationName = destinationName ?: "",
+                legs = journeyLegs,
                 onDismissRequest = { 
                     viewModel.resetJourneyCompleted()
                 },

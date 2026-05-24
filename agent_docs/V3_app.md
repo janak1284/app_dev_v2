@@ -110,8 +110,8 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
 - [x] **Map Rendering Enhancements:**
     - [x] Implement multi-color/multi-style polyline rendering for different transport modes (e.g., Blue for Walking, Orange for Train).
     - [ ] Display transfer station markers on the map.
-- [ ] **Journey Summary & History:**
-    - [ ] Update `JourneySummarySheet` to show a breakdown of all legs.
+- [x] **Journey Summary & History:**
+    - [x] Update `JourneySummarySheet` to show a breakdown of all legs.
     - [ ] Update history views to reflect multi-modal icons and statistics.
 
 ### Phase 4: Verification & Performance

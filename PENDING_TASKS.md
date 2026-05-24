@@ -41,7 +41,7 @@
     - [x] **Alarm Input UI:** Replaced the slider UI with a clean text input UI for Distance (meters/kilometers) and Time (minutes) alarms.
     - [x] **Location Services Alert:** Implemented a system-wide alert that triggers if location services are disabled on the device.
     - [x] **Multi-Color Polylines:** Implemented property-based map styling to render different transport modes in distinct colors.
-    - [ ] **Journey Summary & History:** Update `JourneySummarySheet` to show a breakdown of all transit legs.
+    - [x] **Journey Summary & History:** Updated `JourneySummarySheet` to show a breakdown of all transit legs.
 
 ## Future Improvements (Post-V2)
 - [x] **Performance Ratio ETA Model:** Implemented a sophisticated scaling model using OSRM speed annotations to handle mixed road types and traffic accurately.

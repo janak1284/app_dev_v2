@@ -18,15 +18,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.janak.location.alarm.model.JourneyLeg
+import com.janak.location.alarm.model.TransportMode
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.*
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JourneySummarySheet(
     onDismissRequest: () -> Unit,
     onSaveJourney: (String) -> Unit,
-    initialDestinationName: String = ""
+    initialDestinationName: String = "",
+    legs: List<JourneyLeg> = emptyList()
 ) {
     var routeName by remember { mutableStateOf(initialDestinationName) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scrollState = rememberScrollState()
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -41,7 +49,8 @@ fun JourneySummarySheet(
                 .navigationBarsPadding()
                 .imePadding()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 32.dp)
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Success Icon
@@ -76,6 +85,24 @@ fun JourneySummarySheet(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
+
+            if (legs.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "JOURNEY BREAKDOWN",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    legs.forEach { leg ->
+                        LegItem(leg)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -130,5 +157,46 @@ fun JourneySummarySheet(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun LegItem(leg: JourneyLeg) {
+    val icon = when (leg.mode) {
+        TransportMode.WALK -> Icons.Default.DirectionsWalk
+        TransportMode.BUS -> Icons.Default.DirectionsBus
+        TransportMode.TRAIN -> Icons.Default.DirectionsTransit
+        TransportMode.SUBWAY -> Icons.Default.Subway
+        else -> Icons.Default.DirectionsCar
+    }
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = if (leg.mode == TransportMode.WALK) "Walk" else leg.lineName ?: leg.mode.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
+            )
+            if (!leg.endName.isNullOrBlank()) {
+                Text(
+                    text = "to ${leg.endName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Text(
+            text = formatDistance(leg.distanceMeters.toInt()),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
