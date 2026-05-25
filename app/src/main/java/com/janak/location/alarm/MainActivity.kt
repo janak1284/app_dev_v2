@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
                         photonApiService,
                         osrmApiService,
                         valhallaApiService,
+                        RetrofitClient.orsApiService,
                         routeRepository!!,
                         historyRepository!!,
                         context

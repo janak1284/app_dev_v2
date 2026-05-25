@@ -2,6 +2,7 @@ package com.janak.location.alarm.data.repository
 
 import androidx.room.withTransaction
 import com.janak.location.alarm.api.RetrofitClient
+import com.janak.location.alarm.api.ValhallaApiService
 import com.janak.location.alarm.data.AppDatabase
 import com.janak.location.alarm.data.entity.JourneyLegEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
@@ -61,21 +62,22 @@ class RouteRepository(private val database: AppDatabase) {
             locations = listOf(
                 ValhallaLocation(startLat, startLng),
                 ValhallaLocation(destLat, destLng)
-            )
+            ),
+            costing = "multimodal"
         )
         val jsonRequest = json.encodeToString(request)
         
-        return try {
-            val response = RetrofitClient.valhallaApiService.getRoute(jsonRequest)
-            if (response.isSuccessful) {
-                response.body()?.let { mapValhallaToItinerary(it) }
-            } else {
-                null
+        for (baseUrl in ValhallaApiService.INSTANCES) {
+            try {
+                val response = RetrofitClient.valhallaApiService.getRoute("${baseUrl}route", jsonRequest)
+                if (response.isSuccessful) {
+                    return response.body()?.let { mapValhallaToItinerary(it) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
+        return null
     }
 
     private fun mapValhallaToItinerary(response: ValhallaResponse): TransitItinerary {

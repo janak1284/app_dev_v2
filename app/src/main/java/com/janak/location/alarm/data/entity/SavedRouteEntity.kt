@@ -15,6 +15,7 @@ data class SavedRouteEntity(
     val targetTime: Long? = null,
     val dateSaved: Long = System.currentTimeMillis(),
     val lastTakenTimestamp: Long = System.currentTimeMillis(),
+    val transportMode: com.janak.location.alarm.model.TransportMode = com.janak.location.alarm.model.TransportMode.ROAD,
     val alarmSettings: AlarmSettings,
     val routeGeoJson: String? = null,
     val actualDistanceMeters: Double = 0.0,

@@ -71,3 +71,7 @@ lint/reports/
 lint/intermediate/
 lint/generated/
 /tasks.txt
+
+# API Services
+app/src/main/java/com/janak/location/alarm/api/
+

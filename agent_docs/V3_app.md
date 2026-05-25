@@ -125,3 +125,42 @@ Standardized prefixes for Developer 1 (Data/Spatial) and Developer 2 (Network/UI
 - [x] **Performance Tuning:**
     - [x] Optimize polyline rendering for complex, high-point itineraries using radial simplification.
     - [ ] Benchmark battery impact of dynamic location tracking across long simulated journeys.
+
+---
+
+## Refinement Phase & Debugging History
+
+### ❌ Failed "Railway" Mode API Attempts
+*Documenting the exploration for a reliable, free transit routing engine.*
+
+- [x] **Valhalla Community Mirrors:**
+    - `valhalla1.openstreetmap.de`: Completely offline / Connection Refused.
+    - `valhalla.openstreetmap.de`: Actively refusing connections from mobile clients.
+    - `valhalla.beeline.com`: Consistent 401 Unauthorized / Restricted access.
+- [x] **Transitland API:** Rejected public testing keys with 401 Unauthorized errors.
+- [x] **Mapbox Directions API:** Restricted public testing tokens, leading to 401 Unauthorized errors for transit-specific profiles.
+- [x] **GraphHopper Directions API:** 401 Unauthorized errors on public demo keys.
+- [x] **Multi-Source Sequential Fallback:** Attempted to cycle through multiple community mirrors; all sources failed due to server-side restrictions on free traffic.
+
+### ✅ Refinement Phase Checklist
+*Stabilizing the app and perfecting the multi-modal workflow.*
+
+- [x] **Routing Stability:**
+    - [x] **ORS Integration:** Switched Railway mode to **OpenRouteService (ORS)** using a dedicated API key for professional-grade stability.
+    - [x] **Profile Optimization:** Set Railway mode to use ORS's walking/pedestrian engine as a high-precision proxy for transit-linked paths.
+    - [x] **Strict Mode Enforcement:** Disabled OSRM fallback to ensure users only see the specific transport mode they selected.
+- [x] **Crash Prevention & Safety:**
+    - [x] **Location Availability Guard:** Fixed a `SecurityException` when checking GPS status without permissions.
+    - [x] **Context Safety:** Added `FLAG_ACTIVITY_NEW_TASK` and `try-catch` to the Location Settings intent launch.
+    - [x] **Map Layer Synchronization:** Consolidated MapLibre layer management into a single block to fix `CannotAddLayerException` race conditions.
+    - [x] **Reactive Location Settings:** Added a `BroadcastReceiver` for `PROVIDERS_CHANGED_ACTION` to auto-update the UI when GPS is toggled.
+- [x] **UX & Workflow Improvements:**
+    - [x] **Pre-Journey Mode Selector:** Implemented a mandatory choice dialog (Roadway vs. Railway) when starting a new journey.
+    - [x] **Configuration Cleanup:** Removed redundant transport mode toggles from the alarm sheet for a cleaner interface.
+    - [x] **Enhanced Data Persistence:**
+        - [x] Updated Room schema to `version 8` to save transport mode with every route.
+        - [x] Implemented `fallbackToDestructiveMigration` for seamless schema updates during development.
+    - [x] **Visual Identity:** Added transport-specific icons (Car/Train) and labels to the Home Screen and Saved Route cards.
+- [x] **Build & Build System:**
+    - [x] Resolved all duplicate import conflicts and `FlowPreview` warnings.
+    - [x] Verified full project stability with `./gradlew assembleDebug`.

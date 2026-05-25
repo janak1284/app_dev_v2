@@ -55,7 +55,6 @@ fun ModernConfigurationSheet(
     var predictiveEnabled by remember { mutableStateOf(initialSettings.isPredictiveAlarmEnabled) }
     var predictiveMinutes by remember { mutableStateOf(initialSettings.predictiveMinutes.toFloat()) }
 
-    var transportMode by remember { mutableStateOf(initialSettings.transportMode) }
     var vibrateEnabled by remember { mutableStateOf(initialSettings.isVibrateEnabled) }
 
     // Ringtone States
@@ -126,13 +125,6 @@ fun ModernConfigurationSheet(
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                TransportModeSection(
-                    selectedMode = transportMode,
-                    onModeSelected = { transportMode = it }
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
                 DistanceSection(
                     enabled = distanceEnabled,
                     onToggle = { 
@@ -176,85 +168,12 @@ fun ModernConfigurationSheet(
                             predictiveMinutes = predictiveMinutes.toInt(),
                             isPredictiveAlarmEnabled = predictiveEnabled,
                             isVibrateEnabled = vibrateEnabled,
-                            transportMode = transportMode,
+                            transportMode = initialSettings.transportMode,
                             ringtoneUri = selectedRingtoneUri
                         )
                     )
                 }
             )
-        }
-    }
-}
-
-@Composable
-fun TransportModeSection(
-    selectedMode: TransportMode,
-    onModeSelected: (TransportMode) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "Transport Mode",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            TransportModeButton(
-                mode = TransportMode.ROAD,
-                label = "Road",
-                icon = Icons.Default.DirectionsCar,
-                selected = selectedMode == TransportMode.ROAD,
-                onClick = { onModeSelected(TransportMode.ROAD) },
-                modifier = Modifier.weight(1f)
-            )
-            TransportModeButton(
-                mode = TransportMode.TRAIN,
-                label = "Transit",
-                icon = Icons.Default.DirectionsTransit,
-                selected = selectedMode != TransportMode.ROAD,
-                onClick = { onModeSelected(TransportMode.TRAIN) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun TransportModeButton(
-    mode: TransportMode,
-    label: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val backgroundColor by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        label = "bgColor"
-    )
-    val contentColor by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-        label = "contentColor"
-    )
-
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(48.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = backgroundColor,
-        contentColor = contentColor
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
         }
     }
 }

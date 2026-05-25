@@ -246,81 +246,97 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     }
                 }
                 if (locationComponent.isLocationComponentActivated) {
-                    locationComponent.isLocationComponentEnabled = true
+                    locationComponent.isLocationComponentEnabled = isLocationEnabled
                     locationComponent.renderMode = RenderMode.COMPASS
                 }
             }
         }
     }
 
-    // Update Destination Marker
-    LaunchedEffect(mapInstance, destination, journeyLegs) {
+    // Update Map Layers (Route, Transfers, Destination)
+    LaunchedEffect(mapInstance, destination, routeLine, journeyLegs) {
         val map = mapInstance ?: return@LaunchedEffect
-        val dest = destination
-        val legs = journeyLegs
         
-        if (map.style?.isFullyLoaded == true) {
-            val style = map.style!!
-            val sourceId = "destination-source"
-            val layerId = "destination-layer"
-            val imageId = "destination-marker"
-
-            if (style.getImage(imageId) == null) {
-                val drawable = androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin)
-                drawable?.let {
-                    style.addImage(imageId, it)
-                }
+        map.getStyle { style ->
+            // --- 1. Route Layer (Bottom) ---
+            val routeSourceId = "route-source"
+            val routeLayerId = "route-layer"
+            
+            var routeSource = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(routeSourceId)
+            if (routeSource == null) {
+                routeSource = org.maplibre.android.style.sources.GeoJsonSource(routeSourceId)
+                style.addSource(routeSource)
             }
 
-            var source = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(sourceId)
-            if (source == null) {
-                source = org.maplibre.android.style.sources.GeoJsonSource(sourceId)
-                style.addSource(source)
-                
-                val layer = org.maplibre.android.style.layers.SymbolLayer(layerId, sourceId)
+            if (style.getLayer(routeLayerId) == null) {
+                val layer = org.maplibre.android.style.layers.LineLayer(routeLayerId, routeSourceId)
                 layer.setProperties(
-                    org.maplibre.android.style.layers.PropertyFactory.iconImage(imageId),
-                    org.maplibre.android.style.layers.PropertyFactory.iconSize(1.5f),
-                    org.maplibre.android.style.layers.PropertyFactory.iconAnchor(org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM)
+                    org.maplibre.android.style.layers.PropertyFactory.lineColor(
+                        org.maplibre.android.style.expressions.Expression.match(
+                            org.maplibre.android.style.expressions.Expression.get("mode"),
+                            org.maplibre.android.style.expressions.Expression.literal(android.graphics.Color.parseColor("#34A853")), // Default Green
+                            org.maplibre.android.style.expressions.Expression.stop("WALK", android.graphics.Color.parseColor("#4285F4")), // Blue
+                            org.maplibre.android.style.expressions.Expression.stop("BUS", android.graphics.Color.parseColor("#EA4335")), // Red
+                            org.maplibre.android.style.expressions.Expression.stop("TRAIN", android.graphics.Color.parseColor("#FBBC05")), // Amber
+                            org.maplibre.android.style.expressions.Expression.stop("SUBWAY", android.graphics.Color.parseColor("#800080")) // Purple
+                        )
+                    ),
+                    org.maplibre.android.style.layers.PropertyFactory.lineWidth(5f),
+                    org.maplibre.android.style.layers.PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
+                    org.maplibre.android.style.layers.PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
                 )
                 style.addLayer(layer)
             }
 
-            if (dest != null) {
-                val point = Point.fromLngLat(dest.longitude, dest.latitude)
-                source.setGeoJson(point)
+            if (routeLine != null) {
+                if (journeyLegs.isNotEmpty()) {
+                    val features = journeyLegs.map { leg ->
+                        val feature = org.maplibre.geojson.Feature.fromGeometry(org.maplibre.geojson.LineString.fromJson(leg.geometry))
+                        feature.addStringProperty("mode", leg.mode.name)
+                        feature
+                    }
+                    routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(features))
+                } else {
+                    val feature = org.maplibre.geojson.Feature.fromGeometry(routeLine!!)
+                    feature.addStringProperty("mode", "ROAD")
+                    routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(feature))
+                }
             } else {
-                source.setGeoJson(Point.fromLngLat(0.0, 0.0)) // Clear marker
+                routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
             }
 
-            // --- Transfer Markers ---
+            // --- 2. Transfer Markers (Middle) ---
             val transferSourceId = "transfer-source"
             val transferLayerId = "transfer-layer"
             val transferImageId = "transfer-marker"
 
             if (style.getImage(transferImageId) == null) {
-                val drawable = androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin) // Using pin for now, can be smaller
-                drawable?.let {
-                    style.addImage(transferImageId, it)
-                }
+                val drawable = androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin)
+                drawable?.let { style.addImage(transferImageId, it) }
             }
 
             var transferSource = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(transferSourceId)
             if (transferSource == null) {
                 transferSource = org.maplibre.android.style.sources.GeoJsonSource(transferSourceId)
                 style.addSource(transferSource)
-                
+            }
+
+            if (style.getLayer(transferLayerId) == null) {
                 val layer = org.maplibre.android.style.layers.SymbolLayer(transferLayerId, transferSourceId)
                 layer.setProperties(
                     org.maplibre.android.style.layers.PropertyFactory.iconImage(transferImageId),
                     org.maplibre.android.style.layers.PropertyFactory.iconSize(0.8f),
                     org.maplibre.android.style.layers.PropertyFactory.iconAnchor(org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM)
                 )
-                style.addLayerAbove(layer, "route-layer")
+                // Add above route layer if it exists
+                if (style.getLayer(routeLayerId) != null) {
+                    style.addLayerAbove(layer, routeLayerId)
+                } else {
+                    style.addLayer(layer)
+                }
             }
 
             if (journeyLegs.isNotEmpty()) {
-                // End points of non-final legs are transfer points
                 val transferPoints = journeyLegs.dropLast(1).map { leg ->
                     Point.fromLngLat(leg.endLng, leg.endLat)
                 }
@@ -330,63 +346,38 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             } else {
                 transferSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
             }
-        }
-    }
 
-    LaunchedEffect(routeLine, journeyLegs, mapInstance) {
-        val line = routeLine
-        val legs = journeyLegs
-        val map = mapInstance
-        
-        if (map?.style?.isFullyLoaded == true) {
-            val style = map.style!!
-            val sourceId = "route-source"
-            val layerId = "route-layer"
+            // --- 3. Destination Marker (Top) ---
+            val destSourceId = "destination-source"
+            val destLayerId = "destination-layer"
+            val destImageId = "destination-marker"
 
-            var source = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(sourceId)
-            
-            if (line != null) {
-                if (source == null) {
-                    source = org.maplibre.android.style.sources.GeoJsonSource(sourceId)
-                    style.addSource(source)
-                }
-                
-                if (style.getLayer(layerId) == null) {
-                    val layer = org.maplibre.android.style.layers.LineLayer(layerId, sourceId)
-                    layer.setProperties(
-                        org.maplibre.android.style.layers.PropertyFactory.lineColor(
-                            org.maplibre.android.style.expressions.Expression.match(
-                                org.maplibre.android.style.expressions.Expression.get("mode"),
-                                org.maplibre.android.style.expressions.Expression.literal(android.graphics.Color.parseColor("#34A853")), // Default Green
-                                org.maplibre.android.style.expressions.Expression.stop("WALK", android.graphics.Color.parseColor("#4285F4")), // Blue
-                                org.maplibre.android.style.expressions.Expression.stop("BUS", android.graphics.Color.parseColor("#EA4335")), // Red
-                                org.maplibre.android.style.expressions.Expression.stop("TRAIN", android.graphics.Color.parseColor("#FBBC05")), // Amber
-                                org.maplibre.android.style.expressions.Expression.stop("SUBWAY", android.graphics.Color.parseColor("#800080")) // Purple
-                            )
-                        ),
-                        org.maplibre.android.style.layers.PropertyFactory.lineWidth(5f),
-                        org.maplibre.android.style.layers.PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
-                        org.maplibre.android.style.layers.PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
-                    )
-                    style.addLayerBelow(layer, "destination-layer")
-                }
+            if (style.getImage(destImageId) == null) {
+                val drawable = androidx.core.content.ContextCompat.getDrawable(context, com.janak.location.alarm.R.drawable.ic_location_pin)
+                drawable?.let { style.addImage(destImageId, it) }
+            }
 
-                if (legs.isNotEmpty()) {
-                    val features = legs.map { leg ->
-                        val feature = org.maplibre.geojson.Feature.fromGeometry(org.maplibre.geojson.LineString.fromJson(leg.geometry))
-                        feature.addStringProperty("mode", leg.mode.name)
-                        feature
-                    }
-                    source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(features))
-                } else {
-                    val feature = org.maplibre.geojson.Feature.fromGeometry(line)
-                    feature.addStringProperty("mode", "ROAD")
-                    source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(feature))
-                }
+            var destSource = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(destSourceId)
+            if (destSource == null) {
+                destSource = org.maplibre.android.style.sources.GeoJsonSource(destSourceId)
+                style.addSource(destSource)
+            }
+
+            if (style.getLayer(destLayerId) == null) {
+                val layer = org.maplibre.android.style.layers.SymbolLayer(destLayerId, destSourceId)
+                layer.setProperties(
+                    org.maplibre.android.style.layers.PropertyFactory.iconImage(destImageId),
+                    org.maplibre.android.style.layers.PropertyFactory.iconSize(1.5f),
+                    org.maplibre.android.style.layers.PropertyFactory.iconAnchor(org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM)
+                )
+                // Add at the very top
+                style.addLayer(layer)
+            }
+
+            if (destination != null) {
+                destSource.setGeoJson(Point.fromLngLat(destination!!.longitude, destination!!.latitude))
             } else {
-                if (source != null) {
-                    source.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
-                }
+                destSource.setGeoJson(Point.fromLngLat(0.0, 0.0))
             }
         }
     }
@@ -724,7 +715,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
          }
 
          // --- Location Disabled Alert ---
-         AnimatedVisibility(
+         androidx.compose.animation.AnimatedVisibility(
             visible = !isLocationEnabled,
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
@@ -740,7 +731,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        Icons.Default.LocationOff, 
+                        imageVector = Icons.Filled.LocationOff, 
                         contentDescription = null, 
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(48.dp)
@@ -762,7 +753,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = { 
-                            context.startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                            try {
+                                val intent = Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                android.util.Log.e("MapScreen", "Failed to start location settings", e)
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {

@@ -37,13 +37,16 @@ import com.janak.location.alarm.data.entity.SavedRouteEntity
 import androidx.core.content.edit
 import androidx.core.content.ContextCompat
 import com.janak.location.alarm.domain.RouteDistanceEngine
+import kotlinx.coroutines.FlowPreview
 
+@OptIn(FlowPreview::class)
 class MapViewModel(
     private val locationTrackingManager: LocationTrackingManager,
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
     private val valhallaApiService: ValhallaApiService,
+    private val orsApiService: com.janak.location.alarm.api.OrsApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: HistoryRepository,
     private val context: Context
@@ -142,6 +145,14 @@ class MapViewModel(
     private val _searchHistory = MutableStateFlow<List<PhotonFeature>>(loadSearchHistory())
     val searchHistory: StateFlow<List<PhotonFeature>> = _searchHistory.asStateFlow()
 
+    private val locationSettingsReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == LocationManager.PROVIDERS_CHANGED_ACTION) {
+                checkLocationSettings()
+            }
+        }
+    }
+
     private val reRouteReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
             if (intent?.action == LocationAlarmService.ACTION_RE_ROUTE) {
@@ -170,15 +181,22 @@ class MapViewModel(
         
         val reRouteFilter = android.content.IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
         val journeyFilter = android.content.IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
+        val locationSettingsFilter = android.content.IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
         
         ContextCompat.registerReceiver(context, reRouteReceiver, reRouteFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
         ContextCompat.registerReceiver(context, journeyCompletedReceiver, journeyFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        context.registerReceiver(locationSettingsReceiver, locationSettingsFilter)
     }
 
     fun checkLocationSettings() {
-        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        _isLocationEnabled.value = isGpsEnabled || isNetworkEnabled
+        try {
+            val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+            _isLocationEnabled.value = isGpsEnabled || isNetworkEnabled
+        } catch (e: Exception) {
+            android.util.Log.e("MapViewModel", "Error checking location settings", e)
+            _isLocationEnabled.value = false
+        }
     }
 
     private fun loadSearchHistory(): List<PhotonFeature> {
@@ -396,67 +414,38 @@ class MapViewModel(
     }
 
     private fun fetchTransitRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
-        android.util.Log.d("MapViewModel", "fetchTransitRoute: start=$start, end=$end")
+        android.util.Log.d("MapViewModel", "fetchTransitRoute (ORS): start=$start, end=$end")
         viewModelScope.launch {
             try {
-                val request = ValhallaRequest(
-                    locations = listOf(
-                        ValhallaLocation(lat = start.latitude, lon = start.longitude),
-                        ValhallaLocation(lat = end.latitude, lon = end.longitude)
-                    ),
-                    costing = "multimodal"
-                )
-                val response = valhallaApiService.getRoute(Json.encodeToString(request))
+                val startCoord = "${start.longitude},${start.latitude}"
+                val endCoord = "${end.longitude},${end.latitude}"
+                
+                val response = orsApiService.getWalkingRoute(startCoord, endCoord)
                 if (response.isSuccessful) {
-                    val root = response.body() ?: return@launch
-                    val trip = root.trip
+                    val root = response.body() ?: throw Exception("Empty response from ORS")
+                    val firstFeature = root.features.firstOrNull() ?: throw Exception("No paths found")
                     
-                    // Map Valhalla Trip to JourneyLegs
-                    val legs = trip.legs.mapIndexed { index, valhallaLeg ->
-                        val mode = when (valhallaLeg.maneuvers.firstOrNull()?.travel_mode) {
-                            "bus" -> TransportMode.BUS
-                            "rail", "train" -> TransportMode.TRAIN
-                            "pedestrian" -> TransportMode.WALK
-                            else -> TransportMode.ROAD
-                        }
-                        
-                        // Decode shape (encoded polyline6)
-                        val points = com.mapbox.geojson.utils.PolylineUtils.decode(valhallaLeg.shape, 6)
-                        val mbLine = com.mapbox.geojson.LineString.fromLngLats(points)
-
-                        JourneyLeg(
-                            mode = mode,
-                            geometry = mbLine.toJson(),
-                            startLat = points.first().latitude(),
-                            startLng = points.first().longitude(),
-                            endLat = points.last().latitude(),
-                            endLng = points.last().longitude(),
-                            distanceMeters = valhallaLeg.summary.length * 1000.0,
-                            durationMillis = (valhallaLeg.summary.time * 1000.0).toLong(),
-                            lineName = valhallaLeg.maneuvers.firstOrNull()?.transit_info?.short_name,
-                            endName = if (index < trip.legs.size - 1) trip.locations.getOrNull(index + 1)?.name else null
-                        )
-                    }
+                    val coords = firstFeature.geometry.coordinates
+                    val pointList = coords.map { Point.fromLngLat(it[0], it[1]) }
+                    val mbLine = com.mapbox.geojson.LineString.fromLngLats(pointList.map { 
+                        com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+                    })
+                    val geoJson = mbLine.toJson()
                     
-                    _journeyLegs.value = legs
-                    
-                    val combinedPoints = legs.flatMap { 
-                        com.mapbox.geojson.LineString.fromJson(it.geometry).coordinates() 
-                    }
-                    val fullLine = com.mapbox.geojson.LineString.fromLngLats(combinedPoints)
-                    val geoJson = fullLine.toJson()
-
                     _currentRouteGeoJson.value = geoJson
-                    _expectedDuration.value = trip.summary.time
-                    _expectedDistance.value = trip.summary.length * 1000.0
-                    _segmentSpeeds.value = emptyList()
-
-                    processRouteSuccess(geoJson, trip.summary.length * 1000.0, pushToService, emptyList())
+                    _journeyLegs.value = emptyList() 
+                    _expectedDuration.value = firstFeature.properties.summary.duration
+                    _expectedDistance.value = firstFeature.properties.summary.distance
+                    
+                    processRouteSuccess(geoJson, firstFeature.properties.summary.distance, pushToService, emptyList())
+                } else {
+                    throw Exception("ORS API failed: ${response.code()} ${response.message()}")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MapViewModel", "Failed to fetch transit route", e)
-                // Fallback to road if transit fails? Or just show error
-                fetchRoadRoute(start, end, pushToService)
+                android.util.Log.e("MapViewModel", "Failed to fetch Railway route", e)
+                viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                    android.widget.Toast.makeText(context, "Railway path unreachable. Checking connectivity...", android.widget.Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
@@ -687,6 +676,7 @@ class MapViewModel(
                 mapDestinationName = null,
                 destinationLat = dest.latitude,
                 destinationLng = dest.longitude,
+                transportMode = alarmSettings.transportMode,
                 alarmSettings = alarmSettings,
                 dateSaved = System.currentTimeMillis(),
                 lastTakenTimestamp = System.currentTimeMillis(),
@@ -806,6 +796,7 @@ class MapViewModel(
         try {
             context.unregisterReceiver(reRouteReceiver)
             context.unregisterReceiver(journeyCompletedReceiver)
+            context.unregisterReceiver(locationSettingsReceiver)
         } catch (e: Exception) {}
     }
 }
@@ -816,6 +807,7 @@ class MapViewModelFactory(
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
     private val valhallaApiService: ValhallaApiService,
+    private val orsApiService: com.janak.location.alarm.api.OrsApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: com.janak.location.alarm.data.repository.HistoryRepository,
     private val context: Context
@@ -826,9 +818,11 @@ class MapViewModelFactory(
             return MapViewModel(
                 locationTrackingManager, alarmEngine, 
                 photonApiService, osrmApiService, valhallaApiService,
+                orsApiService,
                 routeRepository, historyRepository, context
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
+
