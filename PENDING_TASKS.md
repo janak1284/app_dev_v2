@@ -26,28 +26,18 @@
 - [x] **Final Field Testing:** Perform real-world verification of the predictive routing engine, spatial calculations, and alarm triggers.
 
 ## V3 Multi-Modal Transition
-- [x] **Phase 1: Transit Data Foundation:** Implemented `JourneyLeg` entities, Valhalla API client, and Repository integration.
+- [x] **Phase 1: Transit Data Foundation:** Implemented `JourneyLeg` entities, OpenRailRouting API client, and Repository integration.
 - [x] **Phase 2: The Multi-Modal Engine:** Refactor `RouteDistanceEngine` and `LocationAlarmService` for leg-based tracking.
-    - [x] Refactored `RouteDistanceEngine` to accept `JourneyLeg` for remaining distance and deviation calculations.
+    - [x] **Optimized Multi-Modal Logic:** Implemented "Road-Rail-Road" stitching using OSRM and OpenRailRouting.
+    - [x] **Smart Station Selection:** Algorithm evaluates top 3 candidate stations via actual road distance (OSRM parallel calls).
     - [x] Enhanced `LocationAlarmService` state machine with `ALARM_TRANSFER`, `WAITING_FOR_CONNECTION`, and `RECALCULATING` states.
     - [x] Implemented logic to detect arrival at the end of a non-final leg and transition to the next leg.
-    - [x] **Dynamic Alarm Reset:** Implemented logic to reset the alarm state if distance/ETA increases significantly after silencing.
-    - [x] Implemented transport-mode-aware polling intervals (e.g., lower frequency for trains).
-    - [x] Implemented "Dead Reckoning" fallback for tracking during GPS loss (e.g., tunnels).
-    - [x] **Missed Transfer Detection:** Added logic to detect user deviation during connection waiting and trigger automatic re-routing.
+    - [x] **Dynamic Alarm Reset:** Implemented logic to reset the alarm state if distance/ETA increases significantly.
 - [x] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
-    - [x] Updated `ModernConfigurationSheet` with "Road" vs "Transit" selection.
-    - [x] Implemented mutually exclusive toggles for Distance and Smart ETA alarms.
-    - [x] Integrated `ValhallaApiService` in `MapViewModel` for transit routing.
-    - [x] **Alarm Input UI:** Replaced the slider UI with a clean text input UI for Distance (meters/kilometers) and Time (minutes) alarms.
-    - [x] **Location Services Alert:** Implemented a system-wide alert that triggers if location services are disabled on the device.
-    - [x] **Multi-Color Polylines:** Implemented property-based map styling to render different transport modes in distinct colors.
+    - [x] **Optimized Loading UI:** Added `CircularProgressIndicator` overlay during complex route calculations.
+    - [x] **Multi-Color Polylines:** Road (Blue), Rail (Black), Walk (Grey).
     - [x] **Transfer Station Markers:** Visualized mode transition points on the map with station markers.
-    - [x] **Journey Summary & History:** Updated `JourneySummarySheet` and `JourneyHistoryScreen` to show leg breakdowns and multi-modal statistics.
 
 ## Future Improvements (Post-V2)
-- [x] **Performance Ratio ETA Model:** Implemented a sophisticated scaling model using OSRM speed annotations to handle mixed road types and traffic accurately.
-- [x] **Battery-saver mode (Smart Polling based on distance):** Implemented dynamic location update intervals (30s to 2s) based on proximity to destination.
+- [ ] **Optimize Rail Multi-Modal Engine:** Evaluate more candidates, NxN matrix options, and walking-to-station logic.
 - [ ] **Real-world field testing and accuracy calibration.**
-- [x] **Unit Testing:** Verified `RouteDistanceEngine` leg-based calculations, performance-ratio ETA model, and polyline simplification.
-- [x] **Performance Tuning:** Implemented radial-distance polyline simplification to optimize map rendering for long transit journeys.

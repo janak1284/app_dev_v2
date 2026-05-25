@@ -63,6 +63,7 @@ fun HomeScreen(
                 ) {
                     Button(
                         onClick = {
+                            android.util.Log.d("HomeScreen", "Selecting ROAD mode")
                             viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.ROAD))
                             showModeSelection = false
                             onNewJourneyClick()
@@ -76,6 +77,7 @@ fun HomeScreen(
                     }
                     Button(
                         onClick = {
+                            android.util.Log.d("HomeScreen", "Selecting TRAIN mode")
                             viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.TRAIN))
                             showModeSelection = false
                             onNewJourneyClick()

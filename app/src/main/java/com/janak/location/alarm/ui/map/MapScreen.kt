@@ -118,6 +118,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val isLocationEnabled by viewModel.isLocationEnabled.collectAsState()
     val routeLine by viewModel.routeLine.collectAsState()
     val journeyLegs by viewModel.journeyLegs.collectAsState()
+    val isRouting by viewModel.isRouting.collectAsState()
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val onDismissSheet = remember { { showBottomSheet = false } }
@@ -274,14 +275,16 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     org.maplibre.android.style.layers.PropertyFactory.lineColor(
                         org.maplibre.android.style.expressions.Expression.match(
                             org.maplibre.android.style.expressions.Expression.get("mode"),
-                            org.maplibre.android.style.expressions.Expression.literal(android.graphics.Color.parseColor("#34A853")), // Default Green
-                            org.maplibre.android.style.expressions.Expression.stop("WALK", android.graphics.Color.parseColor("#4285F4")), // Blue
-                            org.maplibre.android.style.expressions.Expression.stop("BUS", android.graphics.Color.parseColor("#EA4335")), // Red
-                            org.maplibre.android.style.expressions.Expression.stop("TRAIN", android.graphics.Color.parseColor("#FBBC05")), // Amber
-                            org.maplibre.android.style.expressions.Expression.stop("SUBWAY", android.graphics.Color.parseColor("#800080")) // Purple
+                            org.maplibre.android.style.expressions.Expression.literal("#34A853"), // Default Green
+                            org.maplibre.android.style.expressions.Expression.stop("ROAD", "#4285F4"),
+                            org.maplibre.android.style.expressions.Expression.stop("WALK", "#757575"),
+                            org.maplibre.android.style.expressions.Expression.stop("BUS", "#EA4335"),
+                            org.maplibre.android.style.expressions.Expression.stop("TRAIN", "#000000"), // Black for Rail
+                            org.maplibre.android.style.expressions.Expression.stop("SUBWAY", "#800080")
                         )
                     ),
-                    org.maplibre.android.style.layers.PropertyFactory.lineWidth(5f),
+                    org.maplibre.android.style.layers.PropertyFactory.lineWidth(6f),
+                    org.maplibre.android.style.layers.PropertyFactory.lineOpacity(0.8f),
                     org.maplibre.android.style.layers.PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
                     org.maplibre.android.style.layers.PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
                 )
@@ -712,6 +715,48 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                  viewModel = viewModel,
                  onDismiss = onDismissSheet
              )
+         }
+
+         // --- Loading Overlay ---
+         AnimatedVisibility(
+             visible = isRouting,
+             enter = fadeIn(),
+             exit = fadeOut()
+         ) {
+             Box(
+                 modifier = Modifier
+                     .fillMaxSize()
+                     .background(Color.Black.copy(alpha = 0.4f)),
+                 contentAlignment = Alignment.Center
+             ) {
+                 Card(
+                     shape = RoundedCornerShape(24.dp),
+                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                 ) {
+                     Column(
+                         modifier = Modifier.padding(32.dp),
+                         horizontalAlignment = Alignment.CenterHorizontally,
+                         verticalArrangement = Arrangement.Center
+                     ) {
+                         CircularProgressIndicator(
+                             modifier = Modifier.size(48.dp),
+                             color = MaterialTheme.colorScheme.primary,
+                             strokeWidth = 4.dp
+                         )
+                         Spacer(modifier = Modifier.height(16.dp))
+                         Text(
+                             text = "Calculating optimal route...",
+                             style = MaterialTheme.typography.titleMedium,
+                             fontWeight = FontWeight.Bold
+                         )
+                         Text(
+                             text = "Finding best Road -> Rail connection",
+                             style = MaterialTheme.typography.bodySmall,
+                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                         )
+                     }
+                 }
+             }
          }
 
          // --- Location Disabled Alert ---

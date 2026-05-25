@@ -9,12 +9,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.janak.location.alarm.alarm.AlarmEngine
+import com.janak.location.alarm.api.OpenRailRoutingApiService
 import com.janak.location.alarm.api.PhotonApiService
-import com.janak.location.alarm.api.ValhallaApiService
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.*
 import com.janak.location.alarm.service.LocationAlarmService
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,8 +48,7 @@ class MapViewModel(
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
-    private val valhallaApiService: ValhallaApiService,
-    private val orsApiService: com.janak.location.alarm.api.OrsApiService,
+    private val openRailRoutingApiService: OpenRailRoutingApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: HistoryRepository,
     private val context: Context
@@ -112,6 +114,9 @@ class MapViewModel(
 
     private val _remainingEta = MutableStateFlow<Int?>(null)
     val remainingEta: StateFlow<Int?> = _remainingEta.asStateFlow()
+
+    private val _isRouting = MutableStateFlow(false)
+    val isRouting: StateFlow<Boolean> = _isRouting.asStateFlow()
 
     private var fullRouteLine: com.mapbox.geojson.LineString? = null
 
@@ -380,6 +385,7 @@ class MapViewModel(
 
     private fun fetchRoadRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
         android.util.Log.d("MapViewModel", "fetchRoadRoute: start=$start, end=$end")
+        _isRouting.value = true
         viewModelScope.launch {
             try {
                 val coords = "${start.longitude},${start.latitude};${end.longitude},${end.latitude}"
@@ -409,45 +415,227 @@ class MapViewModel(
                 }
             } catch (e: Exception) {
                 android.util.Log.e("MapViewModel", "Failed to fetch road route", e)
+            } finally {
+                _isRouting.value = false
             }
         }
     }
 
     private fun fetchTransitRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
-        android.util.Log.d("MapViewModel", "fetchTransitRoute (ORS): start=$start, end=$end")
+        android.util.Log.d("MapViewModel", "fetchTransitRoute (Optimized Multi-Modal): start=${start.latitude},${start.longitude}, end=${end.latitude},${end.longitude}")
+        _isRouting.value = true
         viewModelScope.launch {
             try {
-                val startCoord = "${start.longitude},${start.latitude}"
-                val endCoord = "${end.longitude},${end.latitude}"
-                
-                val response = orsApiService.getWalkingRoute(startCoord, endCoord)
-                if (response.isSuccessful) {
-                    val root = response.body() ?: throw Exception("Empty response from ORS")
-                    val firstFeature = root.features.firstOrNull() ?: throw Exception("No paths found")
+                coroutineScope {
+                    // 1. Find candidate stations
+                    android.util.Log.d("MapViewModel", "Step 1: Searching for candidate stations...")
+                    val startCandidates = findCandidateStations(start.latitude, start.longitude)
+                    val endCandidates = findCandidateStations(end.latitude, end.longitude)
+
+                    android.util.Log.d("MapViewModel", "Found ${startCandidates.size} start candidates and ${endCandidates.size} end candidates")
+
+                    if (startCandidates.isEmpty() || endCandidates.isEmpty()) {
+                        throw Exception("Could not find railway stations near your locations.")
+                    }
+
+                    // 2. Evaluate best start station (Parallel OSRM)
+                    android.util.Log.d("MapViewModel", "Step 2: Evaluating best start station via OSRM...")
+                    val firstMileOptions = startCandidates.mapIndexed { index, station ->
+                        async { 
+                            val segment = fetchOsrmSegment(start.latitude, start.longitude, station.latitude, station.longitude)
+                            android.util.Log.d("MapViewModel", "Start Candidate $index (${station.latitude},${station.longitude}): dist=${segment?.distance}m, dur=${segment?.duration}s")
+                            segment
+                        }
+                    }.awaitAll().filterNotNull()
+
+                    val winningFirstMile = firstMileOptions.minByOrNull { it.duration } 
+                        ?: throw Exception("No road path found to any nearby station.")
                     
-                    val coords = firstFeature.geometry.coordinates
-                    val pointList = coords.map { Point.fromLngLat(it[0], it[1]) }
-                    val mbLine = com.mapbox.geojson.LineString.fromLngLats(pointList.map { 
+                    val sPoint = winningFirstMile.coordinates.last()
+                    val startStation = LatLng(sPoint.latitude(), sPoint.longitude())
+                    android.util.Log.d("MapViewModel", "Winning Start Station: ${startStation.latitude},${startStation.longitude}")
+
+                    // 3. Evaluate best end station (Parallel OSRM)
+                    android.util.Log.d("MapViewModel", "Step 3: Evaluating best end station via OSRM...")
+                    val lastMileOptions = endCandidates.mapIndexed { index, station ->
+                        async { 
+                            val segment = fetchOsrmSegment(station.latitude, station.longitude, end.latitude, end.longitude)
+                            android.util.Log.d("MapViewModel", "End Candidate $index (${station.latitude},${station.longitude}): dist=${segment?.distance}m, dur=${segment?.duration}s")
+                            segment
+                        }
+                    }.awaitAll().filterNotNull()
+
+                    val winningLastMile = lastMileOptions.minByOrNull { it.duration }
+                        ?: throw Exception("No road path found from any nearby station to destination.")
+
+                    val ePoint = winningLastMile.coordinates.first()
+                    val endStation = LatLng(ePoint.latitude(), ePoint.longitude())
+                    android.util.Log.d("MapViewModel", "Winning End Station: ${endStation.latitude},${endStation.longitude}")
+
+                    // 4. Fetch Rail segment
+                    android.util.Log.d("MapViewModel", "Step 4: Fetching Rail segment from ORR...")
+                    val railMile = fetchRailSegment(startStation.latitude, startStation.longitude, endStation.latitude, endStation.longitude)
+                    if (railMile == null || railMile.coordinates.isEmpty()) {
+                        android.util.Log.e("MapViewModel", "Rail segment fetch failed or returned empty coordinates")
+                        throw Exception("Railway path between optimal stations unavailable.")
+                    }
+                    android.util.Log.d("MapViewModel", "Rail segment success: ${railMile.coordinates.size} points, dist=${railMile.distance}m")
+
+                    // 5. Combine segments into Legs for UI differentiation
+                    val legs = mutableListOf<JourneyLeg>()
+                    
+                    android.util.Log.d("MapViewModel", "Step 5: Combining segments into JourneyLegs")
+                    android.util.Log.d("MapViewModel", "Multi-modal coordinates: first=${winningFirstMile.coordinates.size}, rail=${railMile.coordinates.size}, last=${winningLastMile.coordinates.size}")
+
+                    // Road: First Mile
+                    val firstMileGeoJson = org.maplibre.geojson.LineString.fromLngLats(winningFirstMile.coordinates).toJson()
+                    legs.add(JourneyLeg(
+                        mode = TransportMode.ROAD,
+                        geometry = firstMileGeoJson,
+                        distanceMeters = winningFirstMile.distance,
+                        durationMillis = (winningFirstMile.duration * 1000).toLong(),
+                        startLat = start.latitude,
+                        startLng = start.longitude,
+                        endLat = startStation.latitude,
+                        endLng = startStation.longitude,
+                        endName = "Start Station"
+                    ))
+
+                    // Rail: Long Haul
+                    val railGeoJson = org.maplibre.geojson.LineString.fromLngLats(railMile.coordinates).toJson()
+                    legs.add(JourneyLeg(
+                        mode = TransportMode.TRAIN,
+                        geometry = railGeoJson,
+                        distanceMeters = railMile.distance,
+                        durationMillis = (railMile.duration * 1000).toLong(),
+                        startLat = startStation.latitude,
+                        startLng = startStation.longitude,
+                        endLat = endStation.latitude,
+                        endLng = endStation.longitude,
+                        endName = "Destination Station"
+                    ))
+
+                    // Road: Last Mile
+                    val lastMileGeoJson = org.maplibre.geojson.LineString.fromLngLats(winningLastMile.coordinates).toJson()
+                    legs.add(JourneyLeg(
+                        mode = TransportMode.ROAD,
+                        geometry = lastMileGeoJson,
+                        distanceMeters = winningLastMile.distance,
+                        durationMillis = (winningLastMile.duration * 1000).toLong(),
+                        startLat = endStation.latitude,
+                        startLng = endStation.longitude,
+                        endLat = end.latitude,
+                        endLng = end.longitude,
+                        endName = destinationName.value ?: "Destination"
+                    ))
+
+                    _journeyLegs.value = legs
+                    android.util.Log.d("MapViewModel", "Populated ${legs.size} legs in _journeyLegs")
+
+                    // 6. Combine all coordinates for a single path
+                    val combinedCoords = mutableListOf<Point>()
+                    combinedCoords.addAll(winningFirstMile.coordinates)
+                    combinedCoords.addAll(railMile.coordinates)
+                    combinedCoords.addAll(winningLastMile.coordinates)
+
+                    val mbLine = com.mapbox.geojson.LineString.fromLngLats(combinedCoords.map { 
                         com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude())
                     })
                     val geoJson = mbLine.toJson()
-                    
+                    android.util.Log.d("MapViewModel", "Step 6: Final combined path created with ${combinedCoords.size} points")
+
+                    val totalDistance = winningFirstMile.distance + railMile.distance + winningLastMile.distance
+                    val totalDuration = winningFirstMile.duration + railMile.duration + winningLastMile.duration
+
                     _currentRouteGeoJson.value = geoJson
-                    _journeyLegs.value = emptyList() 
-                    _expectedDuration.value = firstFeature.properties.summary.duration
-                    _expectedDistance.value = firstFeature.properties.summary.distance
+                    _expectedDuration.value = totalDuration
+                    _expectedDistance.value = totalDistance
                     
-                    processRouteSuccess(geoJson, firstFeature.properties.summary.distance, pushToService, emptyList())
-                } else {
-                    throw Exception("ORS API failed: ${response.code()} ${response.message()}")
+                    val combinedSpeeds = mutableListOf<Double>()
+                    combinedSpeeds.addAll(winningFirstMile.speeds)
+                    combinedSpeeds.addAll(railMile.coordinates.map { 0.0 })
+                    combinedSpeeds.addAll(winningLastMile.speeds)
+
+                    _segmentSpeeds.value = combinedSpeeds
+                    processRouteSuccess(geoJson, totalDistance, pushToService, combinedSpeeds)
+
+                    launch(kotlinx.coroutines.Dispatchers.Main) {
+                        android.widget.Toast.makeText(context, "Optimal Multi-modal route calculated", android.widget.Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MapViewModel", "Failed to fetch Railway route", e)
+                android.util.Log.e("MapViewModel", "Failed to fetch Multi-modal route", e)
                 viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "Railway path unreachable. Checking connectivity...", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(context, e.message ?: "Railway path unreachable.", android.widget.Toast.LENGTH_LONG).show()
                 }
+            } finally {
+                _isRouting.value = false
+                android.util.Log.d("MapViewModel", "fetchTransitRoute completed (isRouting set to false)")
             }
         }
+    }
+
+    private data class RouteSegment(val coordinates: List<Point>, val distance: Double, val duration: Double, val speeds: List<Double>)
+
+    private suspend fun fetchOsrmSegment(sLat: Double, sLon: Double, eLat: Double, eLon: Double): RouteSegment? {
+        try {
+            val coords = "$sLon,$sLat;$eLon,$eLat"
+            val response = osrmApiService.getRoute(coords)
+            if (response.isSuccessful) {
+                val route = response.body()?.routes?.firstOrNull() ?: return null
+                val points = route.geometry.coordinates.map { Point.fromLngLat(it[0], it[1]) }
+                val speeds = route.legs.firstOrNull()?.annotation?.speed ?: emptyList()
+                return RouteSegment(points, route.distance, route.duration, speeds)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MapViewModel", "OSRM segment failed", e)
+        }
+        return null
+    }
+
+    private suspend fun fetchRailSegment(sLat: Double, sLon: Double, eLat: Double, eLon: Double): RouteSegment? {
+        try {
+            val response = openRailRoutingApiService.getRoute(points = listOf("$sLat,$sLon", "$eLat,$eLon"))
+            if (response.isSuccessful) {
+                val path = response.body()?.paths?.firstOrNull() ?: return null
+                val points = path.points.coordinates.map { Point.fromLngLat(it[0], it[1]) }
+                return RouteSegment(points, path.distance, path.time.toDouble() / 1000.0, emptyList())
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MapViewModel", "Rail segment failed", e)
+        }
+        return null
+    }
+
+    private suspend fun attemptOpenRailRoute(startLat: Double, startLon: Double, endLat: Double, endLon: Double, pushToService: Boolean): Boolean {
+        return false // Optimized multi-modal handles all rail routing
+    }
+
+    private suspend fun findCandidateStations(lat: Double, lon: Double): List<LatLng> {
+        try {
+            val response = photonApiService.getSuggestions(
+                query = "station",
+                lat = lat,
+                lon = lon,
+                limit = 10
+            )
+            if (response.isSuccessful) {
+                val features = response.body()?.features ?: return emptyList()
+                // Filter and take top 3
+                return features.filter { 
+                    it.properties.osm_key == "railway" || it.properties.name?.lowercase()?.contains("station") == true 
+                }.take(3).mapNotNull { 
+                    it.geometry.coordinates.let { coords -> LatLng(coords[1], coords[0]) }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MapViewModel", "Failed to find candidate stations", e)
+        }
+        return emptyList()
+    }
+
+    private suspend fun findNearestStation(lat: Double, lon: Double): LatLng? {
+        return findCandidateStations(lat, lon).firstOrNull()
     }
 
     private fun processRouteSuccess(geoJson: String, distance: Double, pushToService: Boolean, speeds: List<Double>) {
@@ -806,8 +994,7 @@ class MapViewModelFactory(
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
-    private val valhallaApiService: ValhallaApiService,
-    private val orsApiService: com.janak.location.alarm.api.OrsApiService,
+    private val openRailRoutingApiService: OpenRailRoutingApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: com.janak.location.alarm.data.repository.HistoryRepository,
     private val context: Context
@@ -817,8 +1004,7 @@ class MapViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return MapViewModel(
                 locationTrackingManager, alarmEngine, 
-                photonApiService, osrmApiService, valhallaApiService,
-                orsApiService,
+                photonApiService, osrmApiService, openRailRoutingApiService,
                 routeRepository, historyRepository, context
             ) as T
         }

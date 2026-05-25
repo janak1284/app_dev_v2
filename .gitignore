@@ -73,5 +73,5 @@ lint/generated/
 /tasks.txt
 
 # API Services
-app/src/main/java/com/janak/location/alarm/api/
+# app/src/main/java/com/janak/location/alarm/api/
 

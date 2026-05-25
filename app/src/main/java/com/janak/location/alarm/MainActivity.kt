@@ -57,22 +57,20 @@ class MainActivity : ComponentActivity() {
             } else {
                 val photonApiService = remember { RetrofitClient.photonApiService }
                 val osrmApiService = remember { RetrofitClient.osrmApiService }
-                val valhallaApiService = remember { RetrofitClient.valhallaApiService }
-                
+                val openRailRoutingApiService = remember { RetrofitClient.openRailRoutingApiService }
+
                 val viewModel: MapViewModel = viewModel(
                     factory = MapViewModelFactory(
-                        locationTrackingManager!!, 
-                        alarmEngine!!, 
+                        locationTrackingManager!!,
+                        alarmEngine!!,
                         photonApiService,
                         osrmApiService,
-                        valhallaApiService,
-                        RetrofitClient.orsApiService,
+                        openRailRoutingApiService,
                         routeRepository!!,
                         historyRepository!!,
                         context
                     )
                 )
-
                 var currentScreen by remember { mutableStateOf("home") }
                 var selectedHistoryId by remember { mutableStateOf<Long?>(null) }
                 var routeToEdit by remember { mutableStateOf<SavedRouteEntity?>(null) }
@@ -124,7 +122,8 @@ class MainActivity : ComponentActivity() {
                                      onEditRouteClick = { route -> routeToEdit = route },
                                      onRouteClick = { currentScreen = "map" }
                                  )
-                             }                            "journey_history" -> {
+                             }
+                            "journey_history" -> {
                                 androidx.activity.compose.BackHandler { currentScreen = "settings" }
                                 com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
                                     viewModel = viewModel,
