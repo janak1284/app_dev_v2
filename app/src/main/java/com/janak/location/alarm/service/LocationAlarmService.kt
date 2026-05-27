@@ -347,6 +347,11 @@ class LocationAlarmService : Service() {
     }
 
     private fun processLocationUpdate(location: Location) {
+        if (location.hasAccuracy() && location.accuracy > 40.0f) {
+            android.util.Log.w("LocationAlarmService", "Ignoring inaccurate GPS point (${location.accuracy}m)")
+            return
+        }
+        
         lastLocationTime = System.currentTimeMillis()
         wakeLock?.acquire(60 * 60 * 1000L)
         

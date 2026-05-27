@@ -23,7 +23,15 @@
 - **Center Lock Mode:** Added an auto-follow camera mode for the user location, complete with visual state feedback on the focus button and automatic disengagement on manual map interaction.
 - **High-Fidelity Journey Backend:** 
     - Updated entities to store **Actual Path (GeoJSON)**, **Actual Distance**, and **Actual Duration**.
-    - Refactored `LocationAlarmService` to generate GeoJSON trails and calculate total traversed distance from buffered GPS updates.
+    - **Tracking Pipeline Robustness Optimizations:**
+    - Implemented strict 40m GPS accuracy gating to filter signal noise.
+    - Added 60s debounce cooldown to the re-routing broadcast receiver.
+    - Implemented a 180s switching penalty (hysteresis) to prevent jarring mid-journey route changes.
+    - Implemented concurrent Cartesian product evaluation for multi-modal journeys (Road-Rail-Road).
+    - Decoupled OSRM pre-fetching to minimize redundant network calls.
+    - Introduced Coroutine Semaphore (limit=3) for API rate limiting (OSRM, ORR, Photon).
+    - Implemented a weighted cost function (Road 1.5x vs Rail 1.0x) for time-optimal route selection.
+    - Refactored candidate culling using Haversine distance via Turf-Java.
     - Implemented **Route Reuse** logic in `MapViewModel` that prioritizes stored high-precision paths over API calls, ensuring consistency for repeated journeys.
 - **Auto-Arrival Save Prompt:** Integrated a 50m arrival detection trigger that automatically prompts the user to save the journey once they reach their destination.
 - **Database Migration:** Bumped Room database to **v6** to support new journey metadata and high-fidelity paths.

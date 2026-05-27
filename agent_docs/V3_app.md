@@ -9,13 +9,26 @@ Crucially, V3 adapts to the realities of public transit by gracefully handling G
 
 ## Technical Architecture Changes
 
-### 1. Multi-Modal Routing Engine (Optimized)
+### 1. Multi-Modal Routing Engine (Global Matrix Optimized)
 - **Primary Rail Provider:** [OpenRailRouting](https://routing.openrailrouting.org/) (GraphHopper-based).
 - **Multi-Modal Workflow:** Implements a three-stage "Road -> Rail -> Road" journey:
     1.  **First Mile:** OSRM (Road) from current location to the best start station.
     2.  **Long Haul:** OpenRailRouting (Rail) between optimal start/end stations.
     3.  **Last Mile:** OSRM (Road) from the end station to the final destination.
-- **Smart Station Selection:** Concurrently evaluates the top 3 physically closest stations (via Photon) and selects the pair that minimizes actual road commute time (evaluated via OSRM).
+- **Global Matrix Evaluation (NxM):** 
+    - Concurrently evaluates a Cartesian product of candidate station pairs (Top 5 start x Top 5 end).
+    - **Decoupled OSRM Pre-fetching:** Road legs are pre-fetched once and combined in-memory to minimize redundant network calls.
+    - **API Rate Limiting:** Utilizes a Coroutine `Semaphore(3)` to protect open-source providers (OSRM, ORR, Photon) from rate limits.
+- **Weighted Cost Function:** 
+    - Prioritizes transit-heavy journeys by penalizing road travel time: `(Road * 1.5) + (Rail * 1.0)`.
+    - Selects the global minimum based on weighted cost while preserving raw duration for ETAs.
+
+### 2. Pipeline Robustness & Signal Stability
+- **Accuracy Gating:** Implements a strict 40m GPS horizontal accuracy filter in the background service to ignore signal noise and "urban canyon" bounces.
+- **Re-Route Debouncing:** Enforces a 60s cooldown on re-routing requests to prevent API spam and rapid state transitions.
+- **Switching Penalty (Hysteresis):** Mid-journey re-routing only occurs if the new global optimal path saves at least 180 seconds (3 minutes) compared to the current path, preventing UI jitter.
+- **Distance Gating (Candidate Culling):** Implements a strict 30km radius limit for candidate station searches. Stations beyond this threshold are discarded to prevent unbounded matrix evaluation in non-rail areas.
+- **Auto-Road Fallback:** If no viable transit stations are found within the 30km search radius, the engine automatically falls back to a standard OSRM Road route, ensuring a seamless user experience.
 
 ### 2. Leg-Based Tracking Model
 - **`JourneyLeg` Entity:** Represents a specific segment (ROAD or TRAIN).
@@ -91,24 +104,18 @@ Crucially, V3 adapts to the realities of public transit by gracefully handling G
 ---
 
 ## Future Considerations & Optimizations
-- [ ] **Optimize Rail Multi-Modal:**
-    - Evaluate more candidate stations (beyond top 3).
-    - Implement optional "Full Matrix Evaluation" (NxN) for absolute shortest total journey.
-    - Add logic to handle "Walking to Station" if road distance is very short.
-- [ ] **Real-Time GTFS Integration:** Fetch actual train arrival times to adjust predictive alarms.
-- [ ] **Battery Benchmarking:** Monitor impact of complex multi-modal tracking on long trips.
+- [ ] **GTFS Real-Time Integration:** Fetch actual train arrival times to adjust predictive alarms.
+- [ ] **Battery Benchmarking:** Monitor impact of complex multi-modal matrix tracking on long trips.
+- [ ] **Station Walking Mode:** Add logic to handle "Walking to Station" (WALK mode) if road distance is below a specific threshold (e.g., 500m).
 
 ---
 
 ## Refinement Phase & Debugging History
 
-### ❌ Failed/Deprecated Routing Attempts
-- [x] **Valhalla/Transitland:** 401 Unauthorized errors on public mirrors.
-- [x] **ORS (Railway Profile):** ORS does not have a native rail profile; pedestrian proxy was insufficient for true rail routing.
-- [x] **Mapbox/GraphHopper:** Restricted access or API key issues for transit modes.
-
 ### ✅ Success: OpenRailRouting + Multi-Modal Engine
 - [x] **OpenRailRouting Integration:** Reliable, free rail routing via `routing.openrailrouting.org`.
+- [x] **Global Matrix Routing (V3.1):** Implemented NxM Cartesian product evaluation with weighted cost functions.
+- [x] **Pipeline Robustness (V3.1):** Added accuracy gating, re-route debouncing, and switching hysteresis.
 - [x] **Road-Rail-Road Logic:** Solved the "last mile" problem by stitching OSRM and ORR segments.
 - [x] **Optimized Station Selection:** Replaced "crow-flies" distance with "actual road distance" for station discovery.
 - [x] **UI Differentiation:** Clearly separated Road vs Rail via color coding (Blue vs Black) and icons.
