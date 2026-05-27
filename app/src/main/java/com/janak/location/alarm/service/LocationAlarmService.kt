@@ -10,24 +10,33 @@ import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import com.google.android.gms.location.Priority
 import com.janak.location.alarm.MainActivity
 import com.janak.location.alarm.R
 import com.janak.location.alarm.alarm.AlarmEngine
-import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.data.AppDatabase
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
 import com.janak.location.alarm.data.entity.JourneyLegEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
-import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.domain.RouteDistanceEngine
+import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.JourneyLeg
 import com.janak.location.alarm.model.TransportMode
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.math.roundToInt
 
 class LocationAlarmService : Service() {
@@ -91,7 +100,7 @@ class LocationAlarmService : Service() {
         
         createNotificationChannels()
         
-        val powerManager = getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+        val powerManager = getSystemService(POWER_SERVICE) as android.os.PowerManager
         wakeLock = powerManager.newWakeLock(
             android.os.PowerManager.PARTIAL_WAKE_LOCK,
             "LocationAlarmService::WakeLock"
@@ -257,7 +266,8 @@ class LocationAlarmService : Service() {
                         isDistanceAlarmEnabled = isDistanceAlarmEnabled,
                         predictiveMinutes = predictiveMinutesThreshold,
                         isPredictiveAlarmEnabled = isPredictiveAlarmEnabled,
-                        ringtoneUri = ringtoneUri?.let { try { android.net.Uri.parse(it) } catch(e: Exception) { null } },
+                        ringtoneUri = ringtoneUri?.let { try {
+                            it.toUri() } catch(e: Exception) { null } },
                         isVibrateEnabled = isVibrateEnabled
                     ),
                     timestamp = startTimeMillis
@@ -432,7 +442,7 @@ class LocationAlarmService : Service() {
 
         adjustPollingInterval(distance)
 
-        // Dynamic Alarm Reset: If alarm was silenced but we are now far from destination/ETA again, reset it.
+        // Dynamic Alarm Reset: If alarm was silenced, but we are now far from destination/ETA again, reset it.
         if (isAlarmSilenced) {
             val resetDistance = distanceThreshold * 1.5
             val resetTime = predictiveMinutesThreshold * 1.5
@@ -552,7 +562,7 @@ class LocationAlarmService : Service() {
     }
 
     private fun formatDistance(meters: Int): String {
-        return if (meters >= 1000) String.format("%.1fkm", meters / 1000f) else "${meters}m"
+        return if (meters >= 1000) String.format(Locale.getDefault(), "%.1fkm", meters / 1000f) else "${meters}m"
     }
 
     override fun onDestroy() {
@@ -560,7 +570,7 @@ class LocationAlarmService : Service() {
         trackingJob?.cancel()
         deadReckoningJob?.cancel()
         saveFinalSummary()
-        getSharedPreferences("service_state", MODE_PRIVATE).edit().clear().apply()
+        getSharedPreferences("service_state", MODE_PRIVATE).edit { clear() }
         serviceScope.cancel()
         alarmEngine.stop()
         wakeLock?.let { if (it.isHeld) it.release() }

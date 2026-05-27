@@ -40,4 +40,5 @@
 
 ## Future Improvements (Post-V2)
 - [ ] **Optimize Rail Multi-Modal Engine:** Evaluate more candidates, NxN matrix options, and walking-to-station logic.
-- [ ] **Real-world field testing and accuracy calibration.**
+- [ ] **Real-world field-testing and accuracy calibration.**
+- [x] **MapViewModel Refactoring & Error Fix:** Resolved compilation errors and type mismatches resulting from the failed UI state consolidation refactor, ensuring stable state management for multi-modal routing engine.

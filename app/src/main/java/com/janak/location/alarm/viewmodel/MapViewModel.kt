@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.location.LocationManager
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -27,8 +26,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
+
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
@@ -45,6 +43,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import com.mapbox.turf.TurfMeasurement
 import com.mapbox.turf.TurfConstants
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import com.janak.location.alarm.data.entity.JourneyHistoryEntity
+import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
+import java.util.Locale
 
 @OptIn(FlowPreview::class)
 class MapViewModel(
@@ -59,17 +62,29 @@ class MapViewModel(
 ) : ViewModel() {
 
     private val routeDistanceEngine = RouteDistanceEngine()
-    private val MAX_STATION_SEARCH_RADIUS_KM = 30.0
+    private val maxStationSearchRadiusKm = 30.0
 
-    private fun org.maplibre.geojson.Point.toMapbox(): com.mapbox.geojson.Point = 
+    // Timing Constants for Multi-Modal Realism
+    private val STATION_OVERHEAD_SEC = 300.0 // 5 mins to reach platform/exit station
+    private val TRANSIT_WAIT_BUFFER_SEC = 600.0 // 10 mins average wait for next vehicle
+    private val RAIL_SPEED_CALIBRATION_FACTOR = 0.8 // Assume 20% overhead for stops/track geometry mismatches
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        coerceInputValues = true
+    }
+
+
+    private fun Point.toMapbox(): com.mapbox.geojson.Point =
         com.mapbox.geojson.Point.fromLngLat(longitude(), latitude())
 
-    private fun org.maplibre.geojson.LineString.toMapbox(): com.mapbox.geojson.LineString =
+    private fun LineString.toMapbox(): com.mapbox.geojson.LineString =
         com.mapbox.geojson.LineString.fromLngLats(coordinates().map { it.toMapbox() })
 
-    private fun com.mapbox.geojson.LineString.toMapLibre(): org.maplibre.geojson.LineString =
-        org.maplibre.geojson.LineString.fromLngLats(coordinates().map { 
-            org.maplibre.geojson.Point.fromLngLat(it.longitude(), it.latitude())
+    private fun com.mapbox.geojson.LineString.toMapLibre(): LineString =
+        LineString.fromLngLats(coordinates().map {
+            Point.fromLngLat(it.longitude(), it.latitude())
         })
     
     val savedRoutes = routeRepository.allSavedRoutes
@@ -78,8 +93,8 @@ class MapViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun logJourney(
-        journey: com.janak.location.alarm.data.entity.JourneyHistoryEntity,
-        breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>
+        journey: JourneyHistoryEntity,
+        breadcrumbs: List<RouteBreadcrumbEntity>
     ) {
         viewModelScope.launch {
             historyRepository.saveJourneyLog(journey, breadcrumbs)
@@ -125,8 +140,8 @@ class MapViewModel(
 
     private var fullRouteLine: com.mapbox.geojson.LineString? = null
 
-    private val _alarmSettings = MutableStateFlow(com.janak.location.alarm.model.AlarmSettings())
-    val alarmSettings: StateFlow<com.janak.location.alarm.model.AlarmSettings> = _alarmSettings.asStateFlow()
+    private val _alarmSettings = MutableStateFlow(AlarmSettings())
+    val alarmSettings: StateFlow<AlarmSettings> = _alarmSettings.asStateFlow()
 
     // --- Phase 6: Preview State ---
     private val _isPreviewMode = MutableStateFlow(false)
@@ -152,11 +167,11 @@ class MapViewModel(
     val themeMode: StateFlow<Int> = _themeMode.asStateFlow()
 
     // --- Search History ---
-    private val _searchHistory = MutableStateFlow<List<PhotonFeature>>(loadSearchHistory())
+    private val _searchHistory = MutableStateFlow(loadSearchHistory())
     val searchHistory: StateFlow<List<PhotonFeature>> = _searchHistory.asStateFlow()
 
-    private val locationSettingsReceiver = object : android.content.BroadcastReceiver() {
-        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+    private val locationSettingsReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == LocationManager.PROVIDERS_CHANGED_ACTION) {
                 checkLocationSettings()
             }
@@ -164,9 +179,10 @@ class MapViewModel(
     }
 
     private var lastReRouteTime = 0L
+    private var lastCheckedLocation: Location? = null
 
-    private val reRouteReceiver = object : android.content.BroadcastReceiver() {
-        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+    private val reRouteReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == LocationAlarmService.ACTION_RE_ROUTE) {
                 val currentTime = System.currentTimeMillis()
                 if (currentTime - lastReRouteTime < 60000L) {
@@ -185,8 +201,8 @@ class MapViewModel(
         }
     }
 
-    private val journeyCompletedReceiver = object : android.content.BroadcastReceiver() {
-        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+    private val journeyCompletedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == LocationAlarmService.JOURNEY_COMPLETED_BROADCAST) {
                 _journeyCompleted.value = true
                 stopAlarm()
@@ -198,9 +214,9 @@ class MapViewModel(
         checkLocationSettings()
         setupSearchDebounce()
         
-        val reRouteFilter = android.content.IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
-        val journeyFilter = android.content.IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
-        val locationSettingsFilter = android.content.IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
+        val reRouteFilter = IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
+        val journeyFilter = IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
+        val locationSettingsFilter = IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
         
         ContextCompat.registerReceiver(context, reRouteReceiver, reRouteFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
         ContextCompat.registerReceiver(context, journeyCompletedReceiver, journeyFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
@@ -332,18 +348,14 @@ class MapViewModel(
                 putExtra("RINGTONE_URI", settings.ringtoneUri?.toString())
                 putExtra("VIBRATE", settings.isVibrateEnabled)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
-            }
+            context.startForegroundService(serviceIntent)
         }
         
         _userLocation.value?.let { checkDistance(it) }
         startLocationUpdates()
     }
 
-    fun updateAlarmSettings(settings: com.janak.location.alarm.model.AlarmSettings) {
+    fun updateAlarmSettings(settings: AlarmSettings) {
         val oldMode = _alarmSettings.value.transportMode
         _alarmSettings.value = settings
         
@@ -377,6 +389,7 @@ class MapViewModel(
 
     fun setDestination(latLng: LatLng, name: String? = null) {
         if (!_isAlarmSet.value) {
+            resetRouteState()
             _destination.value = latLng
             _destinationName.value = name
             _isPreviewMode.value = true
@@ -459,7 +472,7 @@ class MapViewModel(
                     val endCandidates = findCandidateStations(end.latitude, end.longitude)
 
                     if (startCandidates.isEmpty() || endCandidates.isEmpty()) {
-                        android.util.Log.w("MapViewModel", "Transit routing aborted: No viable stations within threshold ($MAX_STATION_SEARCH_RADIUS_KM km). Falling back to Road route.")
+                        android.util.Log.w("MapViewModel", "Transit routing aborted: No viable stations within threshold ($maxStationSearchRadiusKm km). Falling back to Road route.")
                         fetchRoadRoute(start, end, pushToService)
                         return@coroutineScope
                     }
@@ -500,13 +513,20 @@ class MapViewModel(
                                 }
                                 
                                 if (rLeg != null) {
-                                    val totalDuration = fMile.duration + rLeg.duration + lMile.duration
+                                    // Apply realism calibrations
+                                    val railDurationCalibrated = rLeg.duration / RAIL_SPEED_CALIBRATION_FACTOR
+                                    val stationOverhead = STATION_OVERHEAD_SEC * 2 // Access/Exit time
+                                    val waitBuffer = TRANSIT_WAIT_BUFFER_SEC
+                                    
+                                    val totalDuration = fMile.duration + railDurationCalibrated + lMile.duration + stationOverhead + waitBuffer
+                                    
                                     // Weighted Cost Function: Penalize Road/Walk (1.5x) vs Transit (1.0x)
-                                    val weightedCost = (fMile.duration * 1.5) + (rLeg.duration * 1.0) + (lMile.duration * 1.5)
+                                    val weightedCost = (fMile.duration * 1.5) + (railDurationCalibrated * 1.0) + (lMile.duration * 1.5) + 
+                                                      (stationOverhead * 1.2) + (waitBuffer * 1.1)
                                     
                                     EvaluatedMultiModalRoute(
                                         firstMile = fMile,
-                                        railLeg = rLeg,
+                                        railLeg = rLeg.copy(duration = railDurationCalibrated), // Use calibrated duration
                                         lastMile = lMile,
                                         totalDuration = totalDuration,
                                         weightedTotalCost = weightedCost,
@@ -542,7 +562,7 @@ class MapViewModel(
                     val legs = mutableListOf<JourneyLeg>()
                     
                     // Road: First Mile
-                    val firstMileGeoJson = org.maplibre.geojson.LineString.fromLngLats(globalWinner.firstMile.coordinates).toJson()
+                    val firstMileGeoJson = LineString.fromLngLats(globalWinner.firstMile.coordinates).toJson()
                     legs.add(JourneyLeg(
                         mode = TransportMode.ROAD,
                         geometry = firstMileGeoJson,
@@ -556,7 +576,7 @@ class MapViewModel(
                     ))
 
                     // Rail: Long Haul
-                    val railGeoJson = org.maplibre.geojson.LineString.fromLngLats(globalWinner.railLeg.coordinates).toJson()
+                    val railGeoJson = LineString.fromLngLats(globalWinner.railLeg.coordinates).toJson()
                     legs.add(JourneyLeg(
                         mode = TransportMode.TRAIN,
                         geometry = railGeoJson,
@@ -570,7 +590,7 @@ class MapViewModel(
                     ))
 
                     // Road: Last Mile
-                    val lastMileGeoJson = org.maplibre.geojson.LineString.fromLngLats(globalWinner.lastMile.coordinates).toJson()
+                    val lastMileGeoJson = LineString.fromLngLats(globalWinner.lastMile.coordinates).toJson()
                     legs.add(JourneyLeg(
                         mode = TransportMode.ROAD,
                         geometry = lastMileGeoJson,
@@ -604,7 +624,13 @@ class MapViewModel(
                     
                     val combinedSpeeds = mutableListOf<Double>()
                     combinedSpeeds.addAll(globalWinner.firstMile.speeds)
-                    combinedSpeeds.addAll(globalWinner.railLeg.coordinates.map { 0.0 })
+                    
+                    // Calibrate rail average speed for ETA performance ratio
+                    val railAvgSpeedMps = if (globalWinner.railLeg.duration > 0) {
+                        globalWinner.railLeg.distance / globalWinner.railLeg.duration
+                    } else 0.0
+                    combinedSpeeds.addAll(globalWinner.railLeg.coordinates.map { railAvgSpeedMps })
+                    
                     combinedSpeeds.addAll(globalWinner.lastMile.speeds)
 
                     _segmentSpeeds.value = combinedSpeeds
@@ -657,7 +683,7 @@ class MapViewModel(
         return null
     }
 
-    private suspend fun attemptOpenRailRoute(startLat: Double, startLon: Double, endLat: Double, endLon: Double, pushToService: Boolean): Boolean {
+    private fun attemptOpenRailRoute(startLat: Double, startLon: Double, endLat: Double, endLon: Double, pushToService: Boolean): Boolean {
         return false // Optimized multi-modal handles all rail routing
     }
 
@@ -674,18 +700,18 @@ class MapViewModel(
                 val origin = Point.fromLngLat(lon, lat)
 
                 // Filter for railway stations, calculate Haversine distance, and take top 5 within radius
-                return features.filter { 
-                    it.properties.osm_key == "railway" || it.properties.name?.lowercase()?.contains("station") == true 
+                return features.asSequence().filter {
+                    it.properties.osmKey == "railway" || it.properties.name?.lowercase()?.contains("station") == true
                 }.map { feature ->
                     val stationPoint = Point.fromLngLat(feature.geometry.coordinates[0], feature.geometry.coordinates[1])
                     val distance = TurfMeasurement.distance(origin.toMapbox(), stationPoint.toMapbox(), TurfConstants.UNIT_KILOMETERS)
                     feature to distance
-                }.filter { it.second <= MAX_STATION_SEARCH_RADIUS_KM } // Strict distance gate
+                }.filter { it.second <= maxStationSearchRadiusKm } // Strict distance gate
                 .sortedBy { it.second } // Sort by Haversine distance ascending
                 .take(5)
-                .map { (feature, _) -> 
-                    LatLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]) 
-                }
+                .map { (feature, _) ->
+                    LatLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0])
+                }.toList()
             }
         } catch (e: Exception) {
             android.util.Log.e("MapViewModel", "Failed to find candidate stations", e)
@@ -715,8 +741,10 @@ class MapViewModel(
 
         // Also update _routeLine for map rendering
         val mbRoute = com.mapbox.geojson.LineString.fromJson(geoJson)
-        fullRouteLine = mbRoute
-        _routeLine.value = mbRoute.toMapLibre()
+        val simplifiedPoints = routeDistanceEngine.simplifyPolyline(mbRoute.coordinates(), 5.0)
+        val simplifiedRoute = com.mapbox.geojson.LineString.fromLngLats(simplifiedPoints)
+        fullRouteLine = simplifiedRoute
+        _routeLine.value = simplifiedRoute.toMapLibre()
 
         if (pushToService && _isAlarmSet.value) {
             val legsJson = if (_journeyLegs.value.isNotEmpty()) Json.encodeToString(_journeyLegs.value) else null
@@ -758,15 +786,13 @@ class MapViewModel(
         }
     }
 
-    private val _journeyCompleted = MutableStateFlow<Boolean>(false)
+    private val _journeyCompleted = MutableStateFlow(false)
     val journeyCompleted: StateFlow<Boolean> = _journeyCompleted.asStateFlow()
     
     private var hasTriggeredArrival = false
 
-    fun resetJourneyCompleted() {
-        _journeyCompleted.value = false
-        hasTriggeredArrival = false
-        // Clear journey state
+    fun resetRouteState() {
+        android.util.Log.d("MapViewModel", "resetRouteState: Clearing all routing and ETA states")
         _destination.value = null
         _destinationName.value = null
         _distanceToDestination.value = null
@@ -775,6 +801,17 @@ class MapViewModel(
         _journeyLegs.value = emptyList()
         _routeLine.value = null
         fullRouteLine = null
+        _expectedDistance.value = 0.0
+        _expectedDuration.value = 0.0
+        _segmentSpeeds.value = emptyList()
+        routeDistanceEngine.resetStats()
+        lastCheckedLocation = null
+    }
+
+    fun resetJourneyCompleted() {
+        _journeyCompleted.value = false
+        hasTriggeredArrival = false
+        resetRouteState()
     }
 
     fun stopAlarm() {
@@ -791,22 +828,31 @@ class MapViewModel(
 
     fun clearDestination() {
         if (!_isAlarmSet.value) {
-            _destination.value = null
-            _destinationName.value = null
+            resetRouteState()
             _isPreviewMode.value = false
-            _distanceToDestination.value = null
-            _remainingEta.value = null
-            _currentRouteGeoJson.value = null
-            _journeyLegs.value = emptyList()
-            _routeLine.value = null
-            fullRouteLine = null
-            routeDistanceEngine.resetStats()
         }
     }
 
     private fun checkDistance(currentLocation: Location) {
         val dest = _destination.value ?: return
+
+        // Fast straight-line distance calculation to destination
+        val results = FloatArray(1)
+        Location.distanceBetween(
+            currentLocation.latitude, currentLocation.longitude,
+            dest.latitude, dest.longitude,
+            results
+        )
+        val straightLineDistance = results[0]
         
+        // Distance-based throttling (5m) to reduce CPU overhead, bypassed within 100m of destination
+        val lastLoc = lastCheckedLocation
+        if (lastLoc != null && straightLineDistance > 100.0 && currentLocation.distanceTo(lastLoc) < 5.0) {
+            android.util.Log.d("MapViewModel", "checkDistance: Throttling calculations, distance moved < 5m")
+            return
+        }
+        lastCheckedLocation = currentLocation
+
         // 1. If in Preview Mode, prioritize the expected distance
         if (_isPreviewMode.value && _expectedDistance.value > 0) {
             _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
@@ -833,7 +879,7 @@ class MapViewModel(
                     }
                     
                     // Calculate distance along route
-                    val distance = com.mapbox.turf.TurfMeasurement.length(slicedLine, com.mapbox.turf.TurfConstants.UNIT_METERS)
+                    val distance = TurfMeasurement.length(slicedLine, TurfConstants.UNIT_METERS)
                     _distanceToDestination.value = formatDistance(distance.toInt())
                     
                     // Update speed and calculate ETA
@@ -875,13 +921,7 @@ class MapViewModel(
         }
 
         // 3. Fallback to Haversine (ONLY if OSRM is unavailable)
-        val results = FloatArray(1)
-        Location.distanceBetween(
-            currentLocation.latitude, currentLocation.longitude,
-            dest.latitude, dest.longitude,
-            results
-        )
-        val distance = results[0]
+        val distance = straightLineDistance
 
         _distanceToDestination.value = if (_isAlarmSet.value || _isPreviewMode.value) {
             formatDistance(distance.toInt())
@@ -909,10 +949,10 @@ class MapViewModel(
     }
 
     private fun formatDistance(meters: Int): String {
-        return if (meters >= 1000) String.format("%.1fkm", meters / 1000f) else "${meters}m"
+        return if (meters >= 1000) String.format(Locale.getDefault(), "%.1fkm", meters / 1000f) else "${meters}m"
     }
     
-    fun saveRoute(destinationName: String, breadcrumbs: List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>, alarmSettings: com.janak.location.alarm.model.AlarmSettings) {
+    fun saveRoute(destinationName: String, breadcrumbs: List<RouteBreadcrumbEntity>, alarmSettings: AlarmSettings) {
         val dest = _destination.value ?: return
         viewModelScope.launch {
             // Get latest history entry to extract actual path metrics
@@ -941,7 +981,7 @@ class MapViewModel(
         }
     }
 
-    fun deleteJourneys(journeys: List<com.janak.location.alarm.data.entity.JourneyHistoryEntity>) {
+    fun deleteJourneys(journeys: List<JourneyHistoryEntity>) {
         viewModelScope.launch {
             historyRepository.deleteJourneys(journeys)
         }
@@ -973,7 +1013,7 @@ class MapViewModel(
         }
     }
 
-    fun getBreadcrumbsForHistory(historyId: Long): kotlinx.coroutines.flow.Flow<List<com.janak.location.alarm.data.entity.RouteBreadcrumbEntity>> {
+    fun getBreadcrumbsForHistory(historyId: Long): kotlinx.coroutines.flow.Flow<List<RouteBreadcrumbEntity>> {
         return historyRepository.getBreadcrumbsForHistory(historyId)
     }
 
@@ -981,11 +1021,14 @@ class MapViewModel(
         lat: Double, 
         lng: Double, 
         name: String, 
-        settings: com.janak.location.alarm.model.AlarmSettings,
+        settings: AlarmSettings,
         preLoadedRouteGeoJson: String? = null,
         preLoadedDistance: Double = 0.0,
         preLoadedDuration: Long = 0
     ) {
+        android.util.Log.d("MapViewModel", "startJourneyDirect: Starting journey to $name, resetting state first")
+        resetRouteState()
+        
         _destination.value = LatLng(lat, lng)
         _destinationName.value = name
         _alarmSettings.value = settings
@@ -998,9 +1041,12 @@ class MapViewModel(
             
             try {
                 val mbRoute = com.mapbox.geojson.LineString.fromJson(preLoadedRouteGeoJson)
-                fullRouteLine = mbRoute
-                _routeLine.value = mbRoute.toMapLibre()
-                android.util.Log.d("MapViewModel", "startJourneyDirect: Using pre-loaded route")
+                // Simplify preloaded geometry to reduce CPU overhead
+                val simplifiedPoints = routeDistanceEngine.simplifyPolyline(mbRoute.coordinates(), 5.0)
+                val simplifiedRoute = com.mapbox.geojson.LineString.fromLngLats(simplifiedPoints)
+                fullRouteLine = simplifiedRoute
+                _routeLine.value = simplifiedRoute.toMapLibre()
+                android.util.Log.d("MapViewModel", "startJourneyDirect: Using pre-loaded simplified route")
             } catch (e: Exception) {
                 android.util.Log.e("MapViewModel", "Failed to parse pre-loaded GeoJSON", e)
             }
@@ -1026,7 +1072,7 @@ class MapViewModel(
         )
     }
 
-    fun startJourneyFromHistory(history: com.janak.location.alarm.data.entity.JourneyHistoryEntity) {
+    fun startJourneyFromHistory(history: JourneyHistoryEntity) {
         startJourneyDirect(
             history.destinationLat, 
             history.destinationLng, 
@@ -1055,7 +1101,7 @@ class MapViewModelFactory(
     private val osrmApiService: PhotonApiService,
     private val openRailRoutingApiService: OpenRailRoutingApiService,
     private val routeRepository: RouteRepository,
-    private val historyRepository: com.janak.location.alarm.data.repository.HistoryRepository,
+    private val historyRepository: HistoryRepository,
     private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

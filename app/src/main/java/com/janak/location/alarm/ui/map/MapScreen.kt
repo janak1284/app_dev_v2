@@ -2,7 +2,6 @@ package com.janak.location.alarm.ui.map
 
 import android.Manifest
 import android.content.Intent
-import android.location.Location
 import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -32,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.janak.location.alarm.service.LocationAlarmService
 import com.janak.location.alarm.ui.alarm.ModernConfigurationSheet
 import com.janak.location.alarm.ui.components.DestinationSearchField
 import com.janak.location.alarm.ui.components.JourneySummarySheet
@@ -48,7 +45,6 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.geojson.Point
 import android.view.MotionEvent
-import kotlin.math.roundToInt
 
 @Composable
 fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
@@ -255,21 +251,25 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     }
 
     // Update Map Layers (Route, Transfers, Destination)
-    LaunchedEffect(mapInstance, destination, routeLine, journeyLegs) {
+    LaunchedEffect(mapInstance, destination, routeLine, journeyLegs, isPreviewMode) {
         val map = mapInstance ?: return@LaunchedEffect
+        android.util.Log.d("MapScreen", "Rendering layers: destination=$destination, routeLineNotNull=${routeLine != null}, isPreview=$isPreviewMode")
         
         map.getStyle { style ->
+            android.util.Log.d("MapScreen", "Style loaded and ready")
             // --- 1. Route Layer (Bottom) ---
             val routeSourceId = "route-source"
             val routeLayerId = "route-layer"
             
             var routeSource = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(routeSourceId)
             if (routeSource == null) {
+                android.util.Log.d("MapScreen", "Adding route source")
                 routeSource = org.maplibre.android.style.sources.GeoJsonSource(routeSourceId)
                 style.addSource(routeSource)
             }
 
             if (style.getLayer(routeLayerId) == null) {
+                android.util.Log.d("MapScreen", "Adding route layer")
                 val layer = org.maplibre.android.style.layers.LineLayer(routeLayerId, routeSourceId)
                 layer.setProperties(
                     org.maplibre.android.style.layers.PropertyFactory.lineColor(
@@ -292,6 +292,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
 
             if (routeLine != null) {
+                android.util.Log.d("MapScreen", "Updating route geometry")
                 if (journeyLegs.isNotEmpty()) {
                     val features = journeyLegs.map { leg ->
                         val feature = org.maplibre.geojson.Feature.fromGeometry(org.maplibre.geojson.LineString.fromJson(leg.geometry))
@@ -305,8 +306,10 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(feature))
                 }
             } else {
+                android.util.Log.d("MapScreen", "Clearing route geometry")
                 routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
             }
+
 
             // --- 2. Transfer Markers (Middle) ---
             val transferSourceId = "transfer-source"
@@ -434,7 +437,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     
                     mapLibreMap.uiSettings.isCompassEnabled = true
                     mapLibreMap.uiSettings.setCompassFadeFacingNorth(false)
-                    mapLibreMap.uiSettings.setCompassGravity(android.view.Gravity.BOTTOM or android.view.Gravity.START)
+                    mapLibreMap.uiSettings.compassGravity = android.view.Gravity.BOTTOM or android.view.Gravity.START
                     mapLibreMap.uiSettings.setCompassMargins(48, 0, 0, 150)
 
                     if (mapLibreMap.style == null) {
@@ -472,12 +475,12 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             IconButton(
                 onClick = onNavigateHome,
                 modifier = Modifier
-                    .padding(end = 8.dp)
+                    .padding(end = 8.dp, top = 4.dp)
                     .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Home")
@@ -760,7 +763,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
          }
 
          // --- Location Disabled Alert ---
-         androidx.compose.animation.AnimatedVisibility(
+         AnimatedVisibility(
             visible = !isLocationEnabled,
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),

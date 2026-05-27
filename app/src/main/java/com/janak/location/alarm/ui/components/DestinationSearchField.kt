@@ -68,10 +68,15 @@ fun DestinationSearchField(
                     feature to distance
                 }
             }
-            if (sortOrder == SortOrder.NEAREST) {
-                withDistance.sortedBy { it.second }
+            if (query.isEmpty()) {
+                // Keep chronological search history order as stored in the list (newest first)
+                withDistance
             } else {
-                withDistance.sortedByDescending { it.second }
+                if (sortOrder == SortOrder.NEAREST) {
+                    withDistance.sortedBy { it.second }
+                } else {
+                    withDistance.sortedByDescending { it.second }
+                }
             }
         } else {
             baseResults.map { it to null }

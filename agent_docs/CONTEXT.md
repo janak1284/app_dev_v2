@@ -42,8 +42,8 @@ The project is actively developed by two engineers using a lightweight feature-b
 - **Handshake Protocol:** Parallel development is unblocked by agreeing on Data Classes (`SavedRoute`, `LineString`) and creating mock repositories while backend wires up the actual logic.
 
 ## 6. Goals Remaining (Execution Roadmap)
-- **Phase 6 (Verification & Enhancement):** Implement Journey Preview, refine OSRM Speed Calibration, and perform field testing.
-- **Verification:** Full field testing and spatial math tuning.
+- **Phase 6 (Verification & Enhancement):** Implement Journey Preview, refine OSRM Speed Calibration, and perform field-testing.
+- **Verification:** Full field-testing and spatial math tuning.
 
 ## 7. Assumptions & Constraints
 - Application logic must rely exclusively on Free and Open Source Software (FOSS) dependencies (OSRM, Turf, MapLibre) to avoid API rate limiting and billing.

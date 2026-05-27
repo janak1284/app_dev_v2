@@ -8,7 +8,6 @@ import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.model.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class RouteRepository(private val database: AppDatabase) {

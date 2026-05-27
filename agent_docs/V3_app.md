@@ -11,7 +11,7 @@ Crucially, V3 adapts to the realities of public transit by gracefully handling G
 
 ### 1. Multi-Modal Routing Engine (Global Matrix Optimized)
 - **Primary Rail Provider:** [OpenRailRouting](https://routing.openrailrouting.org/) (GraphHopper-based).
-- **Multi-Modal Workflow:** Implements a three-stage "Road -> Rail -> Road" journey:
+- **Multi-Modal Workflow:** Implements a three-stage "Road → Rail → Road" journey:
     1.  **First Mile:** OSRM (Road) from current location to the best start station.
     2.  **Long Haul:** OpenRailRouting (Rail) between optimal start/end stations.
     3.  **Last Mile:** OSRM (Road) from the end station to the final destination.
@@ -33,7 +33,7 @@ Crucially, V3 adapts to the realities of public transit by gracefully handling G
 ### 2. Leg-Based Tracking Model
 - **`JourneyLeg` Entity:** Represents a specific segment (ROAD or TRAIN).
 - **Properties:** Transport mode, geometry (GeoJSON LineString), start/end coordinates, and estimated duration.
-- **State Machine:** Combined into a single seamless route for high-precision tracking while maintaining segment metadata for UI and multi-color rendering.
+- **State Machine:** Combined into a single seamless route for high-precision tracking while maintaining segment metadata for UI and multicolor rendering.
 
 ### 3. Intermediate Transfer Alarms & UI
 - **Transfer Markers:** Automatically places markers at transfer stations.

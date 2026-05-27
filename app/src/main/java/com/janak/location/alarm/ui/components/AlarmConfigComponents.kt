@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +197,7 @@ fun AnimatedCard(
 
 fun formatDistance(meters: Int): String {
     return if (meters >= 1000) {
-        String.format("%.1fkm", meters / 1000f)
+        String.format(Locale.getDefault(), "%.1fkm", meters / 1000f)
     } else {
         "${meters}m"
     }

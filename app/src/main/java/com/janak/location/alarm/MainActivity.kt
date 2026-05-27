@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
                                     viewModel = viewModel,
                                     onNewJourneyClick = { currentScreen = "map" },
                                     onSettingsClick = { currentScreen = "settings" },
-                                    onManageJourneysClick = { currentScreen = "journey_history" },
+                                    onManageJourneysClick = { currentScreen = "saved_routes" },
                                     onManageSearchesClick = { currentScreen = "search_history" }
                                 )
                             }

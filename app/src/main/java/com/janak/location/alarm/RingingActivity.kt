@@ -1,12 +1,9 @@
 package com.janak.location.alarm
 
-import android.R.attr.action
 import android.app.KeyguardManager
-import android.content.Context
 import android.content.Intent
 import android.media.Ringtone
 import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -15,13 +12,25 @@ import android.os.VibratorManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.janak.location.alarm.service.LocationAlarmService
 
 class RingingActivity : ComponentActivity() {
@@ -35,7 +44,7 @@ class RingingActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
-            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            val keyguardManager = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
             keyguardManager.requestDismissKeyguard(this, null)
         } else {
             @Suppress("DEPRECATION")
@@ -104,16 +113,16 @@ class RingingActivity : ComponentActivity() {
     }
 
     private fun dismissAlarm() {
-        val intent = Intent(this, com.janak.location.alarm.service.LocationAlarmService::class.java).apply {
-            action = com.janak.location.alarm.service.LocationAlarmService.ACTION_STOP_ALARM
+        val intent = Intent(this, LocationAlarmService::class.java).apply {
+            action = LocationAlarmService.ACTION_STOP_ALARM
         }
         startService(intent)
         stopRingingAndFinish()
     }
 
     private fun endJourney() {
-        val intent = Intent(this, com.janak.location.alarm.service.LocationAlarmService::class.java).apply {
-            action = com.janak.location.alarm.service.LocationAlarmService.ACTION_END_JOURNEY
+        val intent = Intent(this, LocationAlarmService::class.java).apply {
+            action = LocationAlarmService.ACTION_END_JOURNEY
         }
         startService(intent)
         stopRingingAndFinish()
@@ -127,7 +136,7 @@ class RingingActivity : ComponentActivity() {
 
     private fun startAlarm(uriString: String?, vibrate: Boolean) {
         // Handle Audio
-        val uri = if (uriString != null) Uri.parse(uriString) else RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        val uri = uriString?.toUri() ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         ringtone = RingtoneManager.getRingtone(applicationContext, uri)
         
         // Loop the ringtone if supported
@@ -139,20 +148,15 @@ class RingingActivity : ComponentActivity() {
         // Handle Vibration
         if (vibrate) {
             vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                val vibratorManager = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
                 vibratorManager.defaultVibrator
             } else {
                 @Suppress("DEPRECATION")
-                getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                getSystemService(VIBRATOR_SERVICE) as Vibrator
             }
             
             val pattern = longArrayOf(0, 1000, 1000) // wait 0ms, vibrate 1s, sleep 1s
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0)) // 0 means repeat infinitely
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(pattern, 0)
-            }
+            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0)) // 0 means repeat infinitely
         }
     }
 
