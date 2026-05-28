@@ -180,6 +180,7 @@ class MapViewModel(
 
     private var lastReRouteTime = 0L
     private var lastCheckedLocation: Location? = null
+    private var needsInitialCalculation: Boolean = true
 
     private val reRouteReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -758,6 +759,10 @@ class MapViewModel(
             }
             context.startService(updateIntent)
         }
+        
+        // Ensure distance and ETA are calculated immediately after the route is ready
+        needsInitialCalculation = true
+        _userLocation.value?.let { checkDistance(it) }
     }
 
     fun selectSearchResult(feature: PhotonFeature) {
@@ -806,6 +811,7 @@ class MapViewModel(
         _segmentSpeeds.value = emptyList()
         routeDistanceEngine.resetStats()
         lastCheckedLocation = null
+        needsInitialCalculation = true
     }
 
     fun resetJourneyCompleted() {
@@ -845,13 +851,14 @@ class MapViewModel(
         )
         val straightLineDistance = results[0]
         
-        // Distance-based throttling (5m) to reduce CPU overhead, bypassed within 100m of destination
+        // Distance-based throttling (5m) to reduce CPU overhead, bypassed within 100m of destination or on first calculation
         val lastLoc = lastCheckedLocation
-        if (lastLoc != null && straightLineDistance > 100.0 && currentLocation.distanceTo(lastLoc) < 5.0) {
+        if (!needsInitialCalculation && lastLoc != null && straightLineDistance > 100.0 && currentLocation.distanceTo(lastLoc) < 5.0) {
             android.util.Log.d("MapViewModel", "checkDistance: Throttling calculations, distance moved < 5m")
             return
         }
         lastCheckedLocation = currentLocation
+        needsInitialCalculation = false
 
         // 1. If in Preview Mode, prioritize the expected distance
         if (_isPreviewMode.value && _expectedDistance.value > 0) {

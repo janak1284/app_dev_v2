@@ -435,6 +435,9 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 map.getMapAsync { mapLibreMap ->
                     mapInstance = mapLibreMap
                     
+                    mapLibreMap.uiSettings.isLogoEnabled = false
+                    mapLibreMap.uiSettings.isAttributionEnabled = false
+
                     mapLibreMap.uiSettings.isCompassEnabled = true
                     mapLibreMap.uiSettings.setCompassFadeFacingNorth(false)
                     mapLibreMap.uiSettings.compassGravity = android.view.Gravity.BOTTOM or android.view.Gravity.START
@@ -753,7 +756,10 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                              fontWeight = FontWeight.Bold
                          )
                          Text(
-                             text = "Finding best Road -> Rail connection",
+                             text = if (alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.ROAD) 
+                                 "Finding the best road route" 
+                             else 
+                                 "Finding best Road -> Rail connection",
                              style = MaterialTheme.typography.bodySmall,
                              color = MaterialTheme.colorScheme.onSurfaceVariant
                          )
