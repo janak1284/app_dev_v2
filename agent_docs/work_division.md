@@ -11,9 +11,9 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 
 **Developer 1 Checklist:**
 
-* [ ] Install Node.js on your machine.
-* [ ] Run `npm init -y` to create a new project.
-* [ ] Run `npm install express playwright`.
+* [x] Install Node.js on your machine.
+* [x] Run `npm init -y` to create a new project.
+* [x] Run `npm install express playwright`.
 * [ ] Write a basic JavaScript file that uses Playwright to open a headless chromium browser and navigate to a train tracking website.
 * [ ] Read the Playwright documentation on "Locators". Write the code to extract the text for ETA and the Station Sequence.
 * [ ] Print the extracted data to your terminal as a clean JSON object.
@@ -37,10 +37,10 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 
 **Developer 1 Checklist:**
 
-* [ ] Run `npm install @supabase/supabase-js puppeteer-extra-plugin-stealth`.
-* [ ] Inject the stealth plugin into your Playwright script so the target website thinks you are a real human.
+* [x] Run `npm install @supabase/supabase-js puppeteer-extra-plugin-stealth`.
+* [x] Inject the stealth plugin into your Playwright script so the target website thinks you are a real human.
 * [ ] Write the Supabase caching logic: Check the database first. If the data is less than 10 minutes old, return it. If it is older, run the Playwright scraper.
-* [ ] Wrap all of this inside an Express.js server that listens on port `7860`.
+* [x] Wrap all of this inside an Express.js server that listens on port `7860`.
 * [ ] Write your `Dockerfile` using the official Playwright base image.
 * [ ] Create a free Hugging Face Space (Docker template) and push your code. Wait for it to build and give you a public URL.
 

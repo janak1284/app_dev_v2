@@ -1,94 +1,56 @@
-# Location Alarm V2 📍⏰
-### *The Smart Commuter Engine*
+# Location Alarm V4 📍⏰
+### *The Predictive Commuter Engine*
 
-Location Alarm V2 is a high-precision, route-aware travel assistant designed for commuters. Unlike standard proximity alarms that only check "as the crow flies" distance, this app uses a **Smart Routing Engine** to track your actual progress along roads and highways. 
-
-It ensures you never miss your stop by triggering an alarm based on **real road distance** or **predicted arrival time**, even if the app is in your pocket or the screen is off.
+Location Alarm V4 is a multi-modal navigation and alarm system. It is a significant architectural pivot from V3, moving the heavy lifting of live transit tracking to a dedicated microservice while maintaining a high-precision spatial engine on the Android client.
 
 ---
 
-## 🌟 Why V2 is Different?
-Standard GPS alarms often fail because they use a straight line to measure distance. If your bus is traveling a winding road, a 1km "straight line" alarm might go off 15 minutes too early. 
+## 🏗️ Monorepo Architecture
 
-**V2 solves this by:**
-- **Road Snapping:** It "snaps" your GPS position to the actual road path.
-- **Route Tracking:** It knows exactly how much road distance is left, not just how close you are to the dot on the map.
-- **Performance Ratio Scaling:** It tracks the specific speed limit of your current road segment (e.g., city vs. highway) and calculates your real-time efficiency (Performance Ratio) to adjust the entire remaining journey dynamically.
-- **Predictive Timing:** It calculates your ETA by scaling the OSRM base time by your actual performance ratio, ensuring humanized arrival estimates.
+The project is organized as a monorepo to coordinate development between the backend scraper and the mobile client.
 
----
+### 📁 `android-client/`
+The native Android application (Kotlin, Compose).
+- **Spatial Engine:** Uses **Turf-Java** for high-precision route snapping and slicing.
+- **Routing:** Roadway routing via **OSRM API**; Railway routing via **Overpass GeoJSON**.
+- **Tracking:** Background foreground service with battery-aware polling.
 
-## ✨ Key Features
-
-### 🛣️ Smart Routing & Alarms
-- **Road-Aware Distance:** High-precision tracking that follows the curves of the road using the OSRM (Open Source Routing Machine) engine.
-- **Performance Ratio ETA:** A sophisticated model that scales OSRM's expected duration by your real-time performance against segment limits. This ensures accurate predictions even when transitioning between slow traffic and fast highways.
-- **Real-Time Route Slicing:** The map route line dynamically shortens (slices) as you move, providing immediate visual feedback of your progress.
-- **Smart ETA Alarms:** Set an alarm to wake you up exactly **10 minutes before you arrive**, regardless of traffic or distance.
-
-### 🔋 Efficiency & Reliability
-- **Smart Polling (Battery-Saver):** Dynamically adjusts GPS update frequency based on distance to the destination (e.g., 30s polling when 10km away, 2s polling when within 2km).
-- **WakeLock Management:** Ensures the tracking engine stays active even when the phone enters "Deep Sleep" during long commutes.
-- **State Recovery:** Automatically resumes tracking if the system kills the app or if the device restarts.
-
-### 🗺️ Advanced Map Experience
-- **Center Lock (Auto-Follow):** Toggle a "locked" mode that keeps the user centered on the map. It automatically disengages if you manually pan the map.
-- **Interactive MapLibre Interface:** A smooth, battery-efficient map using OpenStreetMap data.
-- **Journey Preview:** See your entire route line and total distance before you even start the trip.
-- **One-Tap Search:** Instant destination search with history and "smart suggestions."
-
-### 📂 History & Management
-- **High-Fidelity Saving:** Automatically captures your **actual path taken**, total distance, and duration.
-- **Improved UI/UX:** Data-rich cards for Saved Routes and History, displaying real-world metrics (KM, minutes) and active alarm settings.
-- **Route Reuse:** When you reuse a saved journey, the app uses your previously traversed high-precision path instead of the OSRM API, ensuring 100% consistency.
-- **Reliable Background Engine:** Enhanced with state recovery and deep-sleep optimization (WakeLocks) to ensure long journeys are recorded without interruption.
-
-### 🛡️ Reliability (The "Guardian" System)
-- **Background Tracking:** A dedicated service keeps the app alive and monitoring your location even when you are using other apps or the phone is locked.
-- **Hardware-Level Alerts:** Alarms use a continuous loop of sound and vibration that won't be silenced by standard notification filters.
+### 📁 `scraper-microservice/`
+A Node.js microservice focused on live transit telemetry.
+- **Engine:** **Playwright** (Headless Chromium) with stealth plugins.
+- **Cache:** **Supabase (PostgreSQL)** with a 10-minute TTL to prevent target site bans.
+- **Hosting:** Designed for **Hugging Face Spaces** (Dockerized).
 
 ---
 
-## 🛠️ The Tech Stack (Simplified)
+## 🌟 V4 Key Features
+- **Strict Geometry:** 100% Route-Based math. Haversine/Straight-Line calculations are strictly prohibited.
+- **Railway Live Telemetry:** Scrapes live train data to provide real-time ETAs where open APIs do not exist.
+- **Adaptive Hardware Polling:** Adjusts GPS frequency based on user speed (Fast = 3s, Slow = 15s) to preserve battery.
+- **Android 14 Ready:** Full support for exact alarms and Do Not Disturb overrides.
 
-- **User Interface:** **Jetpack Compose** (Modern, smooth Android UI).
-- **Offline Database:** **Room / SQLite** (Stores your saved routes and travel history safely on your phone).
-- **Mapping:** **MapLibre & OSRM** (High-performance, open-source mapping and routing).
-- **Spatial Math:** **Turf-Java** (The "brain" that handles complex road calculations).
-- **Background Engine:** **Android Foreground Services** (Ensures 100% reliability during travel).
+---
+
+## 🤝 Development Handshake
+The frontend and backend communicate via a strictly defined contract:
+- See **`API_Contract.md`** for the latest JSON schemas and endpoint definitions.
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- An Android device running Android 8.0 (Oreo) or higher.
-- GPS/Location permissions (Fine Location).
+### Backend (Dev 1)
+```bash
+cd scraper-microservice
+npm install
+node server.js
+```
 
-### Installation
-1. Clone the repo: `git clone https://github.com/janak1284/app_dev_v2.git`
-2. Open in **Android Studio Jellyfish** or newer.
-3. Build and install the `debug` variant.
-
----
-
-## 📂 Project Logic
-The app is built using **Clean Architecture**, which means the code is separated into three simple parts:
-1. **The UI (View):** What you see and click (Compose).
-2. **The Logic (ViewModel):** The bridge that handles search results and button clicks.
-3. **The Engine (Service/Repository):** The background workers that track GPS, talk to the map servers, and save data to your phone.
-
----
-
-## 🗺️ Roadmap
-- [x] **Phase 5:** Home Screen, Saved Routes, and Journey History.
-- [x] **Phase 6:** Predictive Routing Engine & Road-Snapping logic.
-- [x] **Phase 7:** High-Fidelity Path Saving & Route Slicing.
-- [x] **Phase 8:** Refinement Phase (Stability fixes & UX polish).
-- [x] **Phase 9:** Battery-saver mode (Smart Polling) & Segment-Aware Speed Correction.
-- [ ] **Phase 10:** Multi-Modal Transit Engine (V3).
+### Android Client (Dev 2)
+1. Open the `android-client` folder in Android Studio.
+2. Build and run the `app` module.
 
 ---
 
 ## ⚖️ License
-Built for the Location Alarm V2 Project. All rights reserved.
+Built for the Location Alarm V4 Project. All rights reserved.

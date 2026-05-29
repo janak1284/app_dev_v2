@@ -77,7 +77,7 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 
 **Objective:** Build the headless Chromium engine to fetch live train states.
 
-* [ ] Initialize Node.js environment with `playwright`, `express`, and `puppeteer-extra-plugin-stealth`.
+* [x] Initialize Node.js environment with `playwright`, `express`, and `puppeteer-extra-plugin-stealth`.
 * [ ] Write text-based fuzzy DOM selectors to extract `ETA` and `station_sequence` arrays.
 * [ ] Configure request interception to block images, CSS, and tracker scripts to minimize RAM.
 * [ ] Implement the multi-target waterfall try-catch block (fallback to Target Site B if Site A fails).

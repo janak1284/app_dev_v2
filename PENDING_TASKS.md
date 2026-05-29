@@ -1,40 +1,28 @@
-# Pending Tasks (V2 Phase 8: Refinement)
+# Pending Tasks (V4: The Microservice Pivot)
 
-## High Priority Fixes
-- [x] **Bug: 5km Saving Limit:** Fixed by implementing service state recovery, copying location objects, and chunking DB insertions.
-- [x] **Arrival Prompt Immediacy:** Tightened handshake between Service and ViewModel for instant UI reaction.
-- [x] **Saved Journey UI:** Redesigned cards and screens with rich metrics (distance, duration, alarm badges).
+## 🏁 Phase 0: Transition & Restructuring
+- [x] **Step 1: Secure V3 Engine:** Archived `v3-develop` with `archive-v3-engine` tag.
+- [x] **Step 2: V4 Baseline:** Created `v4-develop` branch and cleaned obsolete local branches.
+- [x] **Step 3: Monorepo Surgery:** Restructured repository into `android-client/` and `scraper-microservice/`.
+- [x] **Step 4: API Contract:** Defined strict JSON schema in `API_Contract.md` for cross-team alignment.
+- [x] **Step 5: Dev 1 Environment Setup:** Initialized Node.js, Express, and Playwright in `scraper-microservice/`. Verified baseline server on port 7860.
 
-## UI Enhancements
-- [x] **Search History Preview:** Fix the navigation logic to ensure clicking a search history entry correctly triggers a map route preview.
-- [x] **Selection Mode (Long Press):** Implement a long-press selection mode in both `SavedRoutesScreen` and `JourneyHistoryScreen` to allow bulk deletion.
-- [x] **Journey Preview State:** Implemented a distinct "PREVIEW" mode where users can see the route and ETA before starting the alarm.
-- [x] **One-Click Reactivation:** Users can now click any History or Saved item to instantly start a journey without searching.
-- [x] **Edit Mode (Saved Routes):** Implement the edit logic to allow renaming and re-configuring existing `SavedRoute` entries.
-- [x] **Keyboard Input Optimization:** Adjust UI layouts for text input fields (e.g., naming routes) using `imePadding` and scrollable containers to prevent obscuring.
-- [x] **Real-Time Route Slicing:** Visually update the route line on the map to reflect user progress.
-- [x] **Center Lock Mode:** Add a toggleable auto-follow camera mode for the user location.
-- [x] **Arrival Save Prompt:** Automatically prompt the user to save the journey when reaching 50m from the destination.
+## 🚂 Phase 1: Scraper & Backend (Developer 1)
+- [ ] **Scraper Logic:** Implement Playwright headless navigation and data extraction for train ETA/Sequence.
+- [ ] **Supabase Integration:** Set up PostgreSQL schema and implement 10-minute TTL caching logic.
+- [ ] **Stealth & Anti-Ban:** Configure `puppeteer-extra-plugin-stealth` and request interception to minimize footprint.
+- [ ] **Deployment:** Containerize with Docker and deploy to Hugging Face Spaces.
 
-## Bug Fixes & Verification
-- [x] **Route Line Preview:** Fixed the issue where route lines failed to render when opened from history/saved routes.
-- [x] **Performance Ratio ETA:** Implemented the "Performance Ratio" model to scale OSRM base time by real-time efficiency for humanized arrival estimates.
-- [x] **GPX Simulation:** Performed simulated trips to verify ETA accuracy and route snapping.
-- [x] **High-Fidelity Path Saving:** Ensure the actual path taken (GeoJSON) is saved and reusable for future journeys.
-- [x] **Arrival Stability:** Fixed a fatal crash in the `Turf` library when slicing a route at the exact destination point.
-- [x] **Tracking Persistence:** Fixed bug where tracking stopped when the alarm was dismissed; tracking now continues until arrival.
-- [x] **Final Field Testing:** Perform real-world verification of the predictive routing engine, spatial calculations, and alarm triggers.
+## 📱 Phase 2: Android Client Scaffolding (Developer 2)
+- [ ] **Project Re-init:** Clean up the `android-client/` directory and ensure Gradle builds post-restructuring.
+- [ ] **Network Layer:** Implement Retrofit client for the new V4 Microservice API.
+- [ ] **Mock Integration:** Wire UI to use mock data from `API_Contract.md` while backend is in development.
+- [ ] **Railway Geometry:** Implement Turf-Java "Snap, Slice, and Measure" for Overpass GeoJSON rail tracks.
 
-## V3 Multi-Modal Transition
-- [x] **Phase 1: Transit Data Foundation:** Implemented `JourneyLeg` entities, Valhalla API client, and Repository integration.
-- [ ] **Phase 2: The Multi-Modal Engine:** Refactor `RouteDistanceEngine` and `LocationAlarmService` for leg-based tracking.
-    - [ ] **Dynamic Alarm Reset:** Implement logic to reset the ETA alarm if the user's speed drops significantly after it has triggered, causing the ETA to exceed the threshold again.
-- [ ] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
-    - [ ] Implement mutually exclusive toggles for Distance and Smart ETA alarms.
-    - [ ] **Alarm Input UI:** Replace the slider UI with a clean text input UI for Distance (meters/kilometers) and Time (minutes) alarms.
-    - [ ] **Location Services Alert:** Show an alert/prompt when the app is opened but device location services are turned off.
+## 🧪 Phase 3: Integration & Fallbacks
+- [ ] **Offline Fallback:** Implement mathematical distance/time fallback for when the API is unreachable.
+- [ ] **Android 14 Alarms:** Configure exact alarm permissions and DND bypass.
+- [ ] **Field Testing:** Verify dual-mode (Road/Rail) tracking in real-world scenarios.
 
-## Future Improvements (Post-V2)
-- [x] **Performance Ratio ETA Model:** Implemented a sophisticated scaling model using OSRM speed annotations to handle mixed road types and traffic accurately.
-- [x] **Battery-saver mode (Smart Polling based on distance):** Implemented dynamic location update intervals (30s to 2s) based on proximity to destination.
-- [ ] **Real-world field testing and accuracy calibration.**
+---
+*Legacy V2/V3 tasks have been archived in the `archive-v3-engine` tag.*

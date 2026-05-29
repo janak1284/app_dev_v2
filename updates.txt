@@ -1,34 +1,17 @@
-# Project Updates - Location Alarm V2
+# Project Updates - Location Alarm V4
 
-## Predictive ETA Trigger (Dev 1)
-- **Smart Alarms:** Implemented dual-trigger logic in `LocationAlarmService`. Users can now choose to be woken up based on a distance threshold OR a predictive ETA threshold (e.g., "Wake me 10 minutes before arrival").
-- **UI Configuration:** Added a "Smart ETA Alarm" section to the configuration sheet with a toggle and minute slider.
-- **Model Expansion:** Updated `AlarmSettings` to persist predictive alarm states.
-- **Service Handshake:** Integrated the predictive parameters into the `MapViewModel` -> `LocationAlarmService` intent flow.
-- **Service State Machine:** Refactored `LocationAlarmService` with a robust state machine (`TRACKING`, `ALARM_RINGING`). The service now remains active post-alarm for continuous breadcrumb recording.
-- **Dynamic Re-routing Handshake:** Implemented a bi-directional loop where the service signals deviations (>100m) and `MapViewModel` pushes updated OSRM paths.
-- **Spatial Math Engine:** Integrated `Turf-Java` for route-based distance calculation, route snapping, and cross-track deviation detection.
-- **Predictive ETA:** Implemented a sliding window speed algorithm to provide real-time, road-aware ETAs.
-- **Global Terminology Alignment:** Standardized on "Distance Alarm" and "Time Alarm" across the service and logic layers.
+## The Great V4 Restructuring (Dev 1)
+- **Monorepo Pivot:** Restructured the entire repository into `android-client/` and `scraper-microservice/` to support the new microservice-based architecture.
+- **V3 Archival:** Created `archive-v3-engine` tag to preserve legacy GTFS/Offline logic before the pivot.
+- **API Contract:** Established `API_Contract.md` as the single source of truth for the JSON handshake between the Node.js scraper and the Android client.
+- **Microservice Initialization:** 
+    - Set up Node.js environment with Express, Playwright, and Supabase.
+    - Provisioned native Chromium binaries for headless automation.
+    - Verified baseline tracking endpoint (`/api/v4/train/track`) running on local port 7860.
+- **Documentation Cleanup:** Purged obsolete design and testing documents to focus exclusively on the V4 Predictive Routing Engine mandates.
 
-## Home Screen & Journey Summary Refinement (Dev 2)
-- **Home Screen:** Overhauled the landing screen with a modern "Deep Dark" aesthetic, featuring a dynamic header and rich `RouteCard` components displaying journey metadata.
-- **Journey Summary Sheet:** Replaced the basic save dialog with a polished `ModalBottomSheet` that triggers upon journey completion, allowing users to gracefully save or discard their routes.
-- **Navigation Flow:** Unified the transition from journey tracking back to the saved routes list.
-- **Visual Consistency:** Standardized colors and component shapes across the V2 UI layer.
-
-## High-Fidelity Routing & UI (Dev 1 & 2)
-- **Real-Time Route Slicing:** Implemented dynamic map updates where the route line shortens as the user progresses, using Turf-Java for high-precision snapping and slicing.
-- **Calibrated ETA UI:** Exposed real-time ETA minutes to the MapScreen, providing commuters with a road-aware arrival countdown.
-- **Center Lock Mode:** Added an auto-follow camera mode for the user location, complete with visual state feedback on the focus button and automatic disengagement on manual map interaction.
-- **High-Fidelity Journey Backend:** 
-    - Updated entities to store **Actual Path (GeoJSON)**, **Actual Distance**, and **Actual Duration**.
-    - Refactored `LocationAlarmService` to generate GeoJSON trails and calculate total traversed distance from buffered GPS updates.
-    - Implemented **Route Reuse** logic in `MapViewModel` that prioritizes stored high-precision paths over API calls, ensuring consistency for repeated journeys.
-- **Auto-Arrival Save Prompt:** Integrated a 50m arrival detection trigger that automatically prompts the user to save the journey once they reach their destination.
-- **Database Migration:** Bumped Room database to **v6** to support new journey metadata and high-fidelity paths.
-
-## Technical Foundation
-- **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.
-- **Retrofit Client:** Dual-service configuration for Photon (Search) and OSRM (Routing).
-- **Lifecycle Management:** Fixed memory leaks related to `BroadcastReceiver` unregistration and ensured foreground service persistence.
+## V2/V3 Legacy Milestone (Archived)
+- Successfully implemented Predictive ETA triggers and Performance Ratio scaling.
+- Completed Smart Polling battery optimizations.
+- Established Room database schema for high-fidelity journey logging.
+- *Note: V3's local GTFS engine was deprecated in favor of V4's live scraping architecture.*
