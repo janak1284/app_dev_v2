@@ -1,26 +1,59 @@
 package com.janak.location.alarm.ui.settings
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.DirectionsTransit
+import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Straighten
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.janak.location.alarm.viewmodel.MapViewModel
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
+import com.janak.location.alarm.model.TransportMode
+import com.janak.location.alarm.viewmodel.MapViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -153,6 +186,13 @@ fun HistoryCard(
     onLongClick: () -> Unit,
     onClick: () -> Unit
 ) {
+    val primaryMode = entry.alarmConfigAtTime.transportMode
+    val modeIcon = when (primaryMode) {
+        TransportMode.ROAD -> Icons.Default.DirectionsCar
+        TransportMode.WALK -> Icons.Default.DirectionsWalk
+        else -> Icons.Default.DirectionsTransit
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,11 +200,11 @@ fun HistoryCard(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) 
                 MaterialTheme.colorScheme.primaryContainer 
-            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
     ) {
         Row(
@@ -174,14 +214,14 @@ fun HistoryCard(
             Surface(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 shape = CircleShape,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(44.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        Icons.Default.History,
+                        modeIcon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -191,15 +231,24 @@ fun HistoryCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = entry.destinationName,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
-                Text(
-                    text = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault()).format(Date(entry.timestamp)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
+                
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MetricBadgeSmall(Icons.Default.Schedule, formatDuration(entry.durationMillis))
+                    MetricBadgeSmall(Icons.Default.Straighten, formatDistance(entry.actualDistanceMeters.toInt()))
+                    Text(
+                        text = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(entry.timestamp)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
             
             if (isSelectionMode) {
@@ -207,10 +256,10 @@ fun HistoryCard(
             } else {
                 IconButton(onClick = onReactivateClick) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        imageVector = Icons.Default.PlayArrow,
                         contentDescription = "Re-activate",
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                        modifier = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -233,7 +282,7 @@ fun MetricBadgeSmall(icon: ImageVector, value: String) {
 }
 
 private fun formatDistance(meters: Int): String {
-    return if (meters >= 1000) String.format("%.1f km", meters / 1000f) else "${meters}m"
+    return if (meters >= 1000) String.format(Locale.getDefault(), "%.1f km", meters / 1000f) else "${meters}m"
 }
 
 private fun formatDuration(millis: Long): String {
@@ -243,6 +292,6 @@ private fun formatDuration(millis: Long): String {
         val remainingMinutes = minutes % 60
         "${hours}h ${remainingMinutes}m"
     } else {
-        "${minutes} min"
+        "$minutes min"
     }
 }

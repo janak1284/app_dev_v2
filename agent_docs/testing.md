@@ -7,8 +7,8 @@ Since walking testing is inefficient for route-based deviations, use the **Andro
 
 * **Route Snapping Test:** Feed a GPX route with slight GPS noise. Verify Turf-Java correctly snaps the noisy points to the clean OSRM `LineString`.
 * **The 100m Deviation Trigger:** 1. Start a route.
-    2. Manually override the emulator's location to be >150m away from the active polyline.
-    3. Verify the app automatically drops the old route and triggers a new OSRM Retrofit call.
+    1. Manually override the emulator's location to be >150m away from the active polyline.
+    2. Verify the app automatically drops the old route and triggers a new OSRM Retrofit call.
 * **Network Drop Fallback:** Disconnect the device's internet mid-journey. Verify the app smoothly falls back to Haversine (straight-line) distance for the alarm trigger.
 * **Route Slicing Test:** During GPX playback, verify the blue route line on the map visually shortens from the user's position towards the destination.
 * **Center Lock Mode:** Click the "Focus on User" button. Verify the map auto-follows the user during playback. Manually drag the map and verify the lock disengages (button turns white).

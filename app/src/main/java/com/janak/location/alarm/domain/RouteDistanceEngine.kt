@@ -1,5 +1,6 @@
 package com.janak.location.alarm.domain
 
+import com.janak.location.alarm.model.JourneyLeg
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.turf.TurfConstants
@@ -10,6 +11,18 @@ class RouteDistanceEngine {
 
     private var averageSpeedMps: Double = 0.0
     private val alpha = 0.2 // Smoothing factor for EMA (higher = more weight to recent speed)
+
+    /**
+     * Calculates the distance remaining along a specific journey leg.
+     */
+    fun calculateRemainingDistance(leg: JourneyLeg, userLocation: Point): Double {
+        return try {
+            val route = LineString.fromJson(leg.geometry)
+            calculateRemainingDistance(route, userLocation)
+        } catch (e: Exception) {
+            Double.MAX_VALUE
+        }
+    }
 
     /**
      * Calculates the distance remaining along a polyline from the user's current snapped position.
@@ -31,6 +44,18 @@ class RouteDistanceEngine {
         } catch (e: Exception) {
             // Slicing fails if start == stop (we are exactly at the destination point)
             0.0
+        }
+    }
+
+    /**
+     * Calculates the cross-track distance (perpendicular deviation) from a specific journey leg.
+     */
+    fun calculateDeviation(leg: JourneyLeg, userLocation: Point): Double {
+        return try {
+            val route = LineString.fromJson(leg.geometry)
+            calculateDeviation(route, userLocation)
+        } catch (e: Exception) {
+            Double.MAX_VALUE
         }
     }
 
@@ -139,6 +164,29 @@ class RouteDistanceEngine {
 
     fun resetStats() {
         averageSpeedMps = 0.0
+    }
+
+    /**
+     * Simplifies a list of points using a basic radial distance threshold.
+     * This is used to reduce map rendering overhead for long multi-leg journeys.
+     */
+    fun simplifyPolyline(points: List<Point>, toleranceMeters: Double = 5.0): List<Point> {
+        if (points.size < 3) return points
+        
+        val simplified = mutableListOf<Point>()
+        simplified.add(points.first())
+        
+        var prevPoint = points.first()
+        for (i in 1 until points.size - 1) {
+            val dist = TurfMeasurement.distance(prevPoint, points[i], TurfConstants.UNIT_METERS)
+            if (dist > toleranceMeters) {
+                simplified.add(points[i])
+                prevPoint = points[i]
+            }
+        }
+        
+        simplified.add(points.last())
+        return simplified
     }
 
     /**

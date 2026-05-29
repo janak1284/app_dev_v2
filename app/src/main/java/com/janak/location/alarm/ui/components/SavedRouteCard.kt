@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.data.entity.SavedRouteEntity
+import com.janak.location.alarm.model.TransportMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,6 +55,21 @@ fun SavedRouteCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (route.transportMode == TransportMode.ROAD) Icons.Default.DirectionsCar else Icons.Default.DirectionsTransit,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (route.transportMode == TransportMode.ROAD) "Roadway" else "Railway",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     Text(
                         text = route.destinationName,
                         style = MaterialTheme.typography.titleLarge,

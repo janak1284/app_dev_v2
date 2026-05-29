@@ -37,6 +37,11 @@ Standard GPS alarms often fail because they use a straight line to measure dista
 - **Journey Preview:** See your entire route line and total distance before you even start the trip.
 - **One-Tap Search:** Instant destination search with history and "smart suggestions."
 
+### 🚆 Multi-Modal Transit (New in V3)
+- **Road-Rail-Road Integration:** Seamlessly combines OSRM (Road) and OpenRailRouting (Rail) into a single continuous journey.
+- **Smart Station Selection:** Automatically finds the best railway stations for your journey by evaluating actual road commute times to nearby candidates.
+- **Visual Mode Differentiation:** Clearly see which parts of your trip are by road and which are by rail via color-coded map lines and segment icons.
+
 ### 📂 History & Management
 - **High-Fidelity Saving:** Automatically captures your **actual path taken**, total distance, and duration.
 - **Improved UI/UX:** Data-rich cards for Saved Routes and History, displaying real-world metrics (KM, minutes) and active alarm settings.
@@ -86,7 +91,8 @@ The app is built using **Clean Architecture**, which means the code is separated
 - [x] **Phase 7:** High-Fidelity Path Saving & Route Slicing.
 - [x] **Phase 8:** Refinement Phase (Stability fixes & UX polish).
 - [x] **Phase 9:** Battery-saver mode (Smart Polling) & Segment-Aware Speed Correction.
-- [ ] **Phase 10:** Multi-Modal Transit Engine (V3).
+- [x] **Phase 10:** Multi-Modal Transit Engine (V3 - Initial Release).
+- [ ] **Phase 11:** Further Optimizations (NxN station evaluation, walking logic).
 
 ---
 

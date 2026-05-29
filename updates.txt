@@ -1,4 +1,9 @@
-# Project Updates - Location Alarm V2
+# Project Updates - Location Alarm V3
+
+## Version 3.0.0 Release (May 2026)
+- **Chronological Recent Searches:** Fixed search box suggestions where recent searches were incorrectly sorted by distance instead of remaining in chronological order (newest first).
+- **Static Back Button Alignment:** Fixed MapScreen layout where the back button would shift downward to align with the combined height of the search box and suggestions widget. Changing vertical alignment to top and applying fine-tuned top padding keeps the back button static.
+- **Version Bump:** Bumped version to `3.0.0` (versionCode `3`) to mark the transition to the V3 release.
 
 ## Predictive ETA Trigger (Dev 1)
 - **Smart Alarms:** Implemented dual-trigger logic in `LocationAlarmService`. Users can now choose to be woken up based on a distance threshold OR a predictive ETA threshold (e.g., "Wake me 10 minutes before arrival").
@@ -6,7 +11,7 @@
 - **Model Expansion:** Updated `AlarmSettings` to persist predictive alarm states.
 - **Service Handshake:** Integrated the predictive parameters into the `MapViewModel` -> `LocationAlarmService` intent flow.
 - **Service State Machine:** Refactored `LocationAlarmService` with a robust state machine (`TRACKING`, `ALARM_RINGING`). The service now remains active post-alarm for continuous breadcrumb recording.
-- **Dynamic Re-routing Handshake:** Implemented a bi-directional loop where the service signals deviations (>100m) and `MapViewModel` pushes updated OSRM paths.
+- **Dynamic Re-routing Handshake:** Implemented a bidirectional loop where the service signals deviations (>100m) and `MapViewModel` pushes updated OSRM paths.
 - **Spatial Math Engine:** Integrated `Turf-Java` for route-based distance calculation, route snapping, and cross-track deviation detection.
 - **Predictive ETA:** Implemented a sliding window speed algorithm to provide real-time, road-aware ETAs.
 - **Global Terminology Alignment:** Standardized on "Distance Alarm" and "Time Alarm" across the service and logic layers.
@@ -23,10 +28,25 @@
 - **Center Lock Mode:** Added an auto-follow camera mode for the user location, complete with visual state feedback on the focus button and automatic disengagement on manual map interaction.
 - **High-Fidelity Journey Backend:** 
     - Updated entities to store **Actual Path (GeoJSON)**, **Actual Distance**, and **Actual Duration**.
-    - Refactored `LocationAlarmService` to generate GeoJSON trails and calculate total traversed distance from buffered GPS updates.
+    - **Tracking Pipeline Robustness Optimizations:**
+    - Implemented strict 40m GPS accuracy gating to filter signal noise.
+    - Added 60s debounce cooldown to the re-routing broadcast receiver.
+    - Implemented a 180s switching penalty (hysteresis) to prevent jarring mid-journey route changes.
+    - Implemented concurrent Cartesian product evaluation for multi-modal journeys (Road-Rail-Road).
+    - Decoupled OSRM pre-fetching to minimize redundant network calls.
+    - Introduced Coroutine Semaphore (limit=3) for API rate limiting (OSRM, ORR, Photon).
+    - Implemented a weighted cost function (Road 1.5x vs Rail 1.0x) for time-optimal route selection.
+    - Refactored candidate culling using Haversine distance via Turf-Java.
     - Implemented **Route Reuse** logic in `MapViewModel` that prioritizes stored high-precision paths over API calls, ensuring consistency for repeated journeys.
 - **Auto-Arrival Save Prompt:** Integrated a 50m arrival detection trigger that automatically prompts the user to save the journey once they reach their destination.
 - **Database Migration:** Bumped Room database to **v6** to support new journey metadata and high-fidelity paths.
+
+## Phase 6/7 Refinements (May 2026)
+- **Bug Fix (Stale Preview)**: Implemented `resetRouteState()` in `MapViewModel` to ensure complete state clearing for each new route request, resolving the stale routing/ETA preview bug.
+- **Performance Optimization (ETA Calculation)**: Added distance-based throttling (5m) to `checkDistance` and geometry simplification in `MapViewModel` to reduce CPU overhead for spatial calculations.
+- **Bug Fix (Rendering History Journeys)**: Corrected the order of operations in `startJourneyDirect` to ensure route rendering state is populated correctly after state reset.
+- **Navigation Update**: Updated `MainActivity` and `HomeScreen` navigation to route the "Manage" button in Saved Routes section to the `saved_routes` page.
+- **Rendering Diagnostics**: Added comprehensive logging and state-synchronization fixes for MapLibre `GeoJsonSource` rendering on historical journeys.
 
 ## Technical Foundation
 - **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.

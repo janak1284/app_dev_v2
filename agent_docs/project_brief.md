@@ -21,7 +21,7 @@ AI must:
 
 * Explain briefly but clearly
 * Avoid jargon when possible
-* Suggest simplest working solution first
+* Suggest the simplest working solution first
 
 ---
 

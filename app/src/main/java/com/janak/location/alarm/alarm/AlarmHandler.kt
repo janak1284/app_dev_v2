@@ -8,7 +8,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
-class AlarmHandler(private val context: Context) {
+class AlarmHandler(context: Context) {
 
     private var ringtone: Ringtone? = null
     private var vibrator: Vibrator? = null

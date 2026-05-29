@@ -48,7 +48,7 @@ Finally, align the Jetpack Compose layer with the new backend reality.
 Enhance the transition from Home to Map with a preview state and a more robust predictive engine.
 
 * [x] **Journey Preview State:** Consolidated into the "DESTINATION SET" card. Users see the full road distance and route line immediately.
-* [x] **Streamlined Setup:** Replaced multi-step confirmation with a unified "SET UP ALARM" flow.
+* [x] **Streamlined Setup:** Replaced multistep confirmation with a unified "SET UP ALARM" flow.
 * [x] **OSRM Speed Calibration:** Capture the initial `duration` from the OSRM response. Calculate the "Expected Speed" ($Distance / Duration$).
 * [x] **Dynamic Speed Ratio ETA:** Calculate a "Speed Ratio" ($\text{User Avg Speed} / \text{OSRM Expected Speed}$) to provide an accurate, road-aware ETA.
 * [x] **Search History Persistence:** Silently update recent search entries with OSRM road distance for accurate future lookups.
@@ -92,7 +92,7 @@ We are integrating OSRM for roadway paths and Valhalla/OTP for multi-modal trans
 **Focus:** Background Services, Spatial Mathematics, and Database Architecture.
 
 **1. The Room Database Foundation:**
-* Setup the Room entities (`SavedRoute`, `RouteBreadcrumb`).
+* Set up the Room entities (`SavedRoute`, `RouteBreadcrumb`).
 * Expose data via Repository.
 
 **2. The Spatial Math & Leg Engine:**

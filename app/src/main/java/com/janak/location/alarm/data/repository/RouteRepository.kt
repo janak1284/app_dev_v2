@@ -8,12 +8,11 @@ import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.model.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class RouteRepository(private val database: AppDatabase) {
     private val routeDao = database.routeDao()
-    
+
     val allSavedRoutes: Flow<List<SavedRouteEntity>> = routeDao.getAllSavedRoutes()
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -56,64 +55,46 @@ class RouteRepository(private val database: AppDatabase) {
         routeDao.deleteAllRoutes()
     }
 
-    suspend fun getTransitItinerary(startLat: Double, startLng: Double, destLat: Double, destLng: Double): TransitItinerary? {
-        val request = ValhallaRequest(
-            locations = listOf(
-                ValhallaLocation(startLat, startLng),
-                ValhallaLocation(destLat, destLng)
-            )
-        )
-        val jsonRequest = json.encodeToString(request)
-        
-        return try {
-            val response = RetrofitClient.valhallaApiService.getRoute(jsonRequest)
+    suspend fun getRailwayItinerary(startLat: Double, startLng: Double, destLat: Double, destLng: Double): TransitItinerary? {
+        try {
+            // OpenRailRouting (GraphHopper) expects "lat,lon"
+            val points = listOf("$startLat,$startLng", "$destLat,$destLng")
+            val response = RetrofitClient.openRailRoutingApiService.getRoute(points = points)
             if (response.isSuccessful) {
-                response.body()?.let { mapValhallaToItinerary(it) }
+                return response.body()?.let { mapGraphHopperToItinerary(it) }
             } else {
-                null
+                android.util.Log.e("RouteRepository", "Railway API Error: ${response.errorBody()?.string()}")
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            null
         }
+        return null
     }
 
-    private fun mapValhallaToItinerary(response: ValhallaResponse): TransitItinerary {
-        val legs = response.trip.legs.map { valhallaLeg ->
-            // For now, simplify 1 Valhalla Leg -> 1 JourneyLeg.
-            // In a full implementation, we'd split by maneuver mode.
-            val firstManeuver = valhallaLeg.maneuvers.firstOrNull()
-            val transitInfo = valhallaLeg.maneuvers.firstNotNullOfOrNull { it.transit_info }
-            
-            val mode = when (firstManeuver?.travel_mode?.lowercase()) {
-                "walk" -> TransportMode.WALK
-                "bus" -> TransportMode.BUS
-                "rail", "train" -> TransportMode.TRAIN
-                "subway" -> TransportMode.SUBWAY
-                "tram" -> TransportMode.TRAM
-                else -> TransportMode.ROAD
-            }
+    private fun mapGraphHopperToItinerary(response: GraphHopperResponse): TransitItinerary {
+        val legs = response.paths.map { path ->
+            // Convert GH points to GeoJSON LineString manually
+            val coords = path.points.coordinates.joinToString(",") { "[${it[0]},${it[1]}]" }
+            val geoJson = "{\"type\":\"LineString\",\"coordinates\":[$coords]}"
 
             JourneyLeg(
-                mode = mode,
-                geometry = valhallaLeg.shape,
-                distanceMeters = valhallaLeg.summary.length * 1000.0,
-                durationMillis = (valhallaLeg.summary.time * 1000.0).toLong(),
-                startName = valhallaLeg.maneuvers.firstOrNull()?.instruction,
-                endName = valhallaLeg.maneuvers.lastOrNull()?.instruction,
-                startLat = response.trip.locations.first().lat, // This is simplified
-                startLng = response.trip.locations.first().lon,
-                endLat = response.trip.locations.last().lat,
-                endLng = response.trip.locations.last().lon,
-                lineName = transitInfo?.long_name ?: transitInfo?.short_name,
-                headsign = transitInfo?.headsign
+                mode = TransportMode.TRAIN,
+                geometry = geoJson,
+                distanceMeters = path.distance,
+                durationMillis = path.time,
+                startName = "Start",
+                endName = "End",
+                startLat = path.points.coordinates.first()[1],
+                startLng = path.points.coordinates.first()[0],
+                endLat = path.points.coordinates.last()[1],
+                endLng = path.points.coordinates.last()[0]
             )
         }
-        
+
         return TransitItinerary(
             legs = legs,
-            totalDistanceMeters = response.trip.summary.length * 1000.0,
-            totalDurationMillis = (response.trip.summary.time * 1000.0).toLong()
+            totalDistanceMeters = response.paths.sumOf { it.distance },
+            totalDurationMillis = response.paths.sumOf { it.time }
         )
     }
 }
