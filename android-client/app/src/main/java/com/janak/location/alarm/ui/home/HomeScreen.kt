@@ -1,7 +1,5 @@
 package com.janak.location.alarm.ui.home
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.janak.location.alarm.data.entity.SavedRouteEntity
+import com.janak.location.alarm.model.TransportMode
 import com.janak.location.alarm.viewmodel.MapViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -40,12 +39,71 @@ fun HomeScreen(
 ) {
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val searchHistory by viewModel.searchHistory.collectAsState()
+    var showModeSelection by remember { mutableStateOf(false) }
+
+    if (showModeSelection) {
+        AlertDialog(
+            onDismissRequest = { showModeSelection = false },
+            title = {
+                Text(
+                    "Choose Transport Mode",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("How will you be travelling today?")
+            },
+            confirmButton = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            android.util.Log.d("HomeScreen", "Selecting ROAD mode")
+                            viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.ROAD))
+                            showModeSelection = false
+                            onNewJourneyClick()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.DirectionsCar, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Roadway (Car/Bike)")
+                    }
+                    Button(
+                        onClick = {
+                            android.util.Log.d("HomeScreen", "Selecting TRAIN mode")
+                            viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.TRAIN))
+                            showModeSelection = false
+                            onNewJourneyClick()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Icon(Icons.Default.DirectionsTransit, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Railway (Train/Subway)")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showModeSelection = false }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onNewJourneyClick,
+                onClick = { showModeSelection = true },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(20.dp),
@@ -314,6 +372,20 @@ fun RouteCard(
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (route.transportMode == TransportMode.ROAD) Icons.Default.DirectionsCar else Icons.Default.DirectionsTransit,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (route.transportMode == TransportMode.ROAD) "Roadway" else "Railway",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
                     text = route.destinationName,
                     style = MaterialTheme.typography.titleMedium,

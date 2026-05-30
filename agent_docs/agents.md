@@ -113,14 +113,14 @@ If no automated tests:
 * [x] Implement OSRM Speed Calibration and Performance Ratio ETA logic.
 * [x] Implement "One-Click" direct journey start from history/saved routes.
 * [x] Implement "Edit Mode" for Saved Routes (Rename/Re-configure).
-* [x] Keyboard Input Optimization (imePadding).
+* [x] Keyboard Input Optimization (TimePadding).
 * [x] Road-based distance persistence for "Recent Searches" history.
 * [x] Unified UI flow for Destination Selection and Alarm Setup.
 
 ### Phase 7: Final Verification & Field Testing
 * [ ] GPX Simulation for Calibrated ETA accuracy verification.
 * [ ] WakeLock & Battery Optimization verification.
-* [ ] Final field testing.
+* [ ] Final field-testing.
 
 ---
 

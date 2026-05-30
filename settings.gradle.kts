@@ -5,7 +5,5 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-
 rootProject.name = "app_dev_v2"
-
-includeBuild("android-client")
+include(":android-client:app")

@@ -39,12 +39,12 @@ object RetrofitClient {
             .create(PhotonApiService::class.java)
     }
 
-    val valhallaApiService: ValhallaApiService by lazy {
+    val openRailRoutingApiService: OpenRailRoutingApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(ValhallaApiService.BASE_URL)
+            .baseUrl(OpenRailRoutingApiService.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(ValhallaApiService::class.java)
+            .create(OpenRailRoutingApiService::class.java)
     }
 }

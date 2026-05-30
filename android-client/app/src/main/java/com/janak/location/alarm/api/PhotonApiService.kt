@@ -2,7 +2,6 @@ package com.janak.location.alarm.api
 
 import com.janak.location.alarm.model.OsrmResponse
 import com.janak.location.alarm.model.PhotonResponse
-import kotlinx.serialization.json.JsonObject
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path

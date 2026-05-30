@@ -12,7 +12,7 @@ import com.janak.location.alarm.data.entity.JourneyLegEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 
-@Database(entities = [SavedRouteEntity::class, RouteBreadcrumbEntity::class, JourneyHistoryEntity::class, JourneyLegEntity::class], version = 7, exportSchema = false)
+@Database(entities = [SavedRouteEntity::class, RouteBreadcrumbEntity::class, JourneyHistoryEntity::class, JourneyLegEntity::class], version = 8, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun routeDao(): RouteDao

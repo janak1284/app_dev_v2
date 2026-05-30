@@ -11,6 +11,7 @@ data class AlarmSettings(
     val predictiveMinutes: Int = 10,
     val isPredictiveAlarmEnabled: Boolean = false, // This is the Smart ETA Alarm
     val isVibrateEnabled: Boolean = true,
+    val transportMode: TransportMode = TransportMode.ROAD,
     @Transient val ringtoneUri: Uri? = null,
     val alarmName: String = ""
 )

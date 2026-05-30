@@ -7,14 +7,11 @@ import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,11 +27,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.janak.location.alarm.model.AlarmSettings
 import com.janak.location.alarm.ui.components.DistanceSection
 import com.janak.location.alarm.ui.components.PredictiveSection
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,15 +44,15 @@ fun ModernConfigurationSheet(
     
     // Form States
     var distanceEnabled by remember { mutableStateOf(initialSettings.isDistanceAlarmEnabled) }
-    var distanceMeters by remember { mutableStateOf(initialSettings.distanceMeters.toFloat()) }
+    var distanceMeters by remember { mutableFloatStateOf(initialSettings.distanceMeters.toFloat()) }
     
     var predictiveEnabled by remember { mutableStateOf(initialSettings.isPredictiveAlarmEnabled) }
-    var predictiveMinutes by remember { mutableStateOf(initialSettings.predictiveMinutes.toFloat()) }
+    var predictiveMinutes by remember { mutableFloatStateOf(initialSettings.predictiveMinutes.toFloat()) }
 
     var vibrateEnabled by remember { mutableStateOf(initialSettings.isVibrateEnabled) }
 
     // Ringtone States
-    var selectedRingtoneUri by remember { mutableStateOf<Uri?>(initialSettings.ringtoneUri) }
+    var selectedRingtoneUri by remember { mutableStateOf(initialSettings.ringtoneUri) }
     var ringtoneName by remember { mutableStateOf("Default sound") }
 
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
@@ -121,12 +116,15 @@ fun ModernConfigurationSheet(
                     text = "Alarm Configuration",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(bottom = 32.dp)
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
 
                 DistanceSection(
                     enabled = distanceEnabled,
-                    onToggle = { distanceEnabled = it },
+                    onToggle = { 
+                        distanceEnabled = it
+                        if (it) predictiveEnabled = false 
+                    },
                     distanceMeters = distanceMeters,
                     onDistanceChange = { distanceMeters = it }
                 )
@@ -135,7 +133,10 @@ fun ModernConfigurationSheet(
 
                 PredictiveSection(
                     enabled = predictiveEnabled,
-                    onToggle = { predictiveEnabled = it },
+                    onToggle = { 
+                        predictiveEnabled = it
+                        if (it) distanceEnabled = false
+                    },
                     minutes = predictiveMinutes,
                     onMinutesChange = { predictiveMinutes = it }
                 )
@@ -161,6 +162,7 @@ fun ModernConfigurationSheet(
                             predictiveMinutes = predictiveMinutes.toInt(),
                             isPredictiveAlarmEnabled = predictiveEnabled,
                             isVibrateEnabled = vibrateEnabled,
+                            transportMode = initialSettings.transportMode,
                             ringtoneUri = selectedRingtoneUri
                         )
                     )
