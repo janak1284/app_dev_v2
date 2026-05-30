@@ -1,6 +1,7 @@
 // scraper.js
 const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
+const { getStationCode } = require('./stationMapper');
 
 // Inject the stealth plugin to mask the headless browser fingerprint
 chromium.use(stealth);
@@ -37,51 +38,62 @@ async function scrapeTrainTelemetry(trainNumber) {
         // Go to the site and wait for the DOM to settle
         await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
 
-        // Wait for the main timeline container to appear so we know the data loaded
-        // Note: You may need to tweak this class name if ConfirmTkt updates their UI
+        // Wait for the main timeline container to appear
         try {
-            await page.waitForSelector('.rs-timeline-info', { timeout: 15000 });
+            await page.waitForSelector('.running-status', { timeout: 15000 });
         } catch (e) {
-            console.log("⚠️ Timeline container not found. The site might have updated or the train number is invalid.");
+            console.log("⚠️ Main container '.running-status' not found. Checking for alternative selectors...");
         }
 
-        // 1. Extract the Station Sequence
-        // We look for all elements containing the station codes (usually in brackets like "(MS)")
-        const stationElements = await page.locator('.rs-station-name').allInnerTexts();
-        
-        let sequenceArray = [];
-        stationElements.forEach((text, index) => {
-            // Use regex to extract just the station code from a string like "Chennai Egmore (MS)"
-            const match = text.match(/\((.*?)\)/);
-            if (match && match[1]) {
-                sequenceArray.push({
-                    station_code: match[1].trim(),
-                    sequence_index: index + 1
-                });
-            }
+        // 1. Extract raw data from the page
+        const rawStationData = await page.$$eval('.rs__station-row', (rows) => {
+            return rows.map((row, index) => {
+                const stationNameText = row.querySelector('.rs__station-name')?.innerText.trim() || "";
+                const columns = row.querySelectorAll('div[class^="col-xs-"]');
+                const arrivalTime = columns[2]?.innerText.trim() || "Source";
+                const departureTime = columns[3]?.innerText.trim() || "Destination";
+                const delayStatus = row.querySelector('.rs__station-delay')?.innerText.trim() || "";
+
+                return {
+                    station_name: stationNameText,
+                    sequence_index: index + 1,
+                    arrival: arrivalTime,
+                    departure: departureTime,
+                    status: delayStatus
+                };
+            });
         });
 
-        // 2. Extract the ETA (Live Status)
-        // Find the element highlighting the current delay or arrival time
+        // 2. Map standardized station codes using the in-memory dictionary
+        const stationSequence = rawStationData.map(item => ({
+            ...item,
+            station_code: getStationCode(item.station_name)
+        }));
+
+        // Extract the Overall Live Status (ETA)
         let etaText = "Data unavailable";
         try {
-            // Priority 1: Current status text
-            const statusLocator = page.locator('.rs-current-status');
+            // Check for a global status or the first 'Current' status in the timeline
+            const statusLocator = page.locator('.rs__station-delay').first();
             if (await statusLocator.isVisible()) {
                 etaText = await statusLocator.innerText();
             }
         } catch (e) {
-            console.log("ETA text not found via primary selector.");
+            console.log("Global status/delay not found.");
         }
 
         const extractedData = {
             train_number: trainNumber,
-            eta_string: etaText.replace(/\n/g, ' ').trim(), // Clean up line breaks
-            station_sequence: sequenceArray,
+            eta_string: etaText.replace(/\n/g, ' ').trim(),
+            station_sequence: stationSequence,
             timestamp_fetched: Date.now()
         };
 
-        console.log("✅ Scrape Successful. Payload:");
+        console.log("✅ Scrape Successful. Summary:");
+        console.log(`- Stations Found: ${stationSequence.length}`);
+        console.log(`- Current Status: ${extractedData.eta_string}`);
+        
+        // Detailed log for verification
         console.log(JSON.stringify(extractedData, null, 2));
 
         return extractedData;
