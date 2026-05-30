@@ -34,9 +34,13 @@
     - [x] Implemented logic to detect arrival at the end of a non-final leg and transition to the next leg.
     - [x] **Dynamic Alarm Reset:** Implemented logic to reset the alarm state if distance/ETA increases significantly.
 - [x] **Phase 3: UI/UX for Multi-Modal Journeys:** Transit mode selection and multi-leg map rendering.
-    - [x] **Optimized Loading UI:** Added `CircularProgressIndicator` overlay during complex route calculations.
+    - [x] **Optimized Loading UI:** Added `CircularProgressIndicator` overlay during route calculations.
     - [x] **Multi-Color Polylines:** Road (Blue), Rail (Black), Walk (Grey).
     - [x] **Transfer Station Markers:** Visualized mode transition points on the map with station markers.
+- [x] **Phase 4: Routing Algorithm Refinement:**
+    - [x] **Strict Transit Evaluation:** Implemented 1.5x thresholding and directionality bearing checks to penalize illogical transit routes.
+    - [x] **Suboptimal Warnings:** Routes exceeding duration thresholds are now allowed but marked with a Toast notification.
+    - [x] **Comprehensive Candidate Evaluation:** Increased station search radius and candidate count for improved path linking between origin/destination.
 
 ## Future Improvements (Post-V2)
 - [ ] **Optimize Rail Multi-Modal Engine:** Evaluate more candidates, NxN matrix options, and walking-to-station logic.

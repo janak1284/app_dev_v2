@@ -472,34 +472,57 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
         )
         
-        // --- Top Search Bar ---
-        Row(
+        // --- Top UI Area ---
+        Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.Top
+                .fillMaxWidth()
         ) {
-            IconButton(
-                onClick = onNavigateHome,
-                modifier = Modifier
-                    .padding(end = 8.dp, top = 4.dp)
-                    .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+            // --- Search Bar Row ---
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Home")
+                IconButton(
+                    onClick = onNavigateHome,
+                    modifier = Modifier
+                        .padding(end = 8.dp, top = 4.dp)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Home")
+                }
+                DestinationSearchField(
+                    query = searchQuery,
+                    onQueryChange = { viewModel.onSearchQueryChange(it) },
+                    results = searchResults,
+                    history = searchHistory,
+                    onResultClick = { viewModel.selectSearchResult(it) },
+                    isSearching = isSearching,
+                    onMenuClick = onOpenSettings,
+                    userLocation = userLocation,
+                    onFocusChanged = { isSearchFocused = it },
+                )
             }
-            DestinationSearchField(
-                query = searchQuery,
-                onQueryChange = { viewModel.onSearchQueryChange(it) },
-                results = searchResults,
-                history = searchHistory,
-                onResultClick = { viewModel.selectSearchResult(it) },
-                isSearching = isSearching,
-                onMenuClick = onOpenSettings,
-                userLocation = userLocation,
-                onFocusChanged = { isSearchFocused = it },
-                modifier = Modifier.weight(1f)
-            )
+            
+            // --- Transport Mode Toggle ---
+            Row(
+                modifier = Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.ROAD,
+                    onClick = { viewModel.updateAlarmSettings(alarmSettings.copy(transportMode = com.janak.location.alarm.model.TransportMode.ROAD)) },
+                    label = { Text("Road") },
+                    leadingIcon = { Icon(Icons.Default.DirectionsCar, null, modifier = Modifier.size(16.dp)) }
+                )
+                FilterChip(
+                    selected = alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN,
+                    onClick = { viewModel.updateAlarmSettings(alarmSettings.copy(transportMode = com.janak.location.alarm.model.TransportMode.TRAIN)) },
+                    label = { Text("Rail") },
+                    leadingIcon = { Icon(Icons.Default.DirectionsTransit, null, modifier = Modifier.size(16.dp)) }
+                )
+            }
         }
 
         // --- Floating Buttons ---

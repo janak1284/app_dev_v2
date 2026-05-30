@@ -47,4 +47,13 @@ object RetrofitClient {
             .build()
             .create(OpenRailRoutingApiService::class.java)
     }
+
+    val railwayTelemetryApiService: RailwayTelemetryApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(RailwayTelemetryApiService.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(RailwayTelemetryApiService::class.java)
+    }
 }
