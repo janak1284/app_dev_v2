@@ -28,32 +28,56 @@ async function scrapeTrainTelemetry(trainNumber) {
     });
 
     try {
-        // TODO: Replace with the actual target URL (e.g., RailYatri, ConfirmTkt)
-        const targetUrl = `https://www.google.com/search?q=train+${trainNumber}+status`; 
+        // -----------------------------------------------------------
+        // THE EXTRACTION ZONE (ConfirmTkt)
+        // -----------------------------------------------------------
+        const targetUrl = `https://www.confirmtkt.com/train-running-status/${trainNumber}`;
         console.log(`🌐 Navigating to ${targetUrl}...`);
         
-        // Wait until the network is mostly idle, ensuring dynamic JS has loaded
-        await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
+        // Go to the site and wait for the DOM to settle
+        await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
 
-        // -----------------------------------------------------------
-        // THE EXTRACTION ZONE
-        // -----------------------------------------------------------
-        // Here is where you will write your fuzzy DOM locators.
-        // Example logic (will fail until we target a real site):
+        // Wait for the main timeline container to appear so we know the data loaded
+        // Note: You may need to tweak this class name if ConfirmTkt updates their UI
+        try {
+            await page.waitForSelector('.rs-timeline-info', { timeout: 15000 });
+        } catch (e) {
+            console.log("⚠️ Timeline container not found. The site might have updated or the train number is invalid.");
+        }
+
+        // 1. Extract the Station Sequence
+        // We look for all elements containing the station codes (usually in brackets like "(MS)")
+        const stationElements = await page.locator('.rs-station-name').allInnerTexts();
         
-        // const etaText = await page.locator('.eta-class-name').innerText();
-        // const stationNodes = await page.locator('.station-list-item').allInnerTexts();
+        let sequenceArray = [];
+        stationElements.forEach((text, index) => {
+            // Use regex to extract just the station code from a string like "Chennai Egmore (MS)"
+            const match = text.match(/\((.*?)\)/);
+            if (match && match[1]) {
+                sequenceArray.push({
+                    station_code: match[1].trim(),
+                    sequence_index: index + 1
+                });
+            }
+        });
 
-        // -----------------------------------------------------------
+        // 2. Extract the ETA (Live Status)
+        // Find the element highlighting the current delay or arrival time
+        let etaText = "Data unavailable";
+        try {
+            // Priority 1: Current status text
+            const statusLocator = page.locator('.rs-current-status');
+            if (await statusLocator.isVisible()) {
+                etaText = await statusLocator.innerText();
+            }
+        } catch (e) {
+            console.log("ETA text not found via primary selector.");
+        }
 
-        // Mocking the extraction for now based on your API Contract
         const extractedData = {
             train_number: trainNumber,
-            eta_epoch_ms: Date.now() + 3600000, // Dummy data: 1 hour from now
-            station_sequence: [
-                { station_code: "MS", sequence_index: 1 },
-                { station_code: "TBM", sequence_index: 2 }
-            ],
+            eta_string: etaText.replace(/\n/g, ' ').trim(), // Clean up line breaks
+            station_sequence: sequenceArray,
             timestamp_fetched: Date.now()
         };
 
