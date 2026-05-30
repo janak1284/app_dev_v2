@@ -22,7 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.DirectionsTransit
-import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Straighten
@@ -189,7 +189,7 @@ fun HistoryCard(
     val primaryMode = entry.alarmConfigAtTime.transportMode
     val modeIcon = when (primaryMode) {
         TransportMode.ROAD -> Icons.Default.DirectionsCar
-        TransportMode.WALK -> Icons.Default.DirectionsWalk
+        TransportMode.WALK -> Icons.AutoMirrored.Filled.DirectionsWalk
         else -> Icons.Default.DirectionsTransit
     }
 
