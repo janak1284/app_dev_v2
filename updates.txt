@@ -1,5 +1,10 @@
 # Project Updates - Location Alarm V4
 
+## Scraper Engine & Station Mapping (Dev 1)
+- **Live Scraper Implementation:** Built a robust Playwright-based scraper targeting ConfirmTkt with stealth injection and resource blocking for optimal performance.
+- **O(1) Station Mapper:** Implemented a high-performance in-memory Hash Map compiled from `stations.json` (GeoJSON). Standardized station codes are now automatically resolved on-the-fly.
+- **Data Integrity:** Ensured 100% alignment with the API contract by mapping raw website names to standardized station codes.
+
 ## The Great V4 Restructuring (Dev 1)
 - **Monorepo Pivot:** Restructured the entire repository into `android-client/` and `scraper-microservice/` to support the new microservice-based architecture.
 - **V3 Archival:** Created `archive-v3-engine` tag to preserve legacy GTFS/Offline logic before the pivot.

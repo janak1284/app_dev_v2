@@ -14,9 +14,9 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 * [x] Install Node.js on your machine.
 * [x] Run `npm init -y` to create a new project.
 * [x] Run `npm install express playwright`.
-* [ ] Write a basic JavaScript file that uses Playwright to open a headless chromium browser and navigate to a train tracking website.
-* [ ] Read the Playwright documentation on "Locators". Write the code to extract the text for ETA and the Station Sequence.
-* [ ] Print the extracted data to your terminal as a clean JSON object.
+* [x] Write a basic JavaScript file that uses Playwright to open a headless chromium browser and navigate to a train tracking website.
+* [x] Read the Playwright documentation on "Locators". Write the code to extract the text for ETA and the Station Sequence.
+* [x] Print the extracted data to your terminal as a clean JSON object.
 * [ ] Create a free Supabase account and copy the Postgres database connection string.
 
 **Developer 2 Checklist:**

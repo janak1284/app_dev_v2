@@ -8,7 +8,7 @@
 - [x] **Step 5: Dev 1 Environment Setup:** Initialized Node.js, Express, and Playwright in `scraper-microservice/`. Verified baseline server on port 7860.
 
 ## 🚂 Phase 1: Scraper & Backend (Developer 1)
-- [ ] **Scraper Logic:** Implement Playwright headless navigation and data extraction for train ETA/Sequence.
+- [x] **Scraper Logic:** Implement Playwright headless navigation and data extraction for train ETA/Sequence.
 - [ ] **Supabase Integration:** Set up PostgreSQL schema and implement 10-minute TTL caching logic.
 - [ ] **Stealth & Anti-Ban:** Configure `puppeteer-extra-plugin-stealth` and request interception to minimize footprint.
 - [ ] **Deployment:** Containerize with Docker and deploy to Hugging Face Spaces.
