@@ -42,6 +42,12 @@
     - [x] **Suboptimal Warnings:** Routes exceeding duration thresholds are now allowed but marked with a Toast notification.
     - [x] **Comprehensive Candidate Evaluation:** Increased station search radius and candidate count for improved path linking between origin/destination.
 
+## V4 Railway Telemetry (Microservice)
+- [x] **Phase 1: Scraper Development:** Headless Playwright engine with stealth and request interception.
+- [x] **Phase 2: Supabase Caching:** Implemented 10-minute TTL cache with PostgreSQL upsert logic.
+- [x] **Phase 3: Deployment:** Successfully containerized and hosted on Hugging Face Spaces with Node.js 20 WS fix.
+- [ ] **Phase 4: Multi-Target Fallback:** Implement secondary scraping source for reliability.
+
 ## Future Improvements (Post-V2)
 - [ ] **Optimize Rail Multi-Modal Engine:** Evaluate more candidates, NxN matrix options, and walking-to-station logic.
 - [ ] **Real-world field-testing and accuracy calibration.**

@@ -81,24 +81,24 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 * [x] Write text-based fuzzy DOM selectors to extract `ETA` and `station_sequence` arrays.
 * [x] Configure request interception to block images, CSS, and tracker scripts to minimize RAM.
 * [ ] Implement the multi-target waterfall try-catch block (fallback to Target Site B if Site A fails).
-* [ ] Expose an Express endpoint `/api/track?train=[ID]` returning the JSON payload.
+* [x] Expose an Express endpoint `/api/track?train=[ID]` returning the JSON payload.
 
 ### Phase 2: Cloud Cache Implementation (Railway)
 
 **Objective:** Deploy the Supabase firewall to collapse requests.
 
-* [ ] Deploy a free-tier PostgreSQL instance on Supabase.
-* [ ] Create the schema: `train_number` (PK), `eta_time`, `station_sequence` (TEXT Array), and `last_updated`.
-* [ ] Code the Node.js Request Collapsing logic: Check Supabase first. If `last_updated` is < 10 mins old, return cache. Otherwise, trigger Playwright, `UPSERT` the DB, and return.
+* [x] Deploy a free-tier PostgreSQL instance on Supabase.
+* [x] Create the schema: `train_cache` table with `train_number` (PK), `payload` (JSONB), and `last_updated`.
+* [x] Code the Node.js Request Collapsing logic: Check Supabase first. If `last_updated` is < 10 mins old, return cache. Otherwise, trigger Playwright, `UPSERT` the DB, and return.
 
 ### Phase 3: Infrastructure Deployment
 
 **Objective:** Containerize and host the microservice.
 
-* [ ] Write a `Dockerfile` using `mcr.microsoft.com/playwright` base.
-* [ ] Bind the Express API to `0.0.0.0:7860`.
-* [ ] Deploy to Hugging Face Spaces (Blank Docker template, 16GB RAM tier).
-* [ ] Verify endpoint stability using external API tools.
+* [x] Write a `Dockerfile` using `mcr.microsoft.com/playwright` base.
+* [x] Bind the Express API to `0.0.0.0:7860`.
+* [x] Deploy to Hugging Face Spaces (Blank Docker template, 16GB RAM tier).
+* [x] Verify endpoint stability using external API tools.
 
 ### Phase 4: Mobile Client - Geometry & Data Prep
 

@@ -2,14 +2,23 @@
 require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 const { scrapeTrainTelemetry } = require('./scraper'); 
 
 const app = express();
 // Hugging Face strictly requires port 7860
 const PORT = process.env.PORT || 7860;
 
-// Initialize Supabase (Ensure these are in your .env file!)
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+// Initialize Supabase with WebSocket support for Node 20
+const supabase = createClient(
+    process.env.SUPABASE_URL, 
+    process.env.SUPABASE_KEY,
+    {
+        realtime: {
+            transport: ws,
+        },
+    }
+);
 
 app.use(express.json());
 

@@ -17,7 +17,7 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 * [x] Write a basic JavaScript file that uses Playwright to open a headless chromium browser and navigate to a train tracking website.
 * [x] Read the Playwright documentation on "Locators". Write the code to extract the text for ETA and the Station Sequence.
 * [x] Print the extracted data to your terminal as a clean JSON object.
-* [ ] Create a free Supabase account and copy the Postgres database connection string.
+* [x] Create a free Supabase account and copy the Postgres database connection string.
 
 **Developer 2 Checklist:**
 
@@ -39,10 +39,10 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 
 * [x] Run `npm install @supabase/supabase-js puppeteer-extra-plugin-stealth`.
 * [x] Inject the stealth plugin into your Playwright script so the target website thinks you are a real human.
-* [ ] Write the Supabase caching logic: Check the database first. If the data is less than 10 minutes old, return it. If it is older, run the Playwright scraper.
+* [x] Write the Supabase caching logic: Check the database first. If the data is less than 10 minutes old, return it. If it is older, run the Playwright scraper.
 * [x] Wrap all of this inside an Express.js server that listens on port `7860`.
-* [ ] Write your `Dockerfile` using the official Playwright base image.
-* [ ] Create a free Hugging Face Space (Docker template) and push your code. Wait for it to build and give you a public URL.
+* [x] Write your `Dockerfile` using the official Playwright base image.
+* [x] Create a free Hugging Face Space (Docker template) and push your code. Wait for it to build and give you a public URL.
 
 **Developer 2 Checklist:**
 
@@ -61,7 +61,7 @@ This is where you integrate everything and put in the safety nets for when thing
 
 **Developer 1 Checklist:**
 
-* [ ] Test the live Hugging Face URL using Postman or your browser. Ensure it responds within 8 seconds.
+* [x] Test the live Hugging Face URL using Postman or your browser. Ensure it responds within 8 seconds.
 * [ ] Write a `try/catch` block in your Node.js code to act as a fallback: if the primary train website fails to load, immediately attempt to scrape your backup train website.
 
 **Developer 2 Checklist:**
