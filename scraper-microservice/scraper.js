@@ -107,5 +107,4 @@ async function scrapeTrainTelemetry(trainNumber) {
     }
 }
 
-// Execute the test run
-scrapeTrainTelemetry("12605");
+module.exports = { scrapeTrainTelemetry };

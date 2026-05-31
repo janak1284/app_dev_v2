@@ -72,6 +72,11 @@ lint/intermediate/
 lint/generated/
 /tasks.txt
 
+# Node.js
+node_modules/
+.env
+**/.env
+
 # API Services
 # app/src/main/java/com/janak/location/alarm/api/
 
