@@ -46,6 +46,7 @@
 - [x] **Phase 1: Scraper Development:** Headless Playwright engine with stealth and request interception.
 - [x] **Phase 2: Supabase Caching:** Implemented 10-minute TTL cache with PostgreSQL upsert logic.
 - [x] **Phase 3: Deployment:** Successfully containerized and hosted on Hugging Face Spaces with Node.js 20 WS fix.
+- [x] **Matrix Pipeline (Road):** Integrated OSRM /table API into search flow for real-time route distances.
 - [ ] **Phase 4: Multi-Target Fallback:** Implement secondary scraping source for reliability.
 
 ## Future Improvements (Post-V2)

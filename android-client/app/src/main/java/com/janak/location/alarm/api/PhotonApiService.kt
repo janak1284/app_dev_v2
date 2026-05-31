@@ -1,6 +1,7 @@
 package com.janak.location.alarm.api
 
 import com.janak.location.alarm.model.OsrmResponse
+import com.janak.location.alarm.model.OsrmTableResponse
 import com.janak.location.alarm.model.PhotonResponse
 import retrofit2.Response
 import retrofit2.http.GET
@@ -25,6 +26,14 @@ interface PhotonApiService {
         @Query("geometries") geometries: String = "geojson",
         @Query("annotations") annotations: String = "duration,distance,speed"
     ): Response<OsrmResponse>
+
+    // OSRM Matrix Table
+    @GET("table/v1/driving/{coordinates}")
+    suspend fun getTable(
+        @Path("coordinates") coordinates: String,
+        @Query("sources") sources: String = "0",
+        @Query("annotations") annotations: String = "duration,distance"
+    ): Response<OsrmTableResponse>
 
     // Photon Search
     @GET("api/")

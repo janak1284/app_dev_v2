@@ -107,7 +107,7 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 * [ ] **Overpass Track Extraction:** Query `overpass-turbo.eu` for the exact geographic rail tracks in the operating region. Convert to GeoJSON/Polylines.
 * [ ] **Room DB Setup:** Create entities for `SavedDestinations` (Name, Lat, Lng, Target Distance, Alarm Mode) and store the Overpass railway polylines here.
 * [ ] **Debounced Search:** Implement `StateFlow` with a 350ms debounce for the search bar.
-* [ ] **Matrix Pipeline:** Connect Photon Geocoder outputs directly to the OSRM `/table` API to render exact route distances in the UI dropdown.
+* [x] **Matrix Pipeline:** Connect Photon Geocoder outputs directly to the OSRM `/table` API to render exact route distances in the UI dropdown.
 
 ### Phase 5: Mobile Client - The Tracking Engine
 

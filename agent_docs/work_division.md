@@ -51,7 +51,7 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 * [ ] Wire the local Room database to accept and hold the Overpass GeoJSON linestrings for the physical railway tracks.
 * [ ] Implement the Turf-Java "Snap, Slice, and Measure" algorithm inside the railway loop to anchor live hardware GPS coordinates directly to the track lines.
 * [ ] Update the primary Map UI and Search layout to include a clear toggle switch allowing the user to select between Roadway Mode and Railway Mode.
-* [ ] Wire the input search bar to use Kotlin `StateFlow` with a 350ms debounce window before hitting the OSRM `/table` matrix endpoint.
+* [x] Wire the input search bar to use Kotlin `StateFlow` with a 350ms debounce window before hitting the OSRM `/table` matrix endpoint.
 
 ---
 

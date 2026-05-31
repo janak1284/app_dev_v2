@@ -297,8 +297,34 @@ class MapViewModel(
             }
 
             val remoteFeatures = response.body()?.features ?: emptyList()
-            val combined = (historyMatches + remoteFeatures).distinctBy {
+            var combined = (historyMatches + remoteFeatures).distinctBy {
                 "${it.geometry.coordinates[0]},${it.geometry.coordinates[1]}"
+            }.take(6) // Limit matrix calculation to top 6 results for performance
+
+            // MATRIX PIPELINE: Fetch actual road distances for all results in one call
+            val userLoc = _userLocation.value
+            if (userLoc != null && combined.isNotEmpty()) {
+                try {
+                    val coords = StringBuilder("${userLoc.longitude},${userLoc.latitude}")
+                    combined.forEach { feature ->
+                        coords.append(";${feature.geometry.coordinates[0]},${feature.geometry.coordinates[1]}")
+                    }
+
+                    val matrixResponse = photonApiService.getTable(coords.toString())
+                    if (matrixResponse.isSuccessful) {
+                        val distances = matrixResponse.body()?.distances?.firstOrNull()
+                        // distances[0] is user to user (0), distances[1..N] are user to destinations
+                        if (distances != null && distances.size > 1) {
+                            combined = combined.mapIndexed { index, feature ->
+                                // index + 1 because distances[0] is the source
+                                val roadDist = if (index + 1 < distances.size) distances[index + 1] else null
+                                feature.copy(properties = feature.properties.copy(roadDistance = roadDist))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MapViewModel", "Matrix calculation failed", e)
+                }
             }
 
             _searchResults.value = combined
