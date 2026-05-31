@@ -1,5 +1,5 @@
 # Use the official Playwright image which includes all browser dependencies
-FROM mcr.microsoft.com/playwright:v1.40.0-jammy
+FROM mcr.microsoft.com/playwright:v1.60.0-jammy
 
 # Hugging Face runs containers as user '1000'
 # We must set up a working directory with the correct permissions
