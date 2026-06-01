@@ -37,6 +37,7 @@ The finalized design (Variant F) transforms the "bleak" MapScreen into a modern,
 ### Transit API Integration
 - **Engine:** OpenRailRouting (ORR) API for high-fidelity physical track geometry.
 - **Routing:** Fetch multi-modal itineraries including walking, trains, and buses.
+- **Telemetry Scraper:** Node.js microservice hosted locally with `localtunnel` (`janak-transit-test.loca.lt`) to ensure bypass of cloud-based bot detection.
 - **Stations Database:** Local Room-based database of 8000+ stations for candidate entry/exit evaluation.
 - **Data Model:** Introduce `JourneyLeg` to encapsulate individual segments.
     - `type`: Walk, Train, Bus, etc.

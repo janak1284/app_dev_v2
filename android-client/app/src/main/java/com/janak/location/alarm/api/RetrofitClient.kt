@@ -19,6 +19,15 @@ object RetrofitClient {
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .addHeader("bypass-tunnel-reminders", "true")
+                .build()
+            chain.proceed(request)
+        }
+        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .build()
 
     val photonApiService: PhotonApiService by lazy {
@@ -48,12 +57,12 @@ object RetrofitClient {
             .create(OpenRailRoutingApi::class.java)
     }
 
-    val railwayTelemetryApiService: RailwayTelemetryApiService by lazy {
+    val railwayTelemetryApi: RailwayTelemetryApi by lazy {
         Retrofit.Builder()
-            .baseUrl(RailwayTelemetryApiService.BASE_URL)
+            .baseUrl(RailwayTelemetryApi.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(RailwayTelemetryApiService::class.java)
+            .create(RailwayTelemetryApi::class.java)
     }
 }

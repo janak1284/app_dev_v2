@@ -48,6 +48,9 @@ import android.content.IntentFilter
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import java.util.Locale
+import android.util.Log
+import com.janak.location.alarm.api.RetrofitClient
+import com.janak.location.alarm.util.PolylineDecoder
 
 @OptIn(FlowPreview::class)
 class MapViewModel(
@@ -1193,6 +1196,69 @@ class MapViewModel(
             preLoadedDistance = history.actualDistanceMeters,
             preLoadedDuration = history.durationMillis
         )
+    }
+
+    fun testLiveHandshake(trainNumber: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("PHASE5_TEST", "🚀 Initiating Phase 5 Handshake for Train $trainNumber...")
+                
+                // 1. Fetch Telemetry from Hugging Face
+                val telemetryResponse = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNumber)
+                
+                if (telemetryResponse.isSuccessful && telemetryResponse.body() != null) {
+                    val data = telemetryResponse.body()!!
+                    Log.d("PHASE5_TEST", "📡 Telemetry acquired. Cache Hit: ${data.cacheHit}")
+                    
+                    val stations = data.stationSequence
+                    if (stations.size >= 2) {
+                        // 🔥 THE FIX: Grab the final approach segment (Penultimate to Destination)
+                        val penultimateCode = stations[stations.size - 2].stationCode
+                        val destinationCode = stations.last().stationCode
+                        
+                        // 2. Local Spatial Lookup via Room Database with Telemetry Fallback
+                        val startStation = stationRepository.getStationByCode(penultimateCode)
+                        val endStation = stationRepository.getStationByCode(destinationCode)
+                        
+                        val startLat: Double? = startStation?.latitude ?: stations[stations.size - 2].latitude
+                        val startLon: Double? = startStation?.longitude ?: stations[stations.size - 2].longitude
+                        val endLat: Double? = endStation?.latitude ?: stations.last().latitude
+                        val endLon: Double? = endStation?.longitude ?: stations.last().longitude
+                        
+                        if (startLat != null && startLon != null && endLat != null && endLon != null) {
+                            Log.d("PHASE5_TEST", "🗄️ Final Approach Stations: ${startStation?.name ?: penultimateCode} -> ${endStation?.name ?: destinationCode}")
+                            
+                            val startParam = "$startLat,$startLon"
+                            val endParam = "$endLat,$endLon"
+                            
+                            try {
+                                // 3. Fetch Physical Geometry from OpenRailRouting
+                                val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
+                                
+                                if (orrResponse.isSuccessful && orrResponse.body() != null) {
+                                    // 4. Decode the Polyline
+                                    val polyline = orrResponse.body()!!.paths[0].points
+                                    val decodedPoints = PolylineDecoder.decode(polyline)
+                                    
+                                    Log.d("PHASE5_TEST", "✅ ORR SUCCESS! Track geometry decoded.")
+                                    Log.d("PHASE5_TEST", "📐 Point Count: ${decodedPoints.size}")
+                                } else {
+                                    throw Exception("ORR returned unsuccessful response: ${orrResponse.code()}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("PHASE5_TEST", "⚠️ ORR API Failed. Engaging Haversine Straight-Line Fallback!", e)
+                            }
+                        } else {
+                            Log.e("PHASE5_TEST", "❌ Coordinates resolution failed for $penultimateCode or $destinationCode.")
+                        }
+                    }
+                } else {
+                    Log.e("PHASE5_TEST", "❌ Telemetry Fetch Failed: ${telemetryResponse.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("PHASE5_TEST", "💥 Critical Handshake Exception", e)
+            }
+        }
     }
 
     override fun onCleared() {

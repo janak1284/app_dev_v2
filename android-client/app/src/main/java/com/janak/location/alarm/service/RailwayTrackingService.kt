@@ -4,7 +4,8 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import com.janak.location.alarm.alarm.AlarmEngine
-import com.janak.location.alarm.api.RailwayTelemetryApiService
+import com.janak.location.alarm.api.RailwayTelemetryApi
+import com.janak.location.alarm.api.RetrofitClient
 import com.janak.location.alarm.data.AppDatabase
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.domain.RouteDistanceEngine
@@ -24,7 +25,7 @@ class RailwayTrackingService : Service() {
     private lateinit var locationTrackingManager: LocationTrackingManager
     private lateinit var routeDistanceEngine: RouteDistanceEngine
     private lateinit var routeRepository: RouteRepository
-    private lateinit var telemetryApiService: RailwayTelemetryApiService
+    private lateinit var telemetryApi: RailwayTelemetryApi
     private lateinit var alarmEngine: AlarmEngine
 
     override fun onCreate() {
@@ -33,7 +34,7 @@ class RailwayTrackingService : Service() {
         routeDistanceEngine = RouteDistanceEngine()
         val database = AppDatabase.getDatabase(this)
         routeRepository = RouteRepository(database)
-        telemetryApiService = com.janak.location.alarm.api.RetrofitClient.railwayTelemetryApiService
+        telemetryApi = RetrofitClient.railwayTelemetryApi
         alarmEngine = AlarmEngine(this)
     }
 

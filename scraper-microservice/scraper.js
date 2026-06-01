@@ -1,7 +1,7 @@
 // scraper.js
 const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
-const { getStationCode } = require('./stationMapper');
+const { resolveStationData } = require('./stationMapper');
 
 // Inject the stealth plugin to mask the headless browser fingerprint
 chromium.use(stealth);
@@ -64,10 +64,15 @@ async function scrapeTrainTelemetry(trainNumber) {
             });
         });
 
-        // 2. Map standardized station codes using the in-memory dictionary
-        const stationSequence = rawStationData.map(item => ({
-            ...item,
-            station_code: getStationCode(item.station_name)
+        // 2. Map standardized station data using the dictionary + Supabase
+        const stationSequence = await Promise.all(rawStationData.map(async item => {
+            const resolved = await resolveStationData(item.station_name);
+            return {
+                ...item,
+                station_code: resolved.code,
+                latitude: resolved.lat,
+                longitude: resolved.lon
+            };
         }));
 
         // Extract the Overall Live Status (ETA)
@@ -94,7 +99,7 @@ async function scrapeTrainTelemetry(trainNumber) {
         console.log(`- Current Status: ${extractedData.eta_string}`);
         
         // Detailed log for verification
-        console.log(JSON.stringify(extractedData, null, 2));
+        // console.log(JSON.stringify(extractedData, null, 2));
 
         return extractedData;
 

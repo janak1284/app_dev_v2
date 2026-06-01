@@ -41,12 +41,12 @@
 - **Auto-Arrival Save Prompt:** Integrated a 50m arrival detection trigger that automatically prompts the user to save the journey once they reach their destination.
 - **Database Migration:** Bumped Room database to **v6** to support new journey metadata and high-fidelity paths.
 
-## Phase 6/7 Refinements (May 2026)
-- **Bug Fix (Stale Preview)**: Implemented `resetRouteState()` in `MapViewModel` to ensure complete state clearing for each new route request, resolving the stale routing/ETA preview bug.
-- **Performance Optimization (ETA Calculation)**: Added distance-based throttling (5m) to `checkDistance` and geometry simplification in `MapViewModel` to reduce CPU overhead for spatial calculations.
-- **Bug Fix (Rendering History Journeys)**: Corrected the order of operations in `startJourneyDirect` to ensure route rendering state is populated correctly after state reset.
-- **Navigation Update**: Updated `MainActivity` and `HomeScreen` navigation to route the "Manage" button in Saved Routes section to the `saved_routes` page.
-- **Rendering Diagnostics**: Added comprehensive logging and state-synchronization fixes for MapLibre `GeoJsonSource` rendering on historical journeys.
+## V4 Railway Telemetry & Handshake Refinement (June 2026)
+- **Production-Grade Fuzzy Matcher:** Implemented an advanced token-based fuzzy matching engine in `stationMapper.js` (Microservice). It uses phonetic normalization, substring matching, and Levenshtein similarity to resolve naming discrepancies between ConfirmTkt and official IRCTC datasets with >70% confidence.
+- **Enriched Telemetry Handshake:** Updated the scraping engine to resolve and include physical coordinates (lat/lon) in the telemetry payload, reducing client-side dependency on the local Room database.
+- **Refined Final Approach Logic:** Updated `testLiveHandshake` in `MapViewModel` to focus on the penultimate station segment, providing a high-fidelity test for the arrival sequence.
+- **Bulletproof Alarm Fallback:** Implemented a robust Haversine straight-line math fallback in the Android client for cases where the OpenRailRouting (ORR) track geometry API is unreachable or fails to find a connection.
+- **Supabase Integration:** Integrated fuzzy SQL lookups via Supabase `ilike` as a secondary resolution tier for station coordinates.
 
 ## Technical Foundation
 - **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.

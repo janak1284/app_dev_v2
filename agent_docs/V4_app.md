@@ -18,8 +18,8 @@ The application is a multi-modal commuter alarm relying on strict geographical l
 
 ### Layer 1: The Docker Microservice (Railway Telemetry)
 
-* **Where:** Hugging Face Spaces (Node.js + Playwright + Stealth Plugins)
-* **Responsibility:** Bypasses the lack of open Railway APIs. Scrapes third-party websites to extract live `ETA` and the `station_sequence` (the ordered array of stops). It handles zero GPS or distance math.
+* **Where:** Local Development Machine (via Secure Tunnel: Localtunnel)
+* **Responsibility:** Bypasses the lack of open Railway APIs. Scrapes third-party websites to extract live `ETA` and the `station_sequence`. It is hosted locally to bypass "bot detection" and IP bans enforced by free-tier cloud providers.
 
 ### Layer 2: The Cloud Cache (Anti-Ban Shield)
 
@@ -94,12 +94,13 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 
 ### Phase 3: Infrastructure Deployment
 
-**Objective:** Containerize and host the microservice.
+**Objective:** Containerize and host the microservice with secure tunneling.
 
 * [x] Write a `Dockerfile` using `mcr.microsoft.com/playwright` base.
 * [x] Bind the Express API to `0.0.0.0:7860`.
-* [x] Deploy to Hugging Face Spaces (Blank Docker template, 16GB RAM tier).
-* [x] Verify endpoint stability using external API tools.
+* [x] **Local Pivot:** Transitioned from Hugging Face Spaces to local hosting due to automated bot-detection bans.
+* [x] **Secure Tunneling:** Implemented `localtunnel` with a permanent subdomain (`janak-transit-test.loca.lt`) to provide a stable public endpoint for the Android client.
+* [x] **Client Optimization:** Configured Android OkHttp client with 60s timeouts and `bypass-tunnel-reminders` headers.
 
 ### Phase 4: Mobile Client - Geometry & Data Prep
 
