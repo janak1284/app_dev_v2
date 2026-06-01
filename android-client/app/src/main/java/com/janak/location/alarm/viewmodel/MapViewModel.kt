@@ -526,9 +526,17 @@ class MapViewModel(
 
     fun startRailwayJourney(trainNumber: String, destinationName: String, destinationCode: String, destLat: Double, destLon: Double) {
         AppLogger.d("MapViewModel", "startRailwayJourney: $trainNumber to $destinationName ($destinationCode)")
+
+        // Preserve the current sequence before resetting state
+        val currentSequence = _stationSequence.value
+
         resetRouteState()
-        
+
+        // Restore the sequence so fetchRailwayRoute can use it
+        _stationSequence.value = currentSequence
+
         _currentTrainNumber = trainNumber
+
         _destination.value = LatLng(destLat, destLon)
         _destinationName.value = destinationName
         _destinationCode.value = destinationCode
