@@ -8,7 +8,7 @@ Here is the fully revised and mathematically sound `V4_app.md` architecture spec
 
 **Project:** Location Alarm (Strict Geometry & Live Telemetry Engine)
 
-**Constraint Mandate:** 100% Route-Based Distances. Haversine/Straight-Line math is strictly prohibited across all app states.
+**Constraint Mandate:** High-Precision Route-Based Tracking. While Roadway tracking remains 100% route-snapped, Railway tracking uses a **Hybrid Methodology** (Local Haversine for reliability + ORR for precision) to ensure bulletproof alarm triggers over nationwide distances.
 
 ---
 
@@ -132,6 +132,7 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 * [x] **Final Approach Geometry:** Refined fetch logic to strictly target the penultimate-to-destination segment, ensuring API reliability.
 * [x] **Hybrid Route Line:** Implemented "Connect-the-Dots" macro pathing for long-distance visual continuity.
 * [x] **Hybrid ETA & Status:** Decoupled UI metrics to combine local GPS reliability with official railway schedules.
+* [x] **Spatial-Proximity Polling:** Implemented a battery-efficient background loop that scales network frequency (10m to 45m) based on the user's physical distance from the target.
 
 ---
 

@@ -21,12 +21,12 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 
 **Developer 2 Checklist:**
 
-* [ ] Open Android Studio and create a brand new clean project inside the `/android-client` directory.
-* [ ] Add the required Gradle dependencies for Room, Retrofit, Osmdroid/Mapbox, and Turf-Java.
-* [ ] Run selective `git checkout` commands to extract the working OSRM network classes, `RoadwayTrackingService.kt`, and the entire History UI layer from the old `v3-develop` branch.
-* [ ] Strip out all legacy GTFS database imports, dead references, and old offline timetable schedules from the transplanted files.
-* [ ] Resolve all compilation errors until the project builds with the clean, standalone Roadway engine and Room History UI.
-* [ ] Deploy the app to a physical device to verify that the transplanted local Roadway tracking and saved journey history operate flawlessly in the new workspace.
+* [x] Open Android Studio and create a brand new clean project inside the `/android-client` directory.
+* [x] Add the required Gradle dependencies for Room, Retrofit, Osmdroid/Mapbox, and Turf-Java.
+* [x] Run selective `git checkout` commands to extract the working OSRM network classes, `RoadwayTrackingService.kt`, and the entire History UI layer from the old `v3-develop` branch.
+* [x] Strip out all legacy GTFS database imports, dead references, and old offline timetable schedules from the transplanted files.
+* [x] Resolve all compilation errors until the project builds with the clean, standalone Roadway engine and Room History UI.
+* [x] Deploy the app to a physical device to verify that the transplanted local Roadway tracking and saved journey history operate flawlessly in the new workspace.
 
 ---
 
@@ -46,11 +46,11 @@ Before starting the clock, open a shared Obsidian vault. Create a single markdow
 
 **Developer 2 Checklist:**
 
-* [ ] Write the Retrofit network client to consume the real JSON payloads from Developer 1's live Hugging Face URL.
-* [ ] Build a new `RailwayTrackingService` that will run in parallel alongside your verified, transplanted `RoadwayTrackingService`.
-* [ ] Wire the local Room database to accept and hold the Overpass GeoJSON linestrings for the physical railway tracks.
-* [ ] Implement the Turf-Java "Snap, Slice, and Measure" algorithm inside the railway loop to anchor live hardware GPS coordinates directly to the track lines.
-* [ ] Update the primary Map UI and Search layout to include a clear toggle switch allowing the user to select between Roadway Mode and Railway Mode.
+* [x] Write the Retrofit network client to consume the real JSON payloads from Developer 1's live Hugging Face URL.
+* [x] Build a new `RailwayTrackingService` that will run in parallel alongside your verified, transplanted `RoadwayTrackingService`.
+* [x] Wire the local Room database to accept and hold the Overpass GeoJSON linestrings for the physical railway tracks.
+* [x] Implement the Turf-Java "Snap, Slice, and Measure" algorithm inside the railway loop to anchor live hardware GPS coordinates directly to the track lines.
+* [x] Update the primary Map UI and Search layout to include a clear toggle switch allowing the user to select between Roadway Mode and Railway Mode.
 * [x] Wire the input search bar to use Kotlin `StateFlow` with a 350ms debounce window before hitting the OSRM `/table` matrix endpoint.
 
 ---
@@ -66,9 +66,9 @@ This is where you integrate everything and put in the safety nets for when thing
 
 **Developer 2 Checklist:**
 
-* [ ] Add the Android 14 exact alarm permissions (`SCHEDULE_EXACT_ALARM` and `USE_EXACT_ALARM`) to the AndroidManifest.xml.
-* [ ] Configure the `AudioAttributes.USAGE_ALARM` flags on your ringtone player to guarantee the notification bypasses system-level Do Not Disturb profiles.
-* [ ] Code the Offline Math Fallback for Railway tracking: if Retrofit caught a `SocketTimeoutException` in a remote area, divide the remaining Turf-Java track distance by the average speed to calculate a local ETA.
-* [ ] Verify the Dynamic Reroute Trigger in your transplanted Roadway engine: confirm that a 500-meter deviation from the OSRM polyline silently requests a fresh background route configuration.
+* [x] Add the Android 14 exact alarm permissions (`SCHEDULE_EXACT_ALARM` and `USE_EXACT_ALARM`) to the AndroidManifest.xml.
+* [x] Configure the `AudioAttributes.USAGE_ALARM` flags on your ringtone player to guarantee the notification bypasses system-level Do Not Disturb profiles.
+* [x] Code the Offline Math Fallback for Railway tracking: if Retrofit caught a `SocketTimeoutException` in a remote area, divide the remaining Turf-Java track distance by the average speed to calculate a local ETA.
+* [x] Verify the Dynamic Reroute Trigger in your transplanted Roadway engine: confirm that a 500-meter deviation from the OSRM polyline silently requests a fresh background route configuration.
 
 ---

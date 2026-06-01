@@ -39,6 +39,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -81,17 +84,63 @@ class LocationAlarmService : Service() {
     private var expectedSpeedMps: Double = 0.0
     private var segmentSpeeds: List<Double> = emptyList()
     private var historyId: Long = -1L
+    private var trainNumber: String? = null
+    private var lastKnownRemainingDistanceMeters: Double = Double.MAX_VALUE
+    private var telemetryPollingJob: Job? = null
 
     companion object {
         const val ACTION_STOP_ALARM = "com.janak.location.alarm.ACTION_STOP_ALARM"
         const val ACTION_END_JOURNEY = "com.janak.location.alarm.ACTION_END_JOURNEY"
         const val ACTION_UPDATE_ROUTE = "com.janak.location.alarm.ACTION_UPDATE_ROUTE"
         const val ACTION_RE_ROUTE = "com.janak.location.alarm.ACTION_RE_ROUTE"
+        const val ACTION_TELEMETRY_UPDATED = "com.janak.location.alarm.ACTION_TELEMETRY_UPDATED"
         const val JOURNEY_COMPLETED_BROADCAST = "com.janak.location.alarm.JOURNEY_COMPLETED"
         const val NOTIFICATION_ID = 1
         const val CHANNEL_ID = "LocationAlarmChannel"
         const val GPS_LOSS_THRESHOLD_MS = 15000L 
         const val RAILWAY_BULLETPROOF_THRESHOLD = 2000.0 // 2km
+    }
+// ...
+    private fun getDynamicPollingInterval(remainingMeters: Double): Long {
+        val remainingKm = remainingMeters / 1000.0
+        return when {
+            remainingKm > 150.0 -> 45 * 60 * 1000L // Far away (> 150km): Poll every 45 minutes
+            remainingKm > 50.0  -> 20 * 60 * 1000L // Mid-journey (50-150km): Poll every 20 minutes
+            else -> 10 * 60 * 1000L + 15000L       // Final Approach (< 50km): Poll every 10m 15s
+        }
+    }
+
+    private fun startTelemetryPolling() {
+        val tNum = trainNumber ?: return
+        if (transportMode != TransportMode.TRAIN) return
+
+        telemetryPollingJob?.cancel()
+        telemetryPollingJob = serviceScope.launch {
+            while (isActive) {
+                // Calculate dynamic delay based on live distance
+                val delayMs = getDynamicPollingInterval(lastKnownRemainingDistanceMeters)
+                AppLogger.d("LocationAlarmService", "💤 Telemetry Sleep: Next refresh in ${delayMs / 60000} mins. Distance remaining: ${(lastKnownRemainingDistanceMeters/1000).toInt()} km")
+                
+                delay(delayMs)
+                
+                try {
+                    AppLogger.d("LocationAlarmService", "🔄 Polling live telemetry for train $tNum")
+                    val response = com.janak.location.alarm.api.RetrofitClient.railwayTelemetryApi.getTrainTelemetry(tNum)
+                    if (response.isSuccessful && response.body() != null) {
+                        val sequence = response.body()!!.stationSequence
+                        val json = Json.encodeToString(sequence)
+                        
+                        sendBroadcast(Intent(ACTION_TELEMETRY_UPDATED).apply {
+                            setPackage(packageName)
+                            putExtra("STATION_SEQUENCE_JSON", json)
+                        })
+                        AppLogger.d("LocationAlarmService", "✅ Dynamic telemetry refresh successful")
+                    }
+                } catch (e: Exception) {
+                    AppLogger.e("LocationAlarmService", "⚠️ Dynamic refresh failed", e)
+                }
+            }
+        }
     }
 
     override fun onCreate() {
@@ -198,6 +247,7 @@ class LocationAlarmService : Service() {
             isPredictiveAlarmEnabled = intent.getBooleanExtra("PREDICTIVE_ALARM_ENABLED", false)
             ringtoneUri = intent.getStringExtra("RINGTONE_URI")
             isVibrateEnabled = intent.getBooleanExtra("VIBRATE", true)
+            trainNumber = intent.getStringExtra("TRAIN_NUMBER")
             isAlarmSilenced = false
             
             updateRouteData(intent)
@@ -206,6 +256,7 @@ class LocationAlarmService : Service() {
             startTimeMillis = System.currentTimeMillis()
             
             saveStateToPrefs()
+            startTelemetryPolling()
             
             serviceScope.launch {
                 val initialHistory = JourneyHistoryEntity(
@@ -266,7 +317,7 @@ class LocationAlarmService : Service() {
 
         if (legsJson != null) {
             try {
-                currentLegs = kotlinx.serialization.json.Json.decodeFromString(legsJson)
+                currentLegs = Json.decodeFromString(legsJson)
                 currentLegIndex = 0
             } catch (e: Exception) {}
         }
@@ -389,6 +440,7 @@ class LocationAlarmService : Service() {
         
         updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.roundToInt()} min" else ""}")
         adjustPollingInterval(distance)
+        lastKnownRemainingDistanceMeters = distance
 
         if (distance <= 50) handleArrivalAtPoint()
 

@@ -65,6 +65,7 @@
     - [x] **Final Approach Geometry Optimization:** Refined `fetchRailwayRoute` to strictly request the penultimate-to-destination segment, preventing ORR API timeouts on long-distance routes.
     - [x] **Hybrid Route Line Implementation:** Implemented "Connect-the-Dots" macro pathing combined with high-precision micro-routing for continuous visual coverage.
     - [x] **Hybrid ETA & Status Integration:** Decoupled UI metrics to combine local GPS reliability with official railway schedules. Implemented relative "hours/mins" arrival countdown and strictly honor user-defined alarm ranges.
+    - [x] **Spatial-Proximity Polling:** Implemented a battery-efficient background refresh system that scales network frequency based on the user's distance from the destination.
 
 ## Future Improvements (Post-V2)
 - [ ] **Optimize Rail Multi-Modal Engine:** Evaluate more candidates, NxN matrix options, and walking-to-station logic.

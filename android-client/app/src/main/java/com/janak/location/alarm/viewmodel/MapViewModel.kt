@@ -138,6 +138,7 @@ class MapViewModel(
     val destinationName: StateFlow<String?> = _destinationName.asStateFlow()
 
     private val _destinationCode = MutableStateFlow<String?>(null)
+    private var _currentTrainNumber: String? = null
     private val _railwayEtaStatus = MutableStateFlow<String?>(null)
     val railwayEtaStatus: StateFlow<String?> = _railwayEtaStatus.asStateFlow()
 
@@ -236,12 +237,31 @@ class MapViewModel(
         }
     }
 
+    private val telemetryUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == LocationAlarmService.ACTION_TELEMETRY_UPDATED) {
+                val jsonStr = intent.getStringExtra("STATION_SEQUENCE_JSON") ?: return
+                try {
+                    val sequence = Json.decodeFromString<List<StationSequenceItem>>(jsonStr)
+                    _stationSequence.value = sequence
+                    AppLogger.d("MapViewModel", "Telemetry updated from background broadcast")
+                    
+                    // Trigger immediate UI refresh
+                    _userLocation.value?.let { checkDistance(it) }
+                } catch (e: Exception) {
+                    AppLogger.e("MapViewModel", "Failed to decode background telemetry", e)
+                }
+            }
+        }
+    }
+
     init {
         checkLocationSettings()
         setupSearchDebounce()
 
         val reRouteFilter = IntentFilter(LocationAlarmService.ACTION_RE_ROUTE)
         val journeyFilter = IntentFilter(LocationAlarmService.JOURNEY_COMPLETED_BROADCAST)
+        val telemetryFilter = IntentFilter(LocationAlarmService.ACTION_TELEMETRY_UPDATED)
         val locationSettingsFilter = IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
 
         ContextCompat.registerReceiver(
@@ -254,6 +274,12 @@ class MapViewModel(
             context,
             journeyCompletedReceiver,
             journeyFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        ContextCompat.registerReceiver(
+            context,
+            telemetryUpdateReceiver,
+            telemetryFilter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         context.registerReceiver(locationSettingsReceiver, locationSettingsFilter)
@@ -412,6 +438,15 @@ class MapViewModel(
                 putExtra("PREDICTIVE_ALARM_ENABLED", settings.isPredictiveAlarmEnabled)
                 putExtra("RINGTONE_URI", settings.ringtoneUri?.toString())
                 putExtra("VIBRATE", settings.isVibrateEnabled)
+                
+                // --- NEW: Add train number for telemetry refresh ---
+                if (settings.transportMode == TransportMode.TRAIN) {
+                    // Extract train number from search history or temporary state
+                    // For now, we assume _destinationCode contains the train/station context needed
+                    // We'll pass the trainNumber if we have it in a member variable
+                    // (Actually we should store the current active train number)
+                    _currentTrainNumber?.let { putExtra("TRAIN_NUMBER", it) }
+                }
             }
             context.startForegroundService(serviceIntent)
         }
@@ -493,6 +528,7 @@ class MapViewModel(
         AppLogger.d("MapViewModel", "startRailwayJourney: $trainNumber to $destinationName ($destinationCode)")
         resetRouteState()
         
+        _currentTrainNumber = trainNumber
         _destination.value = LatLng(destLat, destLon)
         _destinationName.value = destinationName
         _destinationCode.value = destinationCode
