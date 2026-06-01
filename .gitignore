@@ -71,6 +71,7 @@ lint/reports/
 lint/intermediate/
 lint/generated/
 /tasks.txt
+/photos
 
 # Node.js
 node_modules/

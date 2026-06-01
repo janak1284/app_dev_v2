@@ -561,9 +561,9 @@ class MapViewModel(
                 throw Exception("Destination is invalid or is the starting station.")
             }
             
-            // --- BUILD THE MACRO ROUTE (Straight lines between all previous stations) ---
-            val completeRoutePoints = mutableListOf<com.mapbox.geojson.Point>()
-            for (i in 0 until destIndex) {
+            // 1. Collect all valid station coordinates for the sequence
+            val routePoints = mutableListOf<String>()
+            for (i in 0..destIndex) {
                 val station = sequence[i]
                 var lat = station.latitude
                 var lon = station.longitude
@@ -577,58 +577,33 @@ class MapViewModel(
                 }
                 
                 if (lat != null && lon != null) {
-                    completeRoutePoints.add(com.mapbox.geojson.Point.fromLngLat(lon, lat))
+                    routePoints.add("$lat,$lon")
                 }
             }
-            
-            // 2. The Final Approach (Penultimate Station -> Destination)
-            val penultimateCode = sequence[destIndex - 1].stationCode
-            
-            val startStation = stationRepository.getStationByCode(penultimateCode)
-            val endStation = stationRepository.getStationByCode(destinationCode)
-            
+            AppLogger.d("MapViewModel", "Sending route points to API: $routePoints")
+
             var orrPoints: List<com.mapbox.geojson.Point>? = null
             var orrDistance = 0.0
             var orrDuration = 0.0
 
-            if (startStation != null && endStation != null) {
-                val startParam = "${startStation.latitude},${startStation.longitude}"
-                val endParam = "${endStation.latitude},${endStation.longitude}"
-                
-                // 3. Fetch the geometry
-                val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
+            if (routePoints.size >= 2) {
+                // 3. Fetch the geometry for the whole path
+                val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(routePoints)
                 
                 if (orrResponse.isSuccessful && orrResponse.body() != null) {
-                    val path = orrResponse.body()!!.paths[0]
-                    orrPoints = PolylineDecoder.decode(path.points)
-                    orrDistance = path.distanceMeters
-                    orrDuration = path.timeMillis / 1000.0
-                }
-            }
-
-            // Fallback for ORR points if DB coords were missing but sequence has them
-            if (orrPoints == null) {
-                val penultimateStation = sequence[destIndex - 1]
-                val destinationStation = sequence[destIndex]
-                if (penultimateStation.latitude != null && destinationStation.latitude != null) {
-                    val startParam = "${penultimateStation.latitude},${penultimateStation.longitude}"
-                    val endParam = "${destinationStation.latitude},${destinationStation.longitude}"
-                    val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
-                    if (orrResponse.isSuccessful && orrResponse.body() != null) {
-                        val path = orrResponse.body()!!.paths[0]
-                        orrPoints = PolylineDecoder.decode(path.points)
-                        orrDistance = path.distanceMeters
-                        orrDuration = path.timeMillis / 1000.0
+                    val paths = orrResponse.body()!!.paths
+                    val bestPath = paths.minByOrNull { it.distanceMeters }
+                    if (bestPath != null) {
+                        orrPoints = PolylineDecoder.decode(bestPath.points)
+                        orrDistance = bestPath.distanceMeters
+                        orrDuration = bestPath.timeMillis / 1000.0
                     }
                 }
             }
 
             if (orrPoints != null) {
-                // Stitch the curved ORR points onto the end of the straight macro points
-                completeRoutePoints.addAll(orrPoints)
-                
-                // 4. PUSH TO UI: This draws the track on the MapLibre canvas!
-                val mbLine = com.mapbox.geojson.LineString.fromLngLats(completeRoutePoints)
+                // Use the fetched ORR points as the full route
+                val mbLine = com.mapbox.geojson.LineString.fromLngLats(orrPoints)
                 _routeLine.value = mbLine.toMapLibre()
                 
                 val geoJson = mbLine.toJson()
@@ -639,21 +614,13 @@ class MapViewModel(
                 
                 // For Railway, we don't have segment speeds yet, use average
                 val avgSpeed = if (orrDuration > 0) orrDistance / orrDuration else 15.0 // Default 15m/s (~54km/h)
-                val speeds = List(completeRoutePoints.size) { avgSpeed }
+                val speeds = List(orrPoints.size) { avgSpeed }
                 _segmentSpeeds.value = speeds
 
                 processRouteSuccess(geoJson, orrDistance, pushToService = _isAlarmSet.value, speeds = speeds)
-                AppLogger.d("MapViewModel", "✅ Hybrid Track rendered! Total Points: ${completeRoutePoints.size}")
+                AppLogger.d("MapViewModel", "✅ Railway Track rendered! Total Points: ${orrPoints.size}")
             } else {
-                // If ORR failed, we still show the Macro Route at least
-                if (completeRoutePoints.size >= 2) {
-                    val mbLine = com.mapbox.geojson.LineString.fromLngLats(completeRoutePoints)
-                    _routeLine.value = mbLine.toMapLibre()
-                    _currentRouteGeoJson.value = mbLine.toJson()
-                    AppLogger.w("MapViewModel", "⚠️ ORR failed, rendering Macro Route only.")
-                } else {
-                    throw Exception("Could not fetch Hybrid Route.")
-                }
+                throw Exception("Could not fetch Railway Route.")
             }
 
         } catch (e: Exception) {
@@ -924,7 +891,7 @@ class MapViewModel(
         try {
             val startPoint = "$sLat,$sLon"
             val endPoint = "$eLat,$eLon"
-            val response = com.janak.location.alarm.api.RetrofitClient.openRailRoutingApi.getTrackGeometry(startPoint, endPoint)
+            val response = com.janak.location.alarm.api.RetrofitClient.openRailRoutingApi.getTrackGeometry(listOf(startPoint, endPoint))
             if (response.isSuccessful) {
                 val orrResponse = response.body() ?: return null
                 val path = orrResponse.paths.firstOrNull() ?: return null

@@ -8,8 +8,7 @@ import retrofit2.http.Query
 interface OpenRailRoutingApi {
     @GET("route")
     suspend fun getTrackGeometry(
-        @Query("point") startPoint: String, // format: "lat,lon"
-        @Query("point") endPoint: String,   // format: "lat,lon"
+        @Query("point") points: List<String>, // format: ["lat,lon", "lat,lon", ...]
         @Query("profile") profile: String = "all_tracks",
         @Query("points_encoded") encoded: Boolean = true,
         @Query("type") type: String = "json"

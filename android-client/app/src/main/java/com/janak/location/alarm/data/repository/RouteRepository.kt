@@ -60,7 +60,7 @@ class RouteRepository(private val database: AppDatabase) {
         try {
             val startPoint = "$startLat,$startLng"
             val endPoint = "$destLat,$destLng"
-            val response = RetrofitClient.openRailRoutingApi.getTrackGeometry(startPoint, endPoint)
+            val response = RetrofitClient.openRailRoutingApi.getTrackGeometry(listOf(startPoint, endPoint))
             if (response.isSuccessful) {
                 val orrResponse = response.body() ?: return null
                 val path = orrResponse.paths.firstOrNull() ?: return null
