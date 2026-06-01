@@ -36,6 +36,7 @@ class MainActivity : ComponentActivity() {
             
             var routeRepository by remember { mutableStateOf<RouteRepository?>(null) }
             var historyRepository by remember { mutableStateOf<com.janak.location.alarm.data.repository.HistoryRepository?>(null) }
+            var stationRepository by remember { mutableStateOf<com.janak.location.alarm.data.repository.StationRepository?>(null) }
             var alarmEngine by remember { mutableStateOf<AlarmEngine?>(null) }
             var locationTrackingManager by remember { mutableStateOf<LocationTrackingManager?>(null) }
 
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
                     val database = AppDatabase.getDatabase(context)
                     routeRepository = RouteRepository(database)
                     historyRepository = com.janak.location.alarm.data.repository.HistoryRepository(database)
+                    stationRepository = com.janak.location.alarm.data.repository.StationRepository(database, context)
                     alarmEngine = AlarmEngine(context)
                     locationTrackingManager = LocationTrackingManager(context)
                     isInitialized = true
@@ -57,7 +59,6 @@ class MainActivity : ComponentActivity() {
             } else {
                 val photonApiService = remember { RetrofitClient.photonApiService }
                 val osrmApiService = remember { RetrofitClient.osrmApiService }
-                val openRailRoutingApiService = remember { RetrofitClient.openRailRoutingApiService }
 
                 val viewModel: MapViewModel = viewModel(
                     factory = MapViewModelFactory(
@@ -65,9 +66,9 @@ class MainActivity : ComponentActivity() {
                         alarmEngine!!,
                         photonApiService,
                         osrmApiService,
-                        openRailRoutingApiService,
                         routeRepository!!,
                         historyRepository!!,
+                        stationRepository!!,
                         context
                     )
                 )

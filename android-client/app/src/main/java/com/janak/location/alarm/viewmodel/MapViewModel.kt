@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.janak.location.alarm.alarm.AlarmEngine
-import com.janak.location.alarm.api.OpenRailRoutingApiService
 import com.janak.location.alarm.api.PhotonApiService
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.*
@@ -34,6 +33,7 @@ import kotlin.math.roundToInt
 
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.data.repository.HistoryRepository
+import com.janak.location.alarm.data.repository.StationRepository
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import androidx.core.content.edit
 import androidx.core.content.ContextCompat
@@ -55,9 +55,9 @@ class MapViewModel(
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
-    private val openRailRoutingApiService: OpenRailRoutingApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: HistoryRepository,
+    private val stationRepository: StationRepository,
     private val context: Context
 ) : ViewModel() {
 
@@ -713,20 +713,28 @@ class MapViewModel(
         eLon: Double
     ): RouteSegment? {
         try {
-            val response =
-                openRailRoutingApiService.getRoute(points = listOf("$sLat,$sLon", "$eLat,$eLon"))
+            val startPoint = "$sLat,$sLon"
+            val endPoint = "$eLat,$eLon"
+            val response = com.janak.location.alarm.api.RetrofitClient.openRailRoutingApi.getTrackGeometry(startPoint, endPoint)
             if (response.isSuccessful) {
-                val path = response.body()?.paths?.firstOrNull() ?: return null
-                val points = path.points.coordinates.map { Point.fromLngLat(it[0], it[1]) }
+                val orrResponse = response.body() ?: return null
+                val path = orrResponse.paths.firstOrNull() ?: return null
+
+                val decodedPoints = com.janak.location.alarm.util.PolylineDecoder.decode(path.points)
+                // Convert Mapbox Point to MapLibre Point
+                val mapLibrePoints = decodedPoints.map {
+                    Point.fromLngLat(it.longitude(), it.latitude())
+                }
+
                 return RouteSegment(
-                    points,
-                    path.distance,
-                    path.time.toDouble() / 1000.0,
-                    emptyList()
+                    coordinates = mapLibrePoints,
+                    distance = path.distanceMeters,
+                    duration = (path.timeMillis / 1000.0),
+                    speeds = emptyList() // ORR doesn't provide per-segment speeds yet
                 )
             }
         } catch (e: Exception) {
-            android.util.Log.e("MapViewModel", "Rail segment failed", e)
+            android.util.Log.e("MapViewModel", "Rail segment fetch failed", e)
         }
         return null
     }
@@ -756,38 +764,8 @@ class MapViewModel(
 
     private suspend fun findCandidateStations(lat: Double, lon: Double, limit: Int = 10): List<LatLng> {
         try {
-            val response = photonApiService.getSuggestions(
-                query = "station",
-                lat = lat,
-                lon = lon,
-                limit = limit
-            )
-            if (response.isSuccessful) {
-                val features = response.body()?.features ?: return emptyList()
-                val origin = Point.fromLngLat(lon, lat)
-
-                // Filter for railway stations, calculate Haversine distance, and take top 5 within radius
-                return features.asSequence().filter {
-                    it.properties.osmKey == "railway" || it.properties.name?.lowercase()
-                        ?.contains("station") == true
-                }.map { feature ->
-                    val stationPoint = Point.fromLngLat(
-                        feature.geometry.coordinates[0],
-                        feature.geometry.coordinates[1]
-                    )
-                    val distance = TurfMeasurement.distance(
-                        origin.toMapbox(),
-                        stationPoint.toMapbox(),
-                        TurfConstants.UNIT_KILOMETERS
-                    )
-                    feature to distance
-                }.filter { it.second <= maxStationSearchRadiusKm } // Strict distance gate
-                    .sortedBy { it.second } // Sort by Haversine distance ascending
-                    .take(5)
-                    .map { (feature, _) ->
-                        LatLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0])
-                    }.toList()
-            }
+            val stations = stationRepository.getNearbyStations(lat, lon, maxStationSearchRadiusKm, limit)
+            return stations.map { LatLng(it.latitude, it.longitude) }
         } catch (e: Exception) {
             android.util.Log.e("MapViewModel", "Failed to find candidate stations", e)
         }
@@ -1227,15 +1205,14 @@ class MapViewModel(
         }
     }
 }
-
 class MapViewModelFactory(
     private val locationTrackingManager: LocationTrackingManager,
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
-    private val openRailRoutingApiService: OpenRailRoutingApiService,
     private val routeRepository: RouteRepository,
     private val historyRepository: HistoryRepository,
+    private val stationRepository: StationRepository,
     private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1243,8 +1220,8 @@ class MapViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return MapViewModel(
                 locationTrackingManager, alarmEngine,
-                photonApiService, osrmApiService, openRailRoutingApiService,
-                routeRepository, historyRepository, context
+                photonApiService, osrmApiService,
+                routeRepository, historyRepository, stationRepository, context
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

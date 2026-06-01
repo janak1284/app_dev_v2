@@ -57,44 +57,37 @@ class RouteRepository(private val database: AppDatabase) {
 
     suspend fun getRailwayItinerary(startLat: Double, startLng: Double, destLat: Double, destLng: Double): TransitItinerary? {
         try {
-            // OpenRailRouting (GraphHopper) expects "lat,lon"
-            val points = listOf("$startLat,$startLng", "$destLat,$destLng")
-            val response = RetrofitClient.openRailRoutingApiService.getRoute(points = points)
+            val startPoint = "$startLat,$startLng"
+            val endPoint = "$destLat,$destLng"
+            val response = RetrofitClient.openRailRoutingApi.getTrackGeometry(startPoint, endPoint)
             if (response.isSuccessful) {
-                return response.body()?.let { mapGraphHopperToItinerary(it) }
-            } else {
-                android.util.Log.e("RouteRepository", "Railway API Error: ${response.errorBody()?.string()}")
+                val orrResponse = response.body() ?: return null
+                val path = orrResponse.paths.firstOrNull() ?: return null
+                
+                val leg = JourneyLeg(
+                    mode = TransportMode.TRAIN,
+                    geometry = com.mapbox.geojson.LineString.fromLngLats(
+                        com.janak.location.alarm.util.PolylineDecoder.decode(path.points)
+                    ).toJson(),
+                    startLat = startLat,
+                    startLng = startLng,
+                    endLat = destLat,
+                    endLng = destLng,
+                    distanceMeters = path.distanceMeters,
+                    durationMillis = path.timeMillis,
+                    startName = "Origin Station",
+                    endName = "Destination Station"
+                )
+                
+                return TransitItinerary(
+                    legs = listOf(leg),
+                    totalDistanceMeters = path.distanceMeters,
+                    totalDurationMillis = path.timeMillis
+                )
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("RouteRepository", "getRailwayItinerary failed", e)
         }
         return null
-    }
-
-    private fun mapGraphHopperToItinerary(response: GraphHopperResponse): TransitItinerary {
-        val legs = response.paths.map { path ->
-            // Convert GH points to GeoJSON LineString manually
-            val coords = path.points.coordinates.joinToString(",") { "[${it[0]},${it[1]}]" }
-            val geoJson = "{\"type\":\"LineString\",\"coordinates\":[$coords]}"
-
-            JourneyLeg(
-                mode = TransportMode.TRAIN,
-                geometry = geoJson,
-                distanceMeters = path.distance,
-                durationMillis = path.time,
-                startName = "Start",
-                endName = "End",
-                startLat = path.points.coordinates.first()[1],
-                startLng = path.points.coordinates.first()[0],
-                endLat = path.points.coordinates.last()[1],
-                endLng = path.points.coordinates.last()[0]
-            )
-        }
-
-        return TransitItinerary(
-            legs = legs,
-            totalDistanceMeters = response.paths.sumOf { it.distance },
-            totalDurationMillis = response.paths.sumOf { it.time }
-        )
     }
 }

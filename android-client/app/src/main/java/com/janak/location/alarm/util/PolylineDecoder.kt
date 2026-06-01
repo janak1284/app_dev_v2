@@ -2,14 +2,9 @@ package com.janak.location.alarm.util
 
 import com.mapbox.geojson.Point
 
-object ValhallaUtil {
-    /**
-     * Decodes a Valhalla encoded polyline.
-     * Valhalla typically uses 6 decimal places (precision = 6).
-     */
-    fun decodePolyline(encoded: String, precision: Int = 6): List<Point> {
-        val factor = Math.pow(10.0, precision.toDouble())
-        val points = mutableListOf<Point>()
+object PolylineDecoder {
+    fun decode(encoded: String): List<Point> {
+        val poly = ArrayList<Point>()
         var index = 0
         val len = encoded.length
         var lat = 0
@@ -37,8 +32,12 @@ object ValhallaUtil {
             val dlng = if (result and 1 != 0) (result shr 1).inv() else result shr 1
             lng += dlng
 
-            points.add(Point.fromLngLat(lng.toDouble() / factor, lat.toDouble() / factor))
+            val p = Point.fromLngLat(
+                (lng.toDouble() / 1E5), 
+                (lat.toDouble() / 1E5)
+            )
+            poly.add(p)
         }
-        return points
+        return poly
     }
 }

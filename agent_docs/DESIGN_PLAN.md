@@ -35,8 +35,9 @@ The finalized design (Variant F) transforms the "bleak" MapScreen into a modern,
 ## Multi-Modal Architecture (Transit Expansion)
 
 ### Transit API Integration
-- **Engine:** Valhalla or OpenTripPlanner (OTP) via Transitland.
+- **Engine:** OpenRailRouting (ORR) API for high-fidelity physical track geometry.
 - **Routing:** Fetch multi-modal itineraries including walking, trains, and buses.
+- **Stations Database:** Local Room-based database of 8000+ stations for candidate entry/exit evaluation.
 - **Data Model:** Introduce `JourneyLeg` to encapsulate individual segments.
     - `type`: Walk, Train, Bus, etc.
     - `geometry`: LineString for the leg.
@@ -44,7 +45,7 @@ The finalized design (Variant F) transforms the "bleak" MapScreen into a modern,
 
 ### Leg-Based Tracking Strategy
 1. **Target Leg:** The `AlarmEngine` identifies the current active `JourneyLeg`.
-2. **Dynamic Destination:** Instead of tracking the final destination, `RouteDistanceEngine` slices the polyline against the `arrivalPoint` of the *current* leg.
+2. **Dynamic Destination:** Instead of tracking the final destination, `RouteDistanceEngine` slices the polyline (ORR or OSRM) against the `arrivalPoint` of the *current* leg.
 3. **Transfer Alarms:** When the user arrives at the end of a non-final leg, a unique "Transfer Alert" is triggered.
 4. **Leg Transition:** Upon alarm dismissal or arrival, the engine automatically advances to the next `JourneyLeg` in the itinerary.
 

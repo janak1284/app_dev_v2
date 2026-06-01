@@ -28,9 +28,10 @@ The application is a multi-modal commuter alarm relying on strict geographical l
 
 ### Layer 3: The Android Client (The Math & Routing Engine)
 
-* **Where:** User's Mobile Device (Kotlin, Turf-Java, OSRM API, Room DB)
+* **Where:** User's Mobile Device (Kotlin, Turf-Java, OSRM API, OpenRailRouting API, Room DB)
 * **Responsibility:** * Manages Roadway routing natively via direct calls to the FOSS OSRM API.
-* Reconstructs physical Railway routes by pulling exact track geometries from an embedded OpenStreetMap (Overpass API) database, completely avoiding straight-line station-to-station inaccuracies.
+* Reconstructs physical Railway routes by pulling exact track geometries from the **OpenRailRouting (ORR) API**, completely avoiding straight-line station-to-station inaccuracies. This replaces the resource-heavy local Overpass DB to prevent OOM crashes.
+* Maintains a local **Stations Database** (resurrected from scraped data) to quickly identify candidate entry/exit points for rail travel.
 * Uses Turf-Java to snap the hardware GPS to the polylines, executing the exact track-distance remaining.
 * Adjusts tracking intensity dynamically to preserve battery and overrides OS-level Do Not Disturb limits to guarantee alarm execution.
 
@@ -40,11 +41,11 @@ The application is a multi-modal commuter alarm relying on strict geographical l
 
 ## 2. Core Methodologies
 
-### A. The "Snap & Slice" Distance Algorithm (Turf-Java & Overpass)
+### A. The "Snap & Slice" Distance Algorithm (Turf-Java & ORR)
 
 Used for **both** Roadway and Railway active tracking to guarantee perfect route adherence.
 
-1. **Snap:** Takes the user's raw, drifting hardware GPS coordinate and uses `nearestPointOnLine` to mathematically anchor them onto the exact Mapbox/Osmdroid polyline (OSRM for roads, Overpass GeoJSON for railways).
+1. **Snap:** Takes the user's raw, drifting hardware GPS coordinate and uses `nearestPointOnLine` to mathematically anchor them onto the exact Mapbox/Osmdroid polyline (OSRM for roads, ORR Polyline for railways).
 2. **Slice:** Uses `lineSlice` to cut the polyline from the user's snapped position to the final destination.
 3. **Measure:** Uses `length` to calculate the exact, curve-accurate distance remaining along the physical road or tracks.
 
@@ -104,9 +105,10 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 
 **Objective:** Implement strict geographic mapping and local preferences.
 
-* [ ] **Overpass Track Extraction:** Query `overpass-turbo.eu` for the exact geographic rail tracks in the operating region. Convert to GeoJSON/Polylines.
-* [ ] **Room DB Setup:** Create entities for `SavedDestinations` (Name, Lat, Lng, Target Distance, Alarm Mode) and store the Overpass railway polylines here.
-* [ ] **Debounced Search:** Implement `StateFlow` with a 350ms debounce for the search bar.
+* [x] **Stations Database:** Resurrected `stations.json` (1.86MB) into `app/src/main/res/raw/`. Implemented Room entities and `StationRepository` to load and search 8000+ stations.
+* [x] **OpenRailRouting (ORR) Client:** Implemented lightweight Retrofit client to fetch physical track geometry via encoded polylines.
+* [x] **Polyline Decoder:** Added high-performance utility to convert ORR strings into Mapbox `Point` objects.
+* [x] **Debounced Search:** Implement `StateFlow` with a 350ms debounce for the search bar.
 * [x] **Matrix Pipeline:** Connect Photon Geocoder outputs directly to the OSRM `/table` API to render exact route distances in the UI dropdown.
 
 ### Phase 5: Mobile Client - The Tracking Engine
@@ -115,7 +117,7 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 
 * [ ] **Android 14 Overrides:** Add `<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>` and `<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>` to the Manifest. Configure `AudioAttributes.USAGE_ALARM` to bypass Do Not Disturb mode.
 * [ ] **Dynamic Location Provider:** Instantiate `FusedLocationProviderClient`. Implement the speed-based polling loop (15 seconds when slow, 3 seconds when fast).
-* [ ] **Distance Mode Logic:** Implement the Turf-Java **Snap, Slice, and Measure** loop against the physical Overpass/OSRM polylines. Fire the alarm if `remainingTrackLength <= targetDistance`.
+* [ ] **Distance Mode Logic:** Implement the Turf-Java **Snap, Slice, and Measure** loop against the physical ORR/OSRM polylines. Fire the alarm if `remainingTrackLength <= targetDistance`.
 * [ ] **Time Mode Logic & Offline Fallback (Train):** * Compare system clock against the scraped API `ETA` minus the user's buffer.
 * If the Hugging Face API throws a `SocketTimeoutException` (user lost internet in a rural zone), immediately execute the offline mathematical fallback to keep the alarm alive.
 * [ ] **Dynamic Rerouting (Road):** During the snap process, evaluate `deviationDistance`. If > 500m, execute a background OSRM `/route` call to update the active linestring.

@@ -31,6 +31,10 @@
 - **Pattern:** Shimmering skeleton animations (1200ms duration, LinearEasing) used for Distance and ETA displays during asynchronous data fetching (OSRM API).
 - **Colors:** LightGray (0.6f to 0.2f alpha) gradient.
 
+### Station Search Optimization
+- **Pattern:** Local box-filtered spatial queries in Room combined with Haversine distance sorting.
+- **Limit:** Top 5 candidates within a 30km radius are evaluated for multi-modal path stitching.
+
 ### Journey History Design
 - **Concept:** A "Gist" approach. The History Screen displays a simplified summary (Destination Name + Timestamp) to minimize visual noise.
 - **Limit:** Hard cap of 10 items to maintain relevance and storage efficiency.
