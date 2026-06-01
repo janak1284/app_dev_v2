@@ -1065,11 +1065,13 @@ class MapViewModel(
         _remainingEta.value = null
         _currentRouteGeoJson.value = null
         _journeyLegs.value = emptyList()
+        _stationSequence.value = emptyList() // Clear railway sequence
         _routeLine.value = null
         fullRouteLine = null
         _expectedDistance.value = 0.0
         _expectedDuration.value = 0.0
         _segmentSpeeds.value = emptyList()
+        _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.ROAD) // Default back to Road
         routeDistanceEngine.resetStats()
         lastCheckedLocation = null
         needsInitialCalculation = true
@@ -1130,6 +1132,13 @@ class MapViewModel(
 
         // 1. Transport Mode Specific Logic
         if (mode == TransportMode.TRAIN) {
+            // Check for Null Island (0.0, 0.0) coordinates - Safeguard against missing station data
+            if (dest.latitude == 0.0 && dest.longitude == 0.0) {
+                _distanceToDestination.value = "Station coordinates unavailable"
+                _railwayEtaStatus.value = "Coordinate Error ⚠️"
+                return
+            }
+
             // RAILWAY: Use Haversine distance for UI (Decoupled from "Final Approach" polyline)
             _distanceToDestination.value = formatDistance(straightLineDistance.toInt())
             

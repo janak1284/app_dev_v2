@@ -382,6 +382,12 @@ class LocationAlarmService : Service() {
     private fun processLocationUpdate(location: Location) {
         if (location.hasAccuracy() && location.accuracy > 40.0f) return
         
+        // Check for Null Island (0.0, 0.0) coordinates - Safeguard against missing station data
+        if (destinationLat == 0.0 && destinationLng == 0.0) {
+            updateNotification("Coordinate Error ⚠️", "Destination coordinates unavailable")
+            return
+        }
+
         lastLocationTime = System.currentTimeMillis()
         wakeLock?.acquire(60 * 60 * 1000L)
         

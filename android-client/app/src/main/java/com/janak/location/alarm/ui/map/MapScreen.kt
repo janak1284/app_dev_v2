@@ -506,28 +506,10 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     onFocusChanged = { isSearchFocused = it },
                 )
             }
-            
-            // --- Transport Mode Toggle ---
-            Row(
-                modifier = Modifier.padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.ROAD,
-                    onClick = { viewModel.updateAlarmSettings(alarmSettings.copy(transportMode = com.janak.location.alarm.model.TransportMode.ROAD)) },
-                    label = { Text("Road") },
-                    leadingIcon = { Icon(Icons.Default.DirectionsCar, null, modifier = Modifier.size(16.dp)) }
-                )
-                FilterChip(
-                    selected = alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN,
-                    onClick = { viewModel.updateAlarmSettings(alarmSettings.copy(transportMode = com.janak.location.alarm.model.TransportMode.TRAIN)) },
-                    label = { Text("Rail") },
-                    leadingIcon = { Icon(Icons.Default.DirectionsTransit, null, modifier = Modifier.size(16.dp)) }
-                )
             }
-        }
 
-        // --- Floating Buttons ---
+            // --- Floating Buttons ---
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
