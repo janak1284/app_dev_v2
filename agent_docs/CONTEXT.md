@@ -27,6 +27,7 @@ The "Location Alarm" is an intelligent, route-based Android commuter application
   - **Multi-Modal Engine:** Integrated OSRM and OpenRailRouting for seamless "Road-Rail-Road" journey tracking.
   - **Lean V4 Railway tracking:** Implemented "Already on Train" mode with strict 2km safety triggers and forced volume alerts.
   - **System Standardization:** Standardized app-wide logging with `AppLogger` and finalized production handshake.
+  - **Hybrid Railway Tracking:** Implemented "Hybrid Route Line" (Macro straight lines + Micro ORR curves) and "Hybrid ETA" (Relative countdown + User-defined alarm ranges).
 - **Currently in Development:**
   - **Refinement:** Accuracy calibration and rail multi-modal engine optimizations.
 

@@ -137,6 +137,10 @@ class MapViewModel(
     private val _destinationName = MutableStateFlow<String?>(null)
     val destinationName: StateFlow<String?> = _destinationName.asStateFlow()
 
+    private val _destinationCode = MutableStateFlow<String?>(null)
+    private val _railwayEtaStatus = MutableStateFlow<String?>(null)
+    val railwayEtaStatus: StateFlow<String?> = _railwayEtaStatus.asStateFlow()
+
     private val _currentRouteGeoJson = MutableStateFlow<String?>(null)
     val currentRouteGeoJson: StateFlow<String?> = _currentRouteGeoJson.asStateFlow()
 
@@ -491,6 +495,7 @@ class MapViewModel(
         
         _destination.value = LatLng(destLat, destLon)
         _destinationName.value = destinationName
+        _destinationCode.value = destinationCode
         _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.TRAIN)
         _isPreviewMode.value = true
         
@@ -502,74 +507,113 @@ class MapViewModel(
     private suspend fun fetchRailwayRoute(trainNumber: String, destinationCode: String) {
         _isRouting.value = true
         try {
-            // 1. Ensure we have the sequence (usually fetched in dialog, but safety check)
-            var stations = _stationSequence.value
-            if (stations.isEmpty()) {
-                val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNumber)
-                if (response.isSuccessful && response.body() != null) {
-                    stations = response.body()!!.stationSequence
-                    _stationSequence.value = stations
+            AppLogger.d("MapViewModel", "Calculating Hybrid Route geometry for $destinationCode...")
+            
+            // 1. Grab the sequence we already fetched in the UI Dialog
+            val sequence = _stationSequence.value 
+            val destIndex = sequence.indexOfFirst { it.stationCode == destinationCode }
+            
+            if (destIndex <= 0) {
+                throw Exception("Destination is invalid or is the starting station.")
+            }
+            
+            // --- BUILD THE MACRO ROUTE (Straight lines between all previous stations) ---
+            val completeRoutePoints = mutableListOf<com.mapbox.geojson.Point>()
+            for (i in 0 until destIndex) {
+                val station = sequence[i]
+                var lat = station.latitude
+                var lon = station.longitude
+                
+                if (lat == null || lon == null) {
+                    val dbStation = stationRepository.getStationByCode(station.stationCode)
+                    if (dbStation != null) {
+                        lat = dbStation.latitude
+                        lon = dbStation.longitude
+                    }
+                }
+                
+                if (lat != null && lon != null) {
+                    completeRoutePoints.add(com.mapbox.geojson.Point.fromLngLat(lon, lat))
+                }
+            }
+            
+            // 2. The Final Approach (Penultimate Station -> Destination)
+            val penultimateCode = sequence[destIndex - 1].stationCode
+            
+            val startStation = stationRepository.getStationByCode(penultimateCode)
+            val endStation = stationRepository.getStationByCode(destinationCode)
+            
+            var orrPoints: List<com.mapbox.geojson.Point>? = null
+            var orrDistance = 0.0
+            var orrDuration = 0.0
+
+            if (startStation != null && endStation != null) {
+                val startParam = "${startStation.latitude},${startStation.longitude}"
+                val endParam = "${endStation.latitude},${endStation.longitude}"
+                
+                // 3. Fetch the geometry
+                val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
+                
+                if (orrResponse.isSuccessful && orrResponse.body() != null) {
+                    val path = orrResponse.body()!!.paths[0]
+                    orrPoints = PolylineDecoder.decode(path.points)
+                    orrDistance = path.distanceMeters
+                    orrDuration = path.timeMillis / 1000.0
                 }
             }
 
-            if (stations.isEmpty()) throw Exception("Station sequence unavailable.")
-
-            // 2. Identify the closest upcoming station to the user's live GPS
-            val user = _userLocation.value
-            val startStation = if (user != null) {
-                stations.minByOrNull { station ->
-                    val results = FloatArray(1)
-                    Location.distanceBetween(user.latitude, user.longitude, station.latitude ?: 0.0, station.longitude ?: 0.0, results)
-                    results[0]
+            // Fallback for ORR points if DB coords were missing but sequence has them
+            if (orrPoints == null) {
+                val penultimateStation = sequence[destIndex - 1]
+                val destinationStation = sequence[destIndex]
+                if (penultimateStation.latitude != null && destinationStation.latitude != null) {
+                    val startParam = "${penultimateStation.latitude},${penultimateStation.longitude}"
+                    val endParam = "${destinationStation.latitude},${destinationStation.longitude}"
+                    val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
+                    if (orrResponse.isSuccessful && orrResponse.body() != null) {
+                        val path = orrResponse.body()!!.paths[0]
+                        orrPoints = PolylineDecoder.decode(path.points)
+                        orrDistance = path.distanceMeters
+                        orrDuration = path.timeMillis / 1000.0
+                    }
                 }
-            } else {
-                stations.firstOrNull()
-            } ?: throw Exception("Could not identify start station.")
+            }
 
-            val endStation = stations.find { it.stationCode == destinationCode } 
-                ?: throw Exception("Destination station not found in sequence.")
-
-            // 3. Fetch Final Approach Geometry from ORR
-            val startParam = "${startStation.latitude},${startStation.longitude}"
-            val endParam = "${endStation.latitude},${endStation.longitude}"
-            
-            val response = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
-            
-            if (response.isSuccessful && response.body() != null) {
-                val orrResponse = response.body()!!
-                val path = orrResponse.paths.firstOrNull() ?: throw Exception("No rail path found.")
+            if (orrPoints != null) {
+                // Stitch the curved ORR points onto the end of the straight macro points
+                completeRoutePoints.addAll(orrPoints)
                 
-                val decodedPoints = PolylineDecoder.decode(path.points)
-                val mapLibrePoints = decodedPoints.map { Point.fromLngLat(it.longitude(), it.latitude()) }
-                
-                val mbLine = com.mapbox.geojson.LineString.fromLngLats(mapLibrePoints.map { 
-                    com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude()) 
-                })
+                // 4. PUSH TO UI: This draws the track on the MapLibre canvas!
+                val mbLine = com.mapbox.geojson.LineString.fromLngLats(completeRoutePoints)
+                _routeLine.value = mbLine.toMapLibre()
                 
                 val geoJson = mbLine.toJson()
-                val distance = path.distanceMeters
-                val duration = path.timeMillis / 1000.0
                 
                 _currentRouteGeoJson.value = geoJson
-                _expectedDistance.value = distance
-                _expectedDuration.value = duration
+                _expectedDistance.value = orrDistance
+                _expectedDuration.value = orrDuration
                 
                 // For Railway, we don't have segment speeds yet, use average
-                val avgSpeed = if (duration > 0) distance / duration else 15.0 // Default 15m/s (~54km/h)
-                val speeds = List(mapLibrePoints.size) { avgSpeed }
+                val avgSpeed = if (orrDuration > 0) orrDistance / orrDuration else 15.0 // Default 15m/s (~54km/h)
+                val speeds = List(completeRoutePoints.size) { avgSpeed }
                 _segmentSpeeds.value = speeds
 
-                processRouteSuccess(geoJson, distance, pushToService = _isAlarmSet.value, speeds = speeds)
+                processRouteSuccess(geoJson, orrDistance, pushToService = _isAlarmSet.value, speeds = speeds)
+                AppLogger.d("MapViewModel", "✅ Hybrid Track rendered! Total Points: ${completeRoutePoints.size}")
             } else {
-                throw Exception("ORR geometry fetch failed.")
+                // If ORR failed, we still show the Macro Route at least
+                if (completeRoutePoints.size >= 2) {
+                    val mbLine = com.mapbox.geojson.LineString.fromLngLats(completeRoutePoints)
+                    _routeLine.value = mbLine.toMapLibre()
+                    _currentRouteGeoJson.value = mbLine.toJson()
+                    AppLogger.w("MapViewModel", "⚠️ ORR failed, rendering Macro Route only.")
+                } else {
+                    throw Exception("Could not fetch Hybrid Route.")
+                }
             }
 
         } catch (e: Exception) {
-            AppLogger.e("MapViewModel", "fetchRailwayRoute failed", e)
-            viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                android.widget.Toast.makeText(context, "Railway tracking failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
-            }
-            // Fallback: If ORR fails, we just clear and rely on Haversine in checkDistance
+            AppLogger.e("MapViewModel", "⚠️ Hybrid route fetch failed. Engaging Haversine Fallback!", e)
             _currentRouteGeoJson.value = null
             _routeLine.value = null
         } finally {
@@ -979,6 +1023,8 @@ class MapViewModel(
         AppLogger.d("MapViewModel", "resetRouteState: Clearing all routing and ETA states")
         _destination.value = null
         _destinationName.value = null
+        _destinationCode.value = null
+        _railwayEtaStatus.value = null
         _distanceToDestination.value = null
         _remainingEta.value = null
         _currentRouteGeoJson.value = null
@@ -1020,6 +1066,7 @@ class MapViewModel(
 
     private fun checkDistance(currentLocation: Location) {
         val dest = _destination.value ?: return
+        val mode = _alarmSettings.value.transportMode
 
         // Fast straight-line distance calculation to destination
         val results = FloatArray(1)
@@ -1030,7 +1077,7 @@ class MapViewModel(
         )
         val straightLineDistance = results[0]
 
-        // Distance-based throttling (5m) to reduce CPU overhead, bypassed within 100m of destination or on first calculation
+        // Distance-based throttling (5m) to reduce CPU overhead
         val lastLoc = lastCheckedLocation
         if (!needsInitialCalculation && lastLoc != null && straightLineDistance > 100.0 && currentLocation.distanceTo(
                 lastLoc
@@ -1045,109 +1092,161 @@ class MapViewModel(
         lastCheckedLocation = currentLocation
         needsInitialCalculation = false
 
-        // 1. If in Preview Mode, prioritize the expected distance
-        if (_isPreviewMode.value && _expectedDistance.value > 0) {
-            _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
-            _remainingEta.value = (_expectedDuration.value / 60.0).roundToInt()
-            return
-        }
+        // 1. Transport Mode Specific Logic
+        if (mode == TransportMode.TRAIN) {
+            // RAILWAY: Use Haversine distance for UI (Decoupled from "Final Approach" polyline)
+            _distanceToDestination.value = formatDistance(straightLineDistance.toInt())
+            
+            // ETA: Extract official arrival and status from sequence
+            val sequence = _stationSequence.value
+            val destCode = _destinationCode.value
+            val destStation = if (destCode != null) sequence.find { it.stationCode == destCode } else null
+            
+            if (destStation != null) {
+                val confirmTktEta = destStation.arrival ?: "Unknown"
+                val trainStatus = destStation.status ?: "On Time"
+                
+                val relativeEta = if (confirmTktEta != "Unknown") {
+                    calculateRelativeEta(confirmTktEta)
+                } else {
+                    null
+                }
 
-        // 2. If Alarm is Active, use high-precision road-snapping logic
-        val route = fullRouteLine
-        if (route != null && (_isAlarmSet.value || _isPreviewMode.value)) {
-            val userPoint = com.mapbox.geojson.Point.fromLngLat(
-                currentLocation.longitude,
-                currentLocation.latitude
-            )
-
-            // Snapping & Slicing
-            val feature =
-                com.mapbox.turf.TurfMisc.nearestPointOnLine(userPoint, route.coordinates())
-            val snappedPoint = feature.geometry() as? com.mapbox.geojson.Point
-
-            if (snappedPoint != null) {
+                if (trainStatus.contains("Delay", ignoreCase = true)) {
+                    _railwayEtaStatus.value = "ETA: ${relativeEta ?: confirmTktEta} ($trainStatus) ⚠️"
+                } else {
+                    _railwayEtaStatus.value = "ETA: ${relativeEta ?: confirmTktEta} ✅"
+                }
+                _remainingEta.value = null // Clear math-based ETA
+            } else {
+                // Fallback: 60 km/h average = 1 km/min
+                val estimatedMinutes = (straightLineDistance / 1000.0).roundToInt()
+                _remainingEta.value = estimatedMinutes
+                _railwayEtaStatus.value = null
+            }
+            
+            // Slicing for MAP UI (if track geometry exists)
+            val route = fullRouteLine
+            if (route != null) {
+                val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
                 try {
-                    val slicedLine = com.mapbox.turf.TurfMisc.lineSlice(
-                        snappedPoint,
-                        route.coordinates().last(),
-                        route
-                    )
-
-                    // Update map route line (sliced version) if it has at least 2 points
-                    if (slicedLine.coordinates().size >= 2) {
-                        _routeLine.value = slicedLine.toMapLibre()
+                    val feature = com.mapbox.turf.TurfMisc.nearestPointOnLine(userPoint, route.coordinates())
+                    val snappedPoint = feature.geometry() as? com.mapbox.geojson.Point
+                    if (snappedPoint != null) {
+                        val slicedLine = com.mapbox.turf.TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
+                        if (slicedLine.coordinates().size >= 2) {
+                            _routeLine.value = slicedLine.toMapLibre()
+                        }
                     }
-
-                    // Calculate distance along route
-                    val distance = TurfMeasurement.length(slicedLine, TurfConstants.UNIT_METERS)
-                    _distanceToDestination.value = formatDistance(distance.toInt())
-
-                    // Update speed and calculate ETA
-                    routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
-
-                    // Segment-Aware Speed Correction
-                    val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(
-                        route,
-                        userPoint,
-                        _segmentSpeeds.value
-                    )
-
-                    val globalSpeed =
-                        if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
-                    val segmentSpeed =
-                        if (currentSegmentSpeed > 0) currentSegmentSpeed else globalSpeed
-
-                    val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
-                        remainingDistanceMeters = distance,
-                        globalExpectedSpeedMps = globalSpeed,
-                        currentSegmentSpeedMps = segmentSpeed
-                    )
-
-                    if (etaMinutes != Double.MAX_VALUE) {
-                        _remainingEta.value = etaMinutes.roundToInt()
-                        AppLogger.d(
-                            "MapViewModel",
-                            "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps"
-                        )
-                    } else {
-                        _remainingEta.value = null
-                        AppLogger.d(
-                            "MapViewModel",
-                            "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED"
-                        )
-                    }
-                    return
                 } catch (e: Exception) {
-                    // Turf lineSlice throws exception if start and end are the same point (arrived)
-                    _distanceToDestination.value = formatDistance(0)
-                    _remainingEta.value = 0
-                    AppLogger.d(
+                    // Ignore slicing errors for long distance rail
+                }
+            }
+        } else {
+            // ROAD: Use high-precision route-snapping logic
+            
+            // If in Preview Mode, prioritize the expected distance
+            if (_isPreviewMode.value && _expectedDistance.value > 0) {
+                _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
+                _remainingEta.value = (_expectedDuration.value / 60.0).roundToInt()
+                return
+            }
+
+            val route = fullRouteLine
+            if (route != null && (_isAlarmSet.value || _isPreviewMode.value)) {
+                val userPoint = com.mapbox.geojson.Point.fromLngLat(
+                    currentLocation.longitude,
+                    currentLocation.latitude
+                )
+
+                // Snapping & Slicing
+                val feature =
+                    com.mapbox.turf.TurfMisc.nearestPointOnLine(userPoint, route.coordinates())
+                val snappedPoint = feature.geometry() as? com.mapbox.geojson.Point
+
+                if (snappedPoint != null) {
+                    try {
+                        val slicedLine = com.mapbox.turf.TurfMisc.lineSlice(
+                            snappedPoint,
+                            route.coordinates().last(),
+                            route
+                        )
+
+                        // Update map route line (sliced version)
+                        if (slicedLine.coordinates().size >= 2) {
+                            _routeLine.value = slicedLine.toMapLibre()
+                        }
+
+                        // Calculate distance along route
+                        val distance = TurfMeasurement.length(slicedLine, TurfConstants.UNIT_METERS)
+                        _distanceToDestination.value = formatDistance(distance.toInt())
+
+                        // Update speed and calculate ETA
+                        routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
+
+                        // Segment-Aware Speed Correction
+                        val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(
+                            route,
+                            userPoint,
+                            _segmentSpeeds.value
+                        )
+
+                        val globalSpeed =
+                            if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
+                        val segmentSpeed =
+                            if (currentSegmentSpeed > 0) currentSegmentSpeed else globalSpeed
+
+                        val etaMinutes = routeDistanceEngine.calculateCalibratedETA(
+                            remainingDistanceMeters = distance,
+                            globalExpectedSpeedMps = globalSpeed,
+                            currentSegmentSpeedMps = segmentSpeed
+                        )
+
+                        if (etaMinutes != Double.MAX_VALUE) {
+                            _remainingEta.value = etaMinutes.roundToInt()
+                            AppLogger.d(
+                                "MapViewModel",
+                                "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps"
+                            )
+                        } else {
+                            _remainingEta.value = null
+                            AppLogger.d(
+                                "MapViewModel",
+                                "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED"
+                            )
+                        }
+                        return
+                    } catch (e: Exception) {
+                        // Turf lineSlice throws exception if start and end are the same point (arrived)
+                        _distanceToDestination.value = formatDistance(0)
+                        _remainingEta.value = 0
+                        AppLogger.d(
+                            "MapViewModel",
+                            "checkDistance: Arrived at exact destination point"
+                        )
+                    }
+                } else {
+                    AppLogger.w(
                         "MapViewModel",
-                        "checkDistance: Arrived at exact destination point"
+                        "checkDistance: Could not snap user to route line"
                     )
                 }
-            } else {
-                AppLogger.w(
-                    "MapViewModel",
-                    "checkDistance: Could not snap user to route line"
-                )
             }
+
+            // Fallback to Haversine (ONLY if OSRM is unavailable)
+            _distanceToDestination.value = if (_isAlarmSet.value || _isPreviewMode.value) {
+                formatDistance(straightLineDistance.toInt())
+            } else {
+                null
+            }
+            _remainingEta.value = null
         }
 
-        // 3. Fallback to Haversine (ONLY if OSRM is unavailable)
-        val distance = straightLineDistance
-
-        _distanceToDestination.value = if (_isAlarmSet.value || _isPreviewMode.value) {
-            formatDistance(distance.toInt())
-        } else {
-            null
-        }
-
-        // Auto-arrival detection (50m threshold)
-        if (distance <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
+        // 2. Arrival Check (Common for both modes)
+        if (straightLineDistance <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
             AppLogger.d(
                 "MapViewModel",
-                "Arrival detected at distance: $distance. isAlarmSet: ${_isAlarmSet.value}"
+                "Arrival detected at distance: $straightLineDistance. isAlarmSet: ${_isAlarmSet.value}"
             )
             hasTriggeredArrival = true
             _journeyCompleted.value = true
@@ -1158,11 +1257,46 @@ class MapViewModel(
                 _routeLine.value = null
                 fullRouteLine = null
             }
-            // If isAlarmSet is true, we wait for the Service's JOURNEY_COMPLETED_BROADCAST
-            // which will call stopAlarm() and ensure data is saved.
         }
+    }
 
-        _remainingEta.value = null
+    private fun calculateRelativeEta(arrivalTimeStr: String): String {
+        return try {
+            val parts = arrivalTimeStr.split(":")
+            if (parts.size != 2) return arrivalTimeStr
+            
+            val arrivalHour = parts[0].trim().toInt()
+            val arrivalMin = parts[1].trim().toInt()
+            
+            val now = java.util.Calendar.getInstance()
+            val arrival = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, arrivalHour)
+                set(java.util.Calendar.MINUTE, arrivalMin)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            
+            // Handle cross-day boundary
+            if (arrival.before(now)) {
+                arrival.add(java.util.Calendar.DATE, 1)
+            }
+            
+            val diffMs = arrival.timeInMillis - now.timeInMillis
+            val diffMins = (diffMs / 60000).toInt()
+            
+            if (diffMins <= 0) return "Arriving..."
+            
+            val h = diffMins / 60
+            val m = diffMins % 60
+            
+            if (h > 0) {
+                "${h} hr ${m} min"
+            } else {
+                "${m} min"
+            }
+        } catch (e: Exception) {
+            arrivalTimeStr
+        }
     }
 
     private fun formatDistance(meters: Int): String {

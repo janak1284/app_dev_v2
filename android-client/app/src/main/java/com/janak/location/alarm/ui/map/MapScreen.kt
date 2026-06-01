@@ -105,6 +105,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val isPreviewMode by viewModel.isPreviewMode.collectAsState()
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val remainingEta by viewModel.remainingEta.collectAsState()
+    val railwayEtaStatus by viewModel.railwayEtaStatus.collectAsState()
     val alarmSettings by viewModel.alarmSettings.collectAsState()
 
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -646,7 +647,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                             
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            if (remainingEta != null) {
+                            if (railwayEtaStatus != null) {
+                                Text(
+                                    text = railwayEtaStatus!!,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            } else if (remainingEta != null) {
                                 Text(
                                     text = "ETA: $remainingEta min",
                                     style = MaterialTheme.typography.bodyLarge,
@@ -693,7 +701,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            if (remainingEta != null) {
+                            if (railwayEtaStatus != null) {
+                                Text(
+                                    text = railwayEtaStatus!!,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            } else if (remainingEta != null) {
                                 Text(
                                     text = "ETA: $remainingEta min",
                                     style = MaterialTheme.typography.bodyLarge,

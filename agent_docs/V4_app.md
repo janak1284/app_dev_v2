@@ -127,3 +127,22 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 ### Phase 6: System Maintenance & Standardization (NEW)
 * [x] **Logging Standardization:** Migrated app-wide logging to `AppLogger`.
 * [x] **Handshake Cleanup:** Finalized production network logic and removed test bootstrap code.
+
+### Phase 7: Railway Logic Optimization (NEW)
+* [x] **Final Approach Geometry:** Refined fetch logic to strictly target the penultimate-to-destination segment, ensuring API reliability.
+* [x] **Hybrid Route Line:** Implemented "Connect-the-Dots" macro pathing for long-distance visual continuity.
+* [x] **Hybrid ETA & Status:** Decoupled UI metrics to combine local GPS reliability with official railway schedules.
+
+---
+
+## 4. Hybrid Methodology (Railway)
+
+To handle the massive distances and data gaps inherent in nationwide railway infrastructure without sacrificing the user experience, V4 employs a dual-layer "Hybrid" strategy:
+
+### A. Hybrid Route Line (Visuals)
+*   **Macro Route:** Connects all previous stations in the sequence with straight lines using local GPS coordinates. This ensures a 400km journey always has a visible path on the map.
+*   **Micro Route:** For the final leg, the engine stitches a high-precision, physically curved polyline from the ORR API onto the macro path. This provides a "Live" feel as the user approaches the target.
+
+### B. Hybrid ETA & Status (Data)
+*   **Mathematical Ground Truth:** The physical alarm trigger (e.g., ringing at the user-defined distance) and the distance countdown rely exclusively on the device's **Hardware GPS**. This is bulletproof and works offline.
+*   **Official Telemetry:** The "ETA" and "Status" fields displayed in the UI are synced with the **official railway schedule** (scraped from ConfirmTkt). This provides users with authoritative, relative "hours/mins" arrival times and delay warnings (e.g., `ETA: 1 hr 15 min (Delayed) ⚠️`) that a simple speed-based math loop cannot predict.

@@ -20,7 +20,9 @@ data class StationSequenceItem(
     @SerialName("station_code") val stationCode: String,
     @SerialName("sequence_index") val sequenceIndex: Int,
     @SerialName("latitude") val latitude: Double? = null,
-    @SerialName("longitude") val longitude: Double? = null
+    @SerialName("longitude") val longitude: Double? = null,
+    @SerialName("arrival") val arrival: String? = null,
+    @SerialName("status") val status: String? = null
 )
 
 interface RailwayTelemetryApi {

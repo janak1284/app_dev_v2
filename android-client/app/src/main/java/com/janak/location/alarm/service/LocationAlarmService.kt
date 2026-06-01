@@ -144,12 +144,10 @@ class LocationAlarmService : Service() {
 
             if (!isAlarmSilenced) {
                 val isRailway = transportMode == TransportMode.TRAIN
-                val isBulletproofRailwayTrigger = isRailway && estimatedRemainingDistance <= RAILWAY_BULLETPROOF_THRESHOLD
 
                 if ((isDistanceAlarmEnabled && estimatedRemainingDistance <= distanceThreshold) || 
-                    (isPredictiveAlarmEnabled && estimatedETA <= predictiveMinutesThreshold) ||
-                    isBulletproofRailwayTrigger) {
-                    triggerAlarm(currentLegIndex < currentLegs.size - 1, forceMaxVolume = isBulletproofRailwayTrigger)
+                    (isPredictiveAlarmEnabled && estimatedETA <= predictiveMinutesThreshold)) {
+                    triggerAlarm(currentLegIndex < currentLegs.size - 1, forceMaxVolume = isRailway)
                 }
             }
         }
@@ -396,14 +394,13 @@ class LocationAlarmService : Service() {
 
         if ((currentState == ServiceState.TRACKING || currentState == ServiceState.WAITING_FOR_CONNECTION) && !isAlarmSilenced) {
             val isRailway = transportMode == TransportMode.TRAIN
-            val isBulletproofRailwayTrigger = isRailway && distance <= RAILWAY_BULLETPROOF_THRESHOLD
             
             val isDistanceTriggered = isDistanceAlarmEnabled && distance <= distanceThreshold
             val isTimeTriggered = isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold
             
-            if (isDistanceTriggered || isTimeTriggered || isBulletproofRailwayTrigger) {
+            if (isDistanceTriggered || isTimeTriggered) {
                 val isTransfer = currentLegs.isNotEmpty() && currentLegIndex < currentLegs.size - 1
-                triggerAlarm(isTransfer, forceMaxVolume = isBulletproofRailwayTrigger)
+                triggerAlarm(isTransfer, forceMaxVolume = isRailway)
             }
         }
     }

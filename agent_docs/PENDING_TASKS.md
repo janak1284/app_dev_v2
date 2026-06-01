@@ -62,6 +62,9 @@
 - [x] **Phase 7: System Maintenance & Standardization:**
     - [x] **App-wide Logging Standardization:** Replaced all `android.util.Log` calls with centralized `AppLogger` for consistent tagging and formatting.
     - [x] **Handshake Cleanup:** Removed `testLiveHandshake` and associated bootstrap code from `MainActivity` to finalize the production handshake logic.
+    - [x] **Final Approach Geometry Optimization:** Refined `fetchRailwayRoute` to strictly request the penultimate-to-destination segment, preventing ORR API timeouts on long-distance routes.
+    - [x] **Hybrid Route Line Implementation:** Implemented "Connect-the-Dots" macro pathing combined with high-precision micro-routing for continuous visual coverage.
+    - [x] **Hybrid ETA & Status Integration:** Decoupled UI metrics to combine local GPS reliability with official railway schedules. Implemented relative "hours/mins" arrival countdown and strictly honor user-defined alarm ranges.
 
 ## Future Improvements (Post-V2)
 - [ ] **Optimize Rail Multi-Modal Engine:** Evaluate more candidates, NxN matrix options, and walking-to-station logic.

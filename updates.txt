@@ -49,6 +49,11 @@
 - **Force Max Volume:** Enhanced `AlarmEngine` to override system volume to maximum for railway arrival alerts, bypassing "Do Not Disturb" and silent modes.
 - **Critical Alert UI:** Updated `RingingActivity` with a "CRITICAL" state and error-themed visuals for high-priority railway alarms.
 
+## Railway Logic Optimization (June 2026)
+- **Hybrid Route Line Implementation:** Developed a dual-layer rendering system for railway journeys. Macro-routing connects stations with straight lines for continuous visual coverage, while Micro-routing (ORR API) provides high-precision curvature for the final approach segment.
+- **Hybrid ETA & Status Engine:** Decoupled UI metrics to prioritize reliability. Distance and arrival triggers are powered by local high-frequency GPS (Haversine math) and strictly honor user-defined alarm ranges. ETA and delay status are synced with official railway telemetry, providing a relative "hours/mins" countdown.
+- **Final Approach Geometry Fetching:** Refined the `fetchRailwayRoute` pipeline to strictly request track geometry from the penultimate station to the destination. This prevents "ConnectionNotFound" and timeout errors associated with long-distance rail pathing in ORR.
+
 ## System Maintenance & Standardization (June 2026)
 - **App-wide Logging Standardization:** Migrated from `android.util.Log` to a centralized `AppLogger` utility. This ensures consistent logcat tagging (`LOCATION_ALARM_V4`) and structured component-based messaging across repositories, services, and viewmodels.
 - **Handshake Finalization:** Removed the `testLiveHandshake` bootstrap logic from `MainActivity` as the production network loop between the Android client and the railway telemetry microservice is now fully verified.
