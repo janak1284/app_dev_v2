@@ -13,6 +13,7 @@ import com.google.android.gms.location.Priority
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import com.janak.location.alarm.util.AppLogger
 
 class LocationTrackingManager(
     context: Context
@@ -29,7 +30,7 @@ class LocationTrackingManager(
 
     @SuppressLint("MissingPermission") // Permissions are handled in UI
     fun getLocationUpdates(): Flow<Location> = callbackFlow {
-        android.util.Log.d("LocationTracker", "getLocationUpdates: Starting flow")
+        AppLogger.d("LocationTracker", "getLocationUpdates: Starting flow")
         val request = LocationRequest.Builder(currentPriority, currentInterval)
             .setMinUpdateDistanceMeters(10f)
             .build()
@@ -37,7 +38,7 @@ class LocationTrackingManager(
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let {
-                    android.util.Log.d("LocationTracker", "onLocationResult: Lat=${it.latitude}, Lon=${it.longitude}")
+                    AppLogger.d("LocationTracker", "onLocationResult: Lat=${it.latitude}, Lon=${it.longitude}")
                     trySend(it)
                 }
             }
@@ -46,15 +47,15 @@ class LocationTrackingManager(
         currentLocationCallback = callback
 
         try {
-            android.util.Log.d("LocationTracker", "requestLocationUpdates: Requesting updates...")
+            AppLogger.d("LocationTracker", "requestLocationUpdates: Requesting updates...")
             client.requestLocationUpdates(request, callback, backgroundLooper)
         } catch (e: Exception) {
-            android.util.Log.e("LocationTracker", "requestLocationUpdates Error", e)
+            AppLogger.e("LocationTracker", "requestLocationUpdates Error", e)
             close(e)
         }
 
         awaitClose {
-            android.util.Log.d("LocationTracker", "awaitClose: Removing updates")
+            AppLogger.d("LocationTracker", "awaitClose: Removing updates")
             client.removeLocationUpdates(callback)
             currentLocationCallback = null
         }
@@ -67,7 +68,7 @@ class LocationTrackingManager(
         currentPriority = priority
         val callback = currentLocationCallback ?: return
         
-        android.util.Log.d("LocationTracker", "updateInterval: New interval $intervalMillis ms, Priority: $priority")
+        AppLogger.d("LocationTracker", "updateInterval: New interval $intervalMillis ms, Priority: $priority")
         val request = LocationRequest.Builder(currentPriority, currentInterval)
             .setMinUpdateDistanceMeters(if (intervalMillis > 10000L) 100f else 10f)
             .build()
@@ -75,7 +76,7 @@ class LocationTrackingManager(
         try {
             client.requestLocationUpdates(request, callback, backgroundLooper)
         } catch (e: Exception) {
-            android.util.Log.e("LocationTracker", "updateInterval Error", e)
+            AppLogger.e("LocationTracker", "updateInterval Error", e)
         }
     }
 }

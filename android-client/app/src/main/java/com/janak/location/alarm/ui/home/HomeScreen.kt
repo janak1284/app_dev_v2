@@ -25,8 +25,11 @@ import com.janak.location.alarm.viewmodel.MapViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.janak.location.alarm.util.AppLogger
 
 import com.janak.location.alarm.ui.components.SavedRouteCard
+import com.janak.location.alarm.ui.components.RailwaySetupDialog
+import org.maplibre.android.geometry.LatLng
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +43,7 @@ fun HomeScreen(
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val searchHistory by viewModel.searchHistory.collectAsState()
     var showModeSelection by remember { mutableStateOf(false) }
+    var showRailwaySetup by remember { mutableStateOf(false) }
 
     if (showModeSelection) {
         AlertDialog(
@@ -61,7 +65,7 @@ fun HomeScreen(
                 ) {
                     Button(
                         onClick = {
-                            android.util.Log.d("HomeScreen", "Selecting ROAD mode")
+                            AppLogger.d("HomeScreen", "Selecting ROAD mode")
                             viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.ROAD))
                             showModeSelection = false
                             onNewJourneyClick()
@@ -75,10 +79,10 @@ fun HomeScreen(
                     }
                     Button(
                         onClick = {
-                            android.util.Log.d("HomeScreen", "Selecting TRAIN mode")
+                            AppLogger.d("HomeScreen", "Selecting TRAIN mode")
                             viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.TRAIN))
                             showModeSelection = false
-                            onNewJourneyClick()
+                            showRailwaySetup = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -96,6 +100,19 @@ fun HomeScreen(
                 }
             },
             shape = RoundedCornerShape(28.dp)
+        )
+    }
+
+    if (showRailwaySetup) {
+        RailwaySetupDialog(
+            viewModel = viewModel,
+            onDismiss = { showRailwaySetup = false },
+            onStartTracking = { trainNumber, destName, destCode, lat, lon ->
+                AppLogger.d("HomeScreen", "Starting Railway tracking: $trainNumber to $destName ($destCode)")
+                viewModel.startRailwayJourney(trainNumber, destName, destCode, lat, lon)
+                showRailwaySetup = false
+                onNewJourneyClick()
+            }
         )
     }
 

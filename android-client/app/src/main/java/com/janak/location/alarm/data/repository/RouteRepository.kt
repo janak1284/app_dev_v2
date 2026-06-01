@@ -9,6 +9,7 @@ import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
+import com.janak.location.alarm.util.AppLogger
 
 class RouteRepository(private val database: AppDatabase) {
     private val routeDao = database.routeDao()
@@ -86,7 +87,7 @@ class RouteRepository(private val database: AppDatabase) {
                 )
             }
         } catch (e: Exception) {
-            android.util.Log.e("RouteRepository", "getRailwayItinerary failed", e)
+            AppLogger.e("RouteRepository", "getRailwayItinerary failed", e)
         }
         return null
     }

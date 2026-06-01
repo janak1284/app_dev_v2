@@ -2,13 +2,8 @@ package com.janak.location.alarm
 
 import android.app.KeyguardManager
 import android.content.Intent
-import android.media.Ringtone
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,12 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import com.janak.location.alarm.service.LocationAlarmService
 
 class RingingActivity : ComponentActivity() {
-    private var ringtone: Ringtone? = null
-    private var vibrator: Vibrator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,29 +48,35 @@ class RingingActivity : ComponentActivity() {
             )
         }
 
-        val ringtoneUriString = intent.getStringExtra("RINGTONE_URI")
-        val shouldVibrate = intent.getBooleanExtra("VIBRATE", true)
-        val isTransfer = intent.getBooleanExtra("IS_TRANSFER", false)
         val transferName = intent.getStringExtra("TRANSFER_NAME")
-
-        startAlarm(ringtoneUriString, shouldVibrate)
+        val isTransfer = intent.getBooleanExtra("IS_TRANSFER", false)
+        val isCritical = intent.getBooleanExtra("FORCE_MAX_VOLUME", false)
 
         setContent {
             // A simple full-screen UI to dismiss the alarm
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
+                color = if (isCritical) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.background
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    if (isCritical) {
+                        Text(
+                            "CRITICAL!",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
                     Text(
                         if (isTransfer) "Transfer!" else "Arrived!", 
                         fontSize = 48.sp, 
                         fontWeight = FontWeight.Bold,
-                        color = if (isTransfer) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                        color = if (isTransfer) MaterialTheme.colorScheme.primary else (if (isCritical) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary)
                     )
                     
                     if (isTransfer && !transferName.isNullOrBlank()) {
@@ -129,41 +127,10 @@ class RingingActivity : ComponentActivity() {
     }
 
     private fun stopRingingAndFinish() {
-        ringtone?.stop()
-        vibrator?.cancel()
         finish()
-    }
-
-    private fun startAlarm(uriString: String?, vibrate: Boolean) {
-        // Handle Audio
-        val uri = uriString?.toUri() ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-        ringtone = RingtoneManager.getRingtone(applicationContext, uri)
-        
-        // Loop the ringtone if supported
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            ringtone?.isLooping = true
-        }
-        ringtone?.play()
-
-        // Handle Vibration
-        if (vibrate) {
-            vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vibratorManager = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-                vibratorManager.defaultVibrator
-            } else {
-                @Suppress("DEPRECATION")
-                getSystemService(VIBRATOR_SERVICE) as Vibrator
-            }
-            
-            val pattern = longArrayOf(0, 1000, 1000) // wait 0ms, vibrate 1s, sleep 1s
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0)) // 0 means repeat infinitely
-        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Ensure we stop ringing if the activity is destroyed by the system
-        ringtone?.stop()
-        vibrator?.cancel()
     }
 }

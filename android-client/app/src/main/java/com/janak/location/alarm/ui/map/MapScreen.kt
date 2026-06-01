@@ -35,6 +35,7 @@ import com.janak.location.alarm.ui.components.DestinationSearchField
 import com.janak.location.alarm.ui.components.JourneySummarySheet
 import com.janak.location.alarm.ui.settings.SettingsScreen
 import com.janak.location.alarm.viewmodel.MapViewModel
+import com.janak.location.alarm.util.AppLogger
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -239,7 +240,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                             LocationComponentActivationOptions.builder(context, style).build()
                         )
                     } catch (e: Exception) {
-                        android.util.Log.e("MapScreen", "Error activating LocationComponent", e)
+                        AppLogger.e("MapScreen", "Error activating LocationComponent", e)
                     }
                 }
                 if (locationComponent.isLocationComponentActivated) {
@@ -253,23 +254,23 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     // Update Map Layers (Route, Transfers, Destination)
     LaunchedEffect(mapInstance, destination, routeLine, journeyLegs, isPreviewMode) {
         val map = mapInstance ?: return@LaunchedEffect
-        android.util.Log.d("MapScreen", "Rendering layers: destination=$destination, routeLineNotNull=${routeLine != null}, isPreview=$isPreviewMode")
+        AppLogger.d("MapScreen", "Rendering layers: destination=$destination, routeLineNotNull=${routeLine != null}, isPreview=$isPreviewMode")
         
         map.getStyle { style ->
-            android.util.Log.d("MapScreen", "Style loaded and ready")
+            AppLogger.d("MapScreen", "Style loaded and ready")
             // --- 1. Route Layer (Bottom) ---
             val routeSourceId = "route-source"
             val routeLayerId = "route-layer"
             
             var routeSource = style.getSourceAs<org.maplibre.android.style.sources.GeoJsonSource>(routeSourceId)
             if (routeSource == null) {
-                android.util.Log.d("MapScreen", "Adding route source")
+                AppLogger.d("MapScreen", "Adding route source")
                 routeSource = org.maplibre.android.style.sources.GeoJsonSource(routeSourceId)
                 style.addSource(routeSource)
             }
 
             if (style.getLayer(routeLayerId) == null) {
-                android.util.Log.d("MapScreen", "Adding route layer")
+                AppLogger.d("MapScreen", "Adding route layer")
                 val layer = org.maplibre.android.style.layers.LineLayer(routeLayerId, routeSourceId)
                 layer.setProperties(
                     org.maplibre.android.style.layers.PropertyFactory.lineColor(
@@ -292,7 +293,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
 
             if (routeLine != null) {
-                android.util.Log.d("MapScreen", "Updating route geometry")
+                AppLogger.d("MapScreen", "Updating route geometry")
                 if (journeyLegs.isNotEmpty()) {
                     val features = journeyLegs.map { leg ->
                         val feature = org.maplibre.geojson.Feature.fromGeometry(org.maplibre.geojson.LineString.fromJson(leg.geometry))
@@ -306,7 +307,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(feature))
                 }
             } else {
-                android.util.Log.d("MapScreen", "Clearing route geometry")
+                AppLogger.d("MapScreen", "Clearing route geometry")
                 routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(emptyList()))
             }
 
@@ -836,7 +837,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 }
                                 context.startActivity(intent)
                             } catch (e: Exception) {
-                                android.util.Log.e("MapScreen", "Failed to start location settings", e)
+                                AppLogger.e("MapScreen", "Failed to start location settings", e)
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)

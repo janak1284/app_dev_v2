@@ -15,6 +15,7 @@
 - [x] **Real-Time Route Slicing:** Visually update the route line on the map to reflect user progress.
 - [x] **Center Lock Mode:** Add a toggleable auto-follow camera mode for the user location.
 - [x] **Arrival Save Prompt:** Automatically prompt the user to save the journey when reaching 50m from the destination.
+- [x] **Railway Setup Dialog:** Implemented a streamlined dropdown-based destination selection flow for train journeys.
 
 ## Bug Fixes & Verification
 - [x] **Route Line Preview:** Fixed the issue where route lines failed to render when opened from history/saved routes.
@@ -53,7 +54,14 @@
     - [x] Integrated Enriched Telemetry (Coordinates in payload) and Room DB fallback.
     - [x] Implemented Haversine fallback for ORR geometry failures.
     - [x] Refined `testLiveHandshake` for final approach segment validation.
-- [ ] **Phase 4: Multi-Target Fallback:** Implement secondary scraping source for reliability.
+- [x] **Phase 6: Lean V4 Engine Implementation:**
+    - [x] Implemented "Already on Train" UX model.
+    - [x] Integrated Turf-Java track snapping logic in service.
+    - [x] Implemented **Bulletproof 2km Trigger** with forced max volume.
+    - [x] Added "CRITICAL" state visuals to `RingingActivity`.
+- [x] **Phase 7: System Maintenance & Standardization:**
+    - [x] **App-wide Logging Standardization:** Replaced all `android.util.Log` calls with centralized `AppLogger` for consistent tagging and formatting.
+    - [x] **Handshake Cleanup:** Removed `testLiveHandshake` and associated bootstrap code from `MainActivity` to finalize the production handshake logic.
 
 ## Future Improvements (Post-V2)
 - [ ] **Optimize Rail Multi-Modal Engine:** Evaluate more candidates, NxN matrix options, and walking-to-station logic.

@@ -46,11 +46,12 @@ import com.mapbox.turf.TurfConstants
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import com.janak.location.alarm.data.entity.JourneyHistoryEntity
-import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
+import com.janak.location.alarm.util.AppLogger
 import java.util.Locale
-import android.util.Log
-import com.janak.location.alarm.api.RetrofitClient
+import com.janak.location.alarm.api.*
 import com.janak.location.alarm.util.PolylineDecoder
+import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
+import kotlinx.coroutines.flow.asStateFlow
 
 @OptIn(FlowPreview::class)
 class MapViewModel(
@@ -63,6 +64,22 @@ class MapViewModel(
     private val stationRepository: StationRepository,
     private val context: Context
 ) : ViewModel() {
+
+    private val _stationSequence = MutableStateFlow<List<StationSequenceItem>>(emptyList())
+    val stationSequence: StateFlow<List<StationSequenceItem>> = _stationSequence.asStateFlow()
+
+    fun fetchTelemetryForDropdown(trainNum: String) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNum)
+                if (response.isSuccessful && response.body() != null) {
+                    _stationSequence.value = response.body()!!.stationSequence
+                }
+            } catch (e: Exception) {
+                AppLogger.e("MapViewModel", "Failed to fetch telemetry for dropdown", e)
+            }
+        }
+    }
 
     private val routeDistanceEngine = RouteDistanceEngine()
     private val maxStationSearchRadiusKm = 30.0
@@ -191,12 +208,12 @@ class MapViewModel(
             if (intent?.action == LocationAlarmService.ACTION_RE_ROUTE) {
                 val currentTime = System.currentTimeMillis()
                 if (currentTime - lastReRouteTime < 60000L) {
-                    android.util.Log.d("MapViewModel", "Re-route request ignored (Debounce active)")
+                    AppLogger.d("MapViewModel", "Re-route request ignored (Debounce active)")
                     return
-                }
-                lastReRouteTime = currentTime
+                    }
+                    lastReRouteTime = currentTime
 
-                android.util.Log.d("MapViewModel", "Re-route broadcast received")
+                    AppLogger.d("MapViewModel", "Re-route broadcast received")
                 val start = _userLocation.value
                 val end = _destination.value
                 if (start != null && end != null) {
@@ -245,7 +262,7 @@ class MapViewModel(
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
             _isLocationEnabled.value = isGpsEnabled || isNetworkEnabled
         } catch (e: Exception) {
-            android.util.Log.e("MapViewModel", "Error checking location settings", e)
+            AppLogger.e("MapViewModel", "Error checking location settings", e)
             _isLocationEnabled.value = false
         }
     }
@@ -326,13 +343,13 @@ class MapViewModel(
                         }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("MapViewModel", "Matrix calculation failed", e)
+                    AppLogger.e("MapViewModel", "Matrix calculation failed", e)
                 }
             }
 
             _searchResults.value = combined
         } catch (e: Exception) {
-            android.util.Log.e("MapViewModel", "Search failed", e)
+            AppLogger.e("MapViewModel", "Search failed", e)
             _searchResults.value = _searchHistory.value.filter { feature ->
                 val name = feature.properties.name ?: ""
                 val street = feature.properties.street ?: ""
@@ -379,6 +396,7 @@ class MapViewModel(
                 putExtra("DEST_LAT", dest.latitude)
                 putExtra("DEST_LNG", dest.longitude)
                 putExtra("DEST_NAME", destName)
+                putExtra("TRANSPORT_MODE", settings.transportMode.name)
                 putExtra("ROUTE_GEOJSON", routeJson)
                 putExtra("JOURNEY_LEGS_JSON", legsJson)
                 putExtra("EXPECTED_DURATION", duration)
@@ -436,14 +454,14 @@ class MapViewModel(
             _destination.value = latLng
             _destinationName.value = name
             _isPreviewMode.value = true
-            android.util.Log.d(
+            AppLogger.d(
                 "MapViewModel",
                 "setDestination: $name, location: ${_userLocation.value}"
             )
             _userLocation.value?.let {
                 checkDistance(it)
                 fetchRoute(it, latLng)
-            } ?: android.util.Log.d(
+            } ?: AppLogger.d(
                 "MapViewModel",
                 "setDestination: Waiting for user location to fetch route"
             )
@@ -455,12 +473,112 @@ class MapViewModel(
         if (mode == TransportMode.ROAD) {
             fetchRoadRoute(start, end, pushToService)
         } else {
-            fetchTransitRoute(start, end, pushToService)
+            // For Railway, if we have a train number in state, we use it. 
+            // Otherwise, we might need to fallback to transit or road.
+            // Since V4 is lean, we assume startRailwayJourney was called.
+            // If this is a re-route, we trigger fetchRailwayRoute.
+            viewModelScope.launch {
+                // We need the train number. For now, let's assume we can get it from history or a temporary state.
+                // If unknown, we fallback to fetchRoadRoute to avoid a silent failure.
+                fetchRoadRoute(start, end, pushToService)
+            }
+        }
+    }
+
+    fun startRailwayJourney(trainNumber: String, destinationName: String, destinationCode: String, destLat: Double, destLon: Double) {
+        AppLogger.d("MapViewModel", "startRailwayJourney: $trainNumber to $destinationName ($destinationCode)")
+        resetRouteState()
+        
+        _destination.value = LatLng(destLat, destLon)
+        _destinationName.value = destinationName
+        _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.TRAIN)
+        _isPreviewMode.value = true
+        
+        viewModelScope.launch {
+            fetchRailwayRoute(trainNumber, destinationCode)
+        }
+    }
+
+    private suspend fun fetchRailwayRoute(trainNumber: String, destinationCode: String) {
+        _isRouting.value = true
+        try {
+            // 1. Ensure we have the sequence (usually fetched in dialog, but safety check)
+            var stations = _stationSequence.value
+            if (stations.isEmpty()) {
+                val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNumber)
+                if (response.isSuccessful && response.body() != null) {
+                    stations = response.body()!!.stationSequence
+                    _stationSequence.value = stations
+                }
+            }
+
+            if (stations.isEmpty()) throw Exception("Station sequence unavailable.")
+
+            // 2. Identify the closest upcoming station to the user's live GPS
+            val user = _userLocation.value
+            val startStation = if (user != null) {
+                stations.minByOrNull { station ->
+                    val results = FloatArray(1)
+                    Location.distanceBetween(user.latitude, user.longitude, station.latitude ?: 0.0, station.longitude ?: 0.0, results)
+                    results[0]
+                }
+            } else {
+                stations.firstOrNull()
+            } ?: throw Exception("Could not identify start station.")
+
+            val endStation = stations.find { it.stationCode == destinationCode } 
+                ?: throw Exception("Destination station not found in sequence.")
+
+            // 3. Fetch Final Approach Geometry from ORR
+            val startParam = "${startStation.latitude},${startStation.longitude}"
+            val endParam = "${endStation.latitude},${endStation.longitude}"
+            
+            val response = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val orrResponse = response.body()!!
+                val path = orrResponse.paths.firstOrNull() ?: throw Exception("No rail path found.")
+                
+                val decodedPoints = PolylineDecoder.decode(path.points)
+                val mapLibrePoints = decodedPoints.map { Point.fromLngLat(it.longitude(), it.latitude()) }
+                
+                val mbLine = com.mapbox.geojson.LineString.fromLngLats(mapLibrePoints.map { 
+                    com.mapbox.geojson.Point.fromLngLat(it.longitude(), it.latitude()) 
+                })
+                
+                val geoJson = mbLine.toJson()
+                val distance = path.distanceMeters
+                val duration = path.timeMillis / 1000.0
+                
+                _currentRouteGeoJson.value = geoJson
+                _expectedDistance.value = distance
+                _expectedDuration.value = duration
+                
+                // For Railway, we don't have segment speeds yet, use average
+                val avgSpeed = if (duration > 0) distance / duration else 15.0 // Default 15m/s (~54km/h)
+                val speeds = List(mapLibrePoints.size) { avgSpeed }
+                _segmentSpeeds.value = speeds
+
+                processRouteSuccess(geoJson, distance, pushToService = _isAlarmSet.value, speeds = speeds)
+            } else {
+                throw Exception("ORR geometry fetch failed.")
+            }
+
+        } catch (e: Exception) {
+            AppLogger.e("MapViewModel", "fetchRailwayRoute failed", e)
+            viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                android.widget.Toast.makeText(context, "Railway tracking failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            }
+            // Fallback: If ORR fails, we just clear and rely on Haversine in checkDistance
+            _currentRouteGeoJson.value = null
+            _routeLine.value = null
+        } finally {
+            _isRouting.value = false
         }
     }
 
     private fun fetchRoadRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
-        android.util.Log.d("MapViewModel", "fetchRoadRoute: start=$start, end=$end")
+        AppLogger.d("MapViewModel", "fetchRoadRoute: start=$start, end=$end")
         _isRouting.value = true
         viewModelScope.launch {
             try {
@@ -490,7 +608,7 @@ class MapViewModel(
                     processRouteSuccess(geoJson, firstRoute.distance, pushToService, speeds)
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MapViewModel", "Failed to fetch road route", e)
+                AppLogger.e("MapViewModel", "Failed to fetch road route", e)
             } finally {
                 _isRouting.value = false
             }
@@ -511,7 +629,7 @@ class MapViewModel(
     private val routingSemaphore = Semaphore(3)
 
     private fun fetchTransitRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
-        android.util.Log.d("MapViewModel", "fetchTransitRoute (Comprehensive): start=${start.latitude},${start.longitude}, end=${end.latitude},${end.longitude}")
+        AppLogger.d("MapViewModel", "fetchTransitRoute (Comprehensive): start=${start.latitude},${start.longitude}, end=${end.latitude},${end.longitude}")
         _isRouting.value = true
         viewModelScope.launch {
             try {
@@ -670,7 +788,7 @@ class MapViewModel(
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MapViewModel", "Failed to fetch Multi-modal route", e)
+                AppLogger.e("MapViewModel", "Failed to fetch Multi-modal route", e)
                 fetchRoadRoute(start, end, pushToService)
                 viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
                     android.widget.Toast.makeText(context, e.message ?: "Railway path unreachable.", android.widget.Toast.LENGTH_LONG).show()
@@ -704,7 +822,7 @@ class MapViewModel(
                 return RouteSegment(points, route.distance, route.duration, speeds)
             }
         } catch (e: Exception) {
-            android.util.Log.e("MapViewModel", "OSRM segment failed", e)
+            AppLogger.e("MapViewModel", "OSRM segment failed", e)
         }
         return null
     }
@@ -737,7 +855,7 @@ class MapViewModel(
                 )
             }
         } catch (e: Exception) {
-            android.util.Log.e("MapViewModel", "Rail segment fetch failed", e)
+            AppLogger.e("MapViewModel", "Rail segment fetch failed", e)
         }
         return null
     }
@@ -770,7 +888,7 @@ class MapViewModel(
             val stations = stationRepository.getNearbyStations(lat, lon, maxStationSearchRadiusKm, limit)
             return stations.map { LatLng(it.latitude, it.longitude) }
         } catch (e: Exception) {
-            android.util.Log.e("MapViewModel", "Failed to find candidate stations", e)
+            AppLogger.e("MapViewModel", "Failed to find candidate stations", e)
         }
         return emptyList()
     }
@@ -858,7 +976,7 @@ class MapViewModel(
     private var hasTriggeredArrival = false
 
     fun resetRouteState() {
-        android.util.Log.d("MapViewModel", "resetRouteState: Clearing all routing and ETA states")
+        AppLogger.d("MapViewModel", "resetRouteState: Clearing all routing and ETA states")
         _destination.value = null
         _destinationName.value = null
         _distanceToDestination.value = null
@@ -918,7 +1036,7 @@ class MapViewModel(
                 lastLoc
             ) < 5.0
         ) {
-            android.util.Log.d(
+            AppLogger.d(
                 "MapViewModel",
                 "checkDistance: Throttling calculations, distance moved < 5m"
             )
@@ -987,13 +1105,13 @@ class MapViewModel(
 
                     if (etaMinutes != Double.MAX_VALUE) {
                         _remainingEta.value = etaMinutes.roundToInt()
-                        android.util.Log.d(
+                        AppLogger.d(
                             "MapViewModel",
                             "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps"
                         )
                     } else {
                         _remainingEta.value = null
-                        android.util.Log.d(
+                        AppLogger.d(
                             "MapViewModel",
                             "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED"
                         )
@@ -1003,13 +1121,13 @@ class MapViewModel(
                     // Turf lineSlice throws exception if start and end are the same point (arrived)
                     _distanceToDestination.value = formatDistance(0)
                     _remainingEta.value = 0
-                    android.util.Log.d(
+                    AppLogger.d(
                         "MapViewModel",
                         "checkDistance: Arrived at exact destination point"
                     )
                 }
             } else {
-                android.util.Log.w(
+                AppLogger.w(
                     "MapViewModel",
                     "checkDistance: Could not snap user to route line"
                 )
@@ -1027,7 +1145,7 @@ class MapViewModel(
 
         // Auto-arrival detection (50m threshold)
         if (distance <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
-            android.util.Log.d(
+            AppLogger.d(
                 "MapViewModel",
                 "Arrival detected at distance: $distance. isAlarmSet: ${_isAlarmSet.value}"
             )
@@ -1133,7 +1251,7 @@ class MapViewModel(
         preLoadedDistance: Double = 0.0,
         preLoadedDuration: Long = 0
     ) {
-        android.util.Log.d(
+        AppLogger.d(
             "MapViewModel",
             "startJourneyDirect: Starting journey to $name, resetting state first"
         )
@@ -1157,12 +1275,12 @@ class MapViewModel(
                 val simplifiedRoute = com.mapbox.geojson.LineString.fromLngLats(simplifiedPoints)
                 fullRouteLine = simplifiedRoute
                 _routeLine.value = simplifiedRoute.toMapLibre()
-                android.util.Log.d(
+                AppLogger.d(
                     "MapViewModel",
                     "startJourneyDirect: Using pre-loaded simplified route"
                 )
             } catch (e: Exception) {
-                android.util.Log.e("MapViewModel", "Failed to parse pre-loaded GeoJSON", e)
+                AppLogger.e("MapViewModel", "Failed to parse pre-loaded GeoJSON", e)
             }
         }
 
@@ -1196,69 +1314,6 @@ class MapViewModel(
             preLoadedDistance = history.actualDistanceMeters,
             preLoadedDuration = history.durationMillis
         )
-    }
-
-    fun testLiveHandshake(trainNumber: String) {
-        viewModelScope.launch {
-            try {
-                Log.d("PHASE5_TEST", "🚀 Initiating Phase 5 Handshake for Train $trainNumber...")
-                
-                // 1. Fetch Telemetry from Hugging Face
-                val telemetryResponse = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNumber)
-                
-                if (telemetryResponse.isSuccessful && telemetryResponse.body() != null) {
-                    val data = telemetryResponse.body()!!
-                    Log.d("PHASE5_TEST", "📡 Telemetry acquired. Cache Hit: ${data.cacheHit}")
-                    
-                    val stations = data.stationSequence
-                    if (stations.size >= 2) {
-                        // 🔥 THE FIX: Grab the final approach segment (Penultimate to Destination)
-                        val penultimateCode = stations[stations.size - 2].stationCode
-                        val destinationCode = stations.last().stationCode
-                        
-                        // 2. Local Spatial Lookup via Room Database with Telemetry Fallback
-                        val startStation = stationRepository.getStationByCode(penultimateCode)
-                        val endStation = stationRepository.getStationByCode(destinationCode)
-                        
-                        val startLat: Double? = startStation?.latitude ?: stations[stations.size - 2].latitude
-                        val startLon: Double? = startStation?.longitude ?: stations[stations.size - 2].longitude
-                        val endLat: Double? = endStation?.latitude ?: stations.last().latitude
-                        val endLon: Double? = endStation?.longitude ?: stations.last().longitude
-                        
-                        if (startLat != null && startLon != null && endLat != null && endLon != null) {
-                            Log.d("PHASE5_TEST", "🗄️ Final Approach Stations: ${startStation?.name ?: penultimateCode} -> ${endStation?.name ?: destinationCode}")
-                            
-                            val startParam = "$startLat,$startLon"
-                            val endParam = "$endLat,$endLon"
-                            
-                            try {
-                                // 3. Fetch Physical Geometry from OpenRailRouting
-                                val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(startParam, endParam)
-                                
-                                if (orrResponse.isSuccessful && orrResponse.body() != null) {
-                                    // 4. Decode the Polyline
-                                    val polyline = orrResponse.body()!!.paths[0].points
-                                    val decodedPoints = PolylineDecoder.decode(polyline)
-                                    
-                                    Log.d("PHASE5_TEST", "✅ ORR SUCCESS! Track geometry decoded.")
-                                    Log.d("PHASE5_TEST", "📐 Point Count: ${decodedPoints.size}")
-                                } else {
-                                    throw Exception("ORR returned unsuccessful response: ${orrResponse.code()}")
-                                }
-                            } catch (e: Exception) {
-                                Log.e("PHASE5_TEST", "⚠️ ORR API Failed. Engaging Haversine Straight-Line Fallback!", e)
-                            }
-                        } else {
-                            Log.e("PHASE5_TEST", "❌ Coordinates resolution failed for $penultimateCode or $destinationCode.")
-                        }
-                    }
-                } else {
-                    Log.e("PHASE5_TEST", "❌ Telemetry Fetch Failed: ${telemetryResponse.errorBody()?.string()}")
-                }
-            } catch (e: Exception) {
-                Log.e("PHASE5_TEST", "💥 Critical Handshake Exception", e)
-            }
-        }
     }
 
     override fun onCleared() {

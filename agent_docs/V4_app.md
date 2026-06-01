@@ -116,9 +116,14 @@ To display route-accurate distances in the Search Dropdown without DDoS'ing OSRM
 
 **Objective:** Build the dual-mode alarm loop, offline fallbacks, and override OS execution limits.
 
-* [ ] **Android 14 Overrides:** Add `<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>` and `<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>` to the Manifest. Configure `AudioAttributes.USAGE_ALARM` to bypass Do Not Disturb mode.
-* [ ] **Dynamic Location Provider:** Instantiate `FusedLocationProviderClient`. Implement the speed-based polling loop (15 seconds when slow, 3 seconds when fast).
-* [ ] **Distance Mode Logic:** Implement the Turf-Java **Snap, Slice, and Measure** loop against the physical ORR/OSRM polylines. Fire the alarm if `remainingTrackLength <= targetDistance`.
-* [ ] **Time Mode Logic & Offline Fallback (Train):** * Compare system clock against the scraped API `ETA` minus the user's buffer.
-* If the Hugging Face API throws a `SocketTimeoutException` (user lost internet in a rural zone), immediately execute the offline mathematical fallback to keep the alarm alive.
-* [ ] **Dynamic Rerouting (Road):** During the snap process, evaluate `deviationDistance`. If > 500m, execute a background OSRM `/route` call to update the active linestring.
+* [x] **Android 14 Overrides:** Add `<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>` and `<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>` to the Manifest. Configure `AudioAttributes.USAGE_ALARM` to bypass Do Not Disturb mode.
+* [x] **Dynamic Location Provider:** Instantiate `FusedLocationProviderClient`. Implement the speed-based polling loop (15 seconds when slow, 3 seconds when fast).
+* [x] **Distance Mode Logic:** Implement the Turf-Java **Snap, Slice, and Measure** loop against the physical ORR/OSRM polylines. Fire the alarm if `remainingTrackLength <= targetDistance`.
+* [x] **Time Mode Logic & Offline Fallback (Train):** 
+    * Compare system clock against the scraped API `ETA` minus the user's buffer.
+    * If the Hugging Face API throws a `SocketTimeoutException` (user lost internet in a rural zone), immediately execute the offline mathematical fallback to keep the alarm alive.
+* [x] **Dynamic Rerouting (Road):** During the snap process, evaluate `deviationDistance`. If > 500m, execute a background OSRM `/route` call to update the active linestring.
+
+### Phase 6: System Maintenance & Standardization (NEW)
+* [x] **Logging Standardization:** Migrated app-wide logging to `AppLogger`.
+* [x] **Handshake Cleanup:** Finalized production network logic and removed test bootstrap code.

@@ -16,6 +16,7 @@ data class TelemetryResponse(
 
 @Serializable
 data class StationSequenceItem(
+    @SerialName("station_name") val stationName: String? = null,
     @SerialName("station_code") val stationCode: String,
     @SerialName("sequence_index") val sequenceIndex: Int,
     @SerialName("latitude") val latitude: Double? = null,

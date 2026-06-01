@@ -11,6 +11,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.InputStreamReader
+import com.janak.location.alarm.util.AppLogger
 
 @Serializable
 private data class StationFeatureCollection(
@@ -76,7 +77,7 @@ class StationRepository(private val database: AppDatabase, private val context: 
             
             stationDao.insertStations(entities)
         } catch (e: Exception) {
-            android.util.Log.e("StationRepository", "Failed to load stations from raw", e)
+            AppLogger.e("StationRepository", "Failed to load stations from raw", e)
         }
     }
 

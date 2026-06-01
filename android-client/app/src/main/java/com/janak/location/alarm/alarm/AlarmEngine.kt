@@ -30,8 +30,16 @@ class AlarmEngine(private val context: Context) {
     /**
      * Starts looping the default system alarm sound and vibration.
      * @param shouldVibrate Whether the haptic vibration should be active.
+     * @param forceMaxVolume If true, overrides system volume to maximum for this alarm.
      */
-    fun start(shouldVibrate: Boolean = true) {
+    fun start(shouldVibrate: Boolean = true, forceMaxVolume: Boolean = false) {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        
+        if (forceMaxVolume) {
+            val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
+            audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, maxVolume, 0)
+        }
+
         // 1. Setup and play Sound
         if (ringtone == null) {
             val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)

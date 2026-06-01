@@ -73,10 +73,6 @@ class MainActivity : ComponentActivity() {
                     )
                 )
 
-                LaunchedEffect(viewModel) {
-                    viewModel.testLiveHandshake("12605")
-                }
-
                 var currentScreen by remember { mutableStateOf("home") }
                 var selectedHistoryId by remember { mutableStateOf<Long?>(null) }
                 var routeToEdit by remember { mutableStateOf<SavedRouteEntity?>(null) }

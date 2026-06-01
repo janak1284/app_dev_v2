@@ -20,15 +20,15 @@ The "Location Alarm" is an intelligent, route-based Android commuter application
   - **Time Alarm:** Alerts user when dynamic ETA is less than *X* minutes.
 
 ## 3. Current State (V2 Pivot Active)
-- **Implemented (V2 Pivot Core):**
+- **Implemented (V2/V3/V4 Core):**
   - **Room Database:** Relational schema with `SavedRoute` and `RouteBreadcrumb` entities, DAOs, and Repository.
   - **Spatial Engine:** `RouteDistanceEngine` using Turf-Java for snapping, deviation triggers, route slicing, EMA speed, and dynamic ETA.
-  - **Service Overhaul:** `LocationAlarmService` now supports route-based tracking, OSRM GeoJSON parsing, GPS buffering, and automatic journey persistence to Room.
-  - **Network Handshake:** `MapViewModel` successfully fetches OSRM routes and communicates them to the background service.
-  - **Terminology Scrub:** Core logic renamed to "Distance/Time Alarm".
-  - **Phase 6 Implementation:** Implemented Search History Preview and Selection Mode (Bulk Deletion) for both Saved Routes and Journey History. Currently finalizing pending tasks.
+  - **Service Overhaul:** `LocationAlarmService` now supports route-based tracking, OSRM/ORR GeoJSON parsing, GPS buffering, and automatic journey persistence to Room.
+  - **Multi-Modal Engine:** Integrated OSRM and OpenRailRouting for seamless "Road-Rail-Road" journey tracking.
+  - **Lean V4 Railway tracking:** Implemented "Already on Train" mode with strict 2km safety triggers and forced volume alerts.
+  - **System Standardization:** Standardized app-wide logging with `AppLogger` and finalized production handshake.
 - **Currently in Development:**
-  - **Phase 6:** Journey Preview, Speed-Adjusted ETA, and Final Field Testing.
+  - **Refinement:** Accuracy calibration and rail multi-modal engine optimizations.
 
 ## 4. Database Architecture (Room)
 The data layer treats journeys as first-class relational entities:
