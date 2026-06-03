@@ -12,9 +12,6 @@ class RouteDistanceEngine {
     private var averageSpeedMps: Double = 0.0
     private val alpha = 0.2 // Smoothing factor for EMA (higher = more weight to recent speed)
 
-    private var emaPerformanceRatio = 1.0
-    private val RATIO_ALPHA = 0.1 // Heavy smoothing for stability
-
     /**
      * Calculates the distance remaining along a specific journey leg.
      */
@@ -138,24 +135,18 @@ class RouteDistanceEngine {
             return (remainingDistanceMeters / averageSpeedMps) / 60.0
         }
 
-        // 1. Calculate the instantaneous raw ratio
-        val rawRatio = averageSpeedMps / currentSegmentSpeedMps
+        // 1. Performance Ratio: How are we doing on the CURRENT road type?
+        // e.g., if we are walking 4km/h on a 5km/h path, we are at 80% efficiency (0.8)
+        var performanceRatio = averageSpeedMps / currentSegmentSpeedMps
         
-        // 2. Clamp the raw ratio BEFORE smoothing to prevent crazy anomalies
-        val clampedRawRatio = rawRatio.coerceIn(0.1, 2.5)
-        
-        // 3. Apply the EMA to the Ratio itself (Stabilization)
-        if (emaPerformanceRatio == 1.0) {
-            emaPerformanceRatio = clampedRawRatio
-        } else {
-            emaPerformanceRatio = (RATIO_ALPHA * clampedRawRatio) + ((1.0 - RATIO_ALPHA) * emaPerformanceRatio)
-        }
+        // Clamp ratio to protect against extreme outliers (traffic jam vs speeding)
+        performanceRatio = performanceRatio.coerceIn(0.1, 2.5)
 
-        // 4. Base OSRM Time: How long OSRM thinks the rest of the journey takes
+        // 2. Base OSRM Time: How long OSRM thinks the rest of the journey takes
         val baseRemainingDurationSeconds = remainingDistanceMeters / globalExpectedSpeedMps
 
-        // 5. Calibrated Time: Scale the OSRM prediction by our current smoothed performance ratio
-        val calibratedTimeSeconds = baseRemainingDurationSeconds / emaPerformanceRatio
+        // 3. Calibrated Time: Scale the OSRM prediction by our current performance ratio
+        val calibratedTimeSeconds = baseRemainingDurationSeconds / performanceRatio
 
         return calibratedTimeSeconds / 60.0
     }
@@ -173,7 +164,6 @@ class RouteDistanceEngine {
 
     fun resetStats() {
         averageSpeedMps = 0.0
-        emaPerformanceRatio = 1.0
     }
 
     /**
