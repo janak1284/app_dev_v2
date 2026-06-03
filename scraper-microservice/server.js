@@ -24,6 +24,7 @@ app.use(express.json());
 
 app.get('/api/v4/train/track', async (req, res) => {
     const trainNumber = req.query.train_number;
+    const forceRefresh = req.query.force_refresh === 'true';
 
     if (!trainNumber) {
         return res.status(400).json({ error: "Missing train_number parameter" });
@@ -37,20 +38,23 @@ app.get('/api/v4/train/track', async (req, res) => {
             .eq('train_number', trainNumber)
             .single();
 
-        // 2. EVALUATE CACHE AGE (10 Minute TTL)
+        // 2. EVALUATE CACHE AGE (10 Min Default, 3 Min for Manual Refresh)
+        const ttlMinutes = forceRefresh ? 3 : 10;
+        
         if (cacheData) {
             const lastUpdated = new Date(cacheData.last_updated).getTime();
             const ageInMinutes = (Date.now() - lastUpdated) / (1000 * 60);
 
-            if (ageInMinutes < 10) {
-                console.log(`⚡ CACHE HIT: Returning data for ${trainNumber}`);
+            if (ageInMinutes < ttlMinutes) {
+                console.log(`⚡ CACHE HIT (${forceRefresh ? 'Manual' : 'Auto'}): Returning data for ${trainNumber}`);
                 return res.json({
                     ...cacheData.payload,
                     cache_hit: true,
-                    timestamp_fetched: lastUpdated
+                    timestamp_fetched: lastUpdated,
+                    server_time: Date.now()
                 });
             }
-            console.log(`⏳ CACHE EXPIRED: Data is ${ageInMinutes.toFixed(1)} mins old. Re-scraping...`);
+            console.log(`⏳ CACHE EXPIRED: Data is ${ageInMinutes.toFixed(1)} mins old (TTL: ${ttlMinutes}m). Re-scraping...`);
         }
 
         // 3. CACHE MISS: FIRE UP PLAYWRIGHT
@@ -71,10 +75,12 @@ app.get('/api/v4/train/track', async (req, res) => {
             });
 
         // 5. RETURN FRESH DATA
+        const now = Date.now();
         return res.json({
             ...scrapedData,
             cache_hit: false,
-            timestamp_fetched: Date.now()
+            timestamp_fetched: now,
+            server_time: now
         });
 
     } catch (err) {

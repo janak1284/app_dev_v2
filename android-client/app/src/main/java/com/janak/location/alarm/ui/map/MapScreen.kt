@@ -45,7 +45,21 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.geojson.Point
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.outlined.Refresh
+import android.os.SystemClock
 import android.view.MotionEvent
+import androidx.compose.ui.draw.alpha
+import kotlinx.coroutines.delay
 
 @Composable
 fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
@@ -106,6 +120,52 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val remainingEta by viewModel.remainingEta.collectAsState()
     val railwayEtaStatus by viewModel.railwayEtaStatus.collectAsState()
+    
+    // --- Data Age Calculation ---
+    val dataAgeAtFetchMs by viewModel.dataAgeAtFetchMs.collectAsState()
+    val localUptimeAtFetchMs by viewModel.localUptimeAtFetchMs.collectAsState()
+    val isRefreshEnabled by viewModel.isRefreshEnabled.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    
+    var lastUpdatedText by remember { mutableStateOf<String?>(null) }
+    var nextRefreshText by remember { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(dataAgeAtFetchMs, localUptimeAtFetchMs, distanceToDestination) {
+        while (true) {
+            if (localUptimeAtFetchMs > 0) {
+                val currentAgeMs = dataAgeAtFetchMs + (SystemClock.elapsedRealtime() - localUptimeAtFetchMs)
+                val mins = (currentAgeMs / 60000).toInt()
+                lastUpdatedText = when {
+                    mins <= 0 -> "Updated: Now"
+                    else -> "Updated: ${mins}m ago"
+                }
+
+                // Match LocationAlarmService dynamic polling logic
+                val distStr = distanceToDestination ?: ""
+                val distKm = try {
+                    if (distStr.contains("km")) distStr.replace("km", "").toDouble()
+                    else 0.0 // meters
+                } catch (e: Exception) { 0.0 }
+
+                val intervalMins = when {
+                    distKm > 150.0 -> 45
+                    distKm > 50.0 -> 20
+                    else -> 10
+                }
+
+                val nextRefreshMins = intervalMins - mins
+                nextRefreshText = when {
+                    nextRefreshMins <= 0 -> "Syncing soon..."
+                    else -> "Auto sync in ${nextRefreshMins}m"
+                }
+            } else {
+                lastUpdatedText = null
+                nextRefreshText = null
+            }
+            delay(10000)
+        }
+    }
+
     val alarmSettings by viewModel.alarmSettings.collectAsState()
 
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -199,11 +259,12 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     }
 
     // Handle Map Clicks and Movement
-    LaunchedEffect(mapInstance) {
+    LaunchedEffect(mapInstance, alarmSettings.transportMode) {
         val map = mapInstance ?: return@LaunchedEffect
         map.addOnMapClickListener { latLng ->
             focusManager.clearFocus()
-            if (!isAlarmSet) {
+            // Railway destinations are fixed by the train schedule/dropdown, so don't allow map tap override
+            if (!isAlarmSet && alarmSettings.transportMode != com.janak.location.alarm.model.TransportMode.TRAIN) {
                 viewModel.setDestination(latLng)
             }
             true
@@ -281,8 +342,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                             org.maplibre.android.style.expressions.Expression.stop("ROAD", "#4285F4"),
                             org.maplibre.android.style.expressions.Expression.stop("WALK", "#757575"),
                             org.maplibre.android.style.expressions.Expression.stop("BUS", "#EA4335"),
-                            org.maplibre.android.style.expressions.Expression.stop("TRAIN", "#000000"), // Black for Rail
-                            org.maplibre.android.style.expressions.Expression.stop("SUBWAY", "#800080")
+                            org.maplibre.android.style.expressions.Expression.stop("TRAIN", "#000000") // Black for Rail
                         )
                     ),
                     org.maplibre.android.style.layers.PropertyFactory.lineWidth(6f),
@@ -636,6 +696,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Medium
                                 )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TelemetrySyncIndicator(
+                                    lastUpdatedText = lastUpdatedText ?: "Updated: Now",
+                                    nextRefreshText = nextRefreshText,
+                                    isRefreshing = isRefreshing,
+                                    isRefreshEnabled = isRefreshEnabled,
+                                    onRefreshClick = { viewModel.manualRefresh() }
+                                )
                             } else if (remainingEta != null) {
                                 Text(
                                     text = "ETA: $remainingEta min",
@@ -647,12 +715,6 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "DISTANCE TO TARGET",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(
                                 onClick = { viewModel.toggleAlarm() },
@@ -689,6 +751,14 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.secondary,
                                     fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TelemetrySyncIndicator(
+                                    lastUpdatedText = lastUpdatedText ?: "Updated: Now",
+                                    nextRefreshText = nextRefreshText,
+                                    isRefreshing = isRefreshing,
+                                    isRefreshEnabled = isRefreshEnabled,
+                                    onRefreshClick = { viewModel.manualRefresh() }
                                 )
                             } else if (remainingEta != null) {
                                 Text(
@@ -777,10 +847,11 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                              fontWeight = FontWeight.Bold
                          )
                          Text(
-                             text = if (alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.ROAD) 
-                                 "Finding the best road route" 
-                             else 
-                                 "Finding best Road -> Rail connection",
+                             text = when (alarmSettings.transportMode) {
+                                 com.janak.location.alarm.model.TransportMode.ROAD -> "Finding the best road route"
+                                 com.janak.location.alarm.model.TransportMode.TRAIN -> "Fetching railway track geometry"
+                                 else -> "Calculating optimal route..."
+                             },
                              style = MaterialTheme.typography.bodySmall,
                              color = MaterialTheme.colorScheme.onSurfaceVariant
                          )
@@ -882,6 +953,78 @@ fun StatusHeader(title: String, icon: ImageVector, color: Color) {
             color = color,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+/**
+ * A premium, low-profile telemetry sync indicator for real-time tracking.
+ */
+@Composable
+fun TelemetrySyncIndicator(
+    lastUpdatedText: String,
+    nextRefreshText: String?,
+    isRefreshing: Boolean,
+    isRefreshEnabled: Boolean,
+    onRefreshClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        modifier = modifier
+            .alpha(if (isRefreshEnabled) 1f else 0.6f)
+            .clickable(enabled = isRefreshEnabled, onClick = onRefreshClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AnimatedContent(
+                targetState = isRefreshing,
+                transitionSpec = {
+                    (fadeIn() + slideInVertically { it / 2 }).togetherWith(fadeOut() + slideOutVertically { -it / 2 })
+                },
+                label = "SyncIconState"
+            ) { refreshing ->
+                if (!refreshing) {
+                    Icon(
+                        imageVector = Icons.Outlined.Refresh,
+                        contentDescription = "Refresh telemetry",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(14.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
+            }
+
+            Column {
+                Text(
+                    text = if (isRefreshing) "Syncing..." else lastUpdatedText,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    color = if (isRefreshing) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+                if (!isRefreshing && nextRefreshText != null) {
+                    Text(
+                        text = nextRefreshText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        }
     }
 }
 

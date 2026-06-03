@@ -11,7 +11,9 @@ data class TelemetryResponse(
     @SerialName("train_number") val trainNumber: String,
     @SerialName("eta_string") val etaString: String? = null,
     @SerialName("station_sequence") val stationSequence: List<StationSequenceItem>,
-    @SerialName("cache_hit") val cacheHit: Boolean
+    @SerialName("cache_hit") val cacheHit: Boolean,
+    @SerialName("timestamp_fetched") val timestampFetched: Long? = null,
+    @SerialName("server_time") val serverTime: Long? = null
 )
 
 @Serializable
@@ -32,6 +34,7 @@ interface RailwayTelemetryApi {
 
     @GET("api/v4/train/track")
     suspend fun getTrainTelemetry(
-        @Query("train_number") trainNumber: String
+        @Query("train_number") trainNumber: String,
+        @Query("force_refresh") forceRefresh: Boolean = false
     ): Response<TelemetryResponse>
 }

@@ -52,6 +52,8 @@ import com.janak.location.alarm.api.*
 import com.janak.location.alarm.util.PolylineDecoder
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import kotlinx.coroutines.flow.asStateFlow
+import android.os.SystemClock
+import kotlinx.coroutines.delay
 
 @OptIn(FlowPreview::class)
 class MapViewModel(
@@ -73,7 +75,12 @@ class MapViewModel(
             try {
                 val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNum)
                 if (response.isSuccessful && response.body() != null) {
-                    _stationSequence.value = response.body()!!.stationSequence
+                    val body = response.body()!!
+                    _stationSequence.value = body.stationSequence
+                    
+                    // Update age tracking states
+                    _dataAgeAtFetchMs.value = (body.serverTime ?: 0L) - (body.timestampFetched ?: 0L)
+                    _localUptimeAtFetchMs.value = SystemClock.elapsedRealtime()
                 }
             } catch (e: Exception) {
                 AppLogger.e("MapViewModel", "Failed to fetch telemetry for dropdown", e)
@@ -183,6 +190,55 @@ class MapViewModel(
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
+    // --- Manual Refresh & Age Tracking ---
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _isRefreshEnabled = MutableStateFlow(true)
+    val isRefreshEnabled: StateFlow<Boolean> = _isRefreshEnabled.asStateFlow()
+
+    private val _dataAgeAtFetchMs = MutableStateFlow(0L)
+    val dataAgeAtFetchMs: StateFlow<Long> = _dataAgeAtFetchMs.asStateFlow()
+
+    private val _localUptimeAtFetchMs = MutableStateFlow(0L)
+    val localUptimeAtFetchMs: StateFlow<Long> = _localUptimeAtFetchMs.asStateFlow()
+
+    fun manualRefresh() {
+        val tNum = _currentTrainNumber ?: return
+        if (!_isRefreshEnabled.value) return
+
+        viewModelScope.launch {
+            try {
+                _isRefreshing.value = true
+                _isRefreshEnabled.value = false
+                AppLogger.d("MapViewModel", "Manual refresh triggered for $tNum")
+                
+                val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(tNum, forceRefresh = true)
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    _stationSequence.value = body.stationSequence
+                    
+                    // Update age tracking states
+                    _dataAgeAtFetchMs.value = (body.serverTime ?: 0L) - (body.timestampFetched ?: 0L)
+                    _localUptimeAtFetchMs.value = SystemClock.elapsedRealtime()
+                    
+                    AppLogger.d("MapViewModel", "Manual refresh successful. Cache hit: ${body.cacheHit}")
+                    
+                    // Force UI update by bypassing the distance throttle
+                    needsInitialCalculation = true
+                    _userLocation.value?.let { checkDistance(it) }
+                }
+            } catch (e: Exception) {
+                AppLogger.e("MapViewModel", "Manual refresh failed", e)
+            } finally {
+                _isRefreshing.value = false
+                // Enforce 120-second cooldown
+                delay(120_000L)
+                _isRefreshEnabled.value = true
+            }
+        }
+    }
+
     // --- System State ---
     private val _isLocationEnabled = MutableStateFlow(true)
     val isLocationEnabled: StateFlow<Boolean> = _isLocationEnabled.asStateFlow()
@@ -244,6 +300,15 @@ class MapViewModel(
                 try {
                     val sequence = Json.decodeFromString<List<StationSequenceItem>>(jsonStr)
                     _stationSequence.value = sequence
+                    
+                    val serverTime = intent.getLongExtra("SERVER_TIME", 0L)
+                    val timestampFetched = intent.getLongExtra("TIMESTAMP_FETCHED", 0L)
+                    
+                    if (serverTime > 0 && timestampFetched > 0) {
+                        _dataAgeAtFetchMs.value = serverTime - timestampFetched
+                        _localUptimeAtFetchMs.value = SystemClock.elapsedRealtime()
+                    }
+                    
                     AppLogger.d("MapViewModel", "Telemetry updated from background broadcast")
                     
                     // Trigger immediate UI refresh
@@ -511,15 +576,18 @@ class MapViewModel(
         val mode = _alarmSettings.value.transportMode
         if (mode == TransportMode.ROAD) {
             fetchRoadRoute(start, end, pushToService)
-        } else {
-            // For Railway, if we have a train number in state, we use it. 
-            // Otherwise, we might need to fallback to transit or road.
-            // Since V4 is lean, we assume startRailwayJourney was called.
-            // If this is a re-route, we trigger fetchRailwayRoute.
-            viewModelScope.launch {
-                // We need the train number. For now, let's assume we can get it from history or a temporary state.
-                // If unknown, we fallback to fetchRoadRoute to avoid a silent failure.
-                fetchRoadRoute(start, end, pushToService)
+        } else if (mode == TransportMode.TRAIN) {
+            // For Railway, we already handle routing via fetchRailwayRoute
+            // This is called during startRailwayJourney.
+            // If this is a re-route (e.g., settings change), we re-trigger it.
+            val tNum = _currentTrainNumber
+            val destCode = _destinationCode.value
+            if (tNum != null && destCode != null) {
+                viewModelScope.launch {
+                    fetchRailwayRoute(tNum, destCode)
+                }
+            } else {
+                AppLogger.w("MapViewModel", "Railway mode active but no train number/dest code for routing")
             }
         }
     }
@@ -563,6 +631,8 @@ class MapViewModel(
             
             // 1. Collect all valid station coordinates for the sequence
             val routePoints = mutableListOf<String>()
+            val missingCoords = mutableListOf<String>()
+            
             for (i in 0..destIndex) {
                 val station = sequence[i]
                 var lat = station.latitude
@@ -577,28 +647,52 @@ class MapViewModel(
                 }
                 
                 if (lat != null && lon != null) {
-                    routePoints.add("$lat,$lon")
+                    // Use Locale.US to ensure decimal point '.' instead of locale-specific ','
+                    val formatted = String.format(java.util.Locale.US, "%.6f,%.6f", lat, lon)
+                    routePoints.add(formatted)
+                } else {
+                    missingCoords.add(station.stationName ?: station.stationCode)
                 }
             }
-            AppLogger.d("MapViewModel", "Sending route points to API: $routePoints")
+            
+            // 2. We only send Start and End points to ORR. 
+            // Sending middle stations increases the risk of a "Connection not found" error if one coordinate is slightly off-track.
+            val finalRoutePoints = mutableListOf<String>()
+            if (routePoints.size >= 2) {
+                finalRoutePoints.add(routePoints.first())
+                finalRoutePoints.add(routePoints.last())
+            }
+            
+            AppLogger.d("MapViewModel", "Collected ${routePoints.size} stations. Sending Source & Destination to ORR. Missing: $missingCoords")
 
             var orrPoints: List<com.mapbox.geojson.Point>? = null
             var orrDistance = 0.0
             var orrDuration = 0.0
 
-            if (routePoints.size >= 2) {
+            if (finalRoutePoints.size == 2) {
                 // 3. Fetch the geometry for the whole path
-                val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(routePoints)
-                
-                if (orrResponse.isSuccessful && orrResponse.body() != null) {
-                    val paths = orrResponse.body()!!.paths
-                    val bestPath = paths.minByOrNull { it.distanceMeters }
-                    if (bestPath != null) {
-                        orrPoints = PolylineDecoder.decode(bestPath.points)
-                        orrDistance = bestPath.distanceMeters
-                        orrDuration = bestPath.timeMillis / 1000.0
+                try {
+                    val orrResponse = RetrofitClient.openRailRoutingApi.getTrackGeometry(finalRoutePoints)
+                    
+                    if (orrResponse.isSuccessful && orrResponse.body() != null) {
+                        val paths = orrResponse.body()!!.paths
+                        val bestPath = paths.minByOrNull { it.distanceMeters }
+                        if (bestPath != null) {
+                            orrPoints = PolylineDecoder.decode(bestPath.points)
+                            orrDistance = bestPath.distanceMeters
+                            orrDuration = bestPath.timeMillis / 1000.0
+                        } else {
+                            AppLogger.w("MapViewModel", "ORR success but empty paths list")
+                        }
+                    } else {
+                        AppLogger.e("MapViewModel", "ORR API failed: ${orrResponse.code()} ${orrResponse.message()}")
+                        AppLogger.d("MapViewModel", "Endpoints sent: Source=${finalRoutePoints.first()}, Dest=${finalRoutePoints.last()}")
                     }
+                } catch (e: Exception) {
+                    AppLogger.e("MapViewModel", "ORR Network/Parsing Error", e)
                 }
+            } else {
+                AppLogger.w("MapViewModel", "Insufficient points for ORR request")
             }
 
             if (orrPoints != null) {
@@ -620,7 +714,61 @@ class MapViewModel(
                 processRouteSuccess(geoJson, orrDistance, pushToService = _isAlarmSet.value, speeds = speeds)
                 AppLogger.d("MapViewModel", "✅ Railway Track rendered! Total Points: ${orrPoints.size}")
             } else {
-                throw Exception("Could not fetch Railway Route.")
+                // FALLBACK: "Connect-the-Dots" approach
+                // Build a path using straight lines between all stations that have coordinates
+                AppLogger.w("MapViewModel", "ORR failed. Building 'Connect-the-Dots' fallback route.")
+                
+                val dotPoints = mutableListOf<com.mapbox.geojson.Point>()
+                var totalDistance = 0.0
+                var lastPoint: com.mapbox.geojson.Point? = null
+
+                for (i in 0..destIndex) {
+                    val station = sequence[i]
+                    var lat = station.latitude
+                    var lon = station.longitude
+                    
+                    if (lat == null || lon == null) {
+                        val dbStation = stationRepository.getStationByCode(station.stationCode)
+                        if (dbStation != null) {
+                            lat = dbStation.latitude
+                            lon = dbStation.longitude
+                        }
+                    }
+                    
+                    if (lat != null && lon != null) {
+                        val currentPoint = com.mapbox.geojson.Point.fromLngLat(lon, lat)
+                        dotPoints.add(currentPoint)
+                        
+                        if (lastPoint != null) {
+                            totalDistance += calculateHaversineDistance(
+                                lastPoint.latitude(), lastPoint.longitude(),
+                                currentPoint.latitude(), currentPoint.longitude()
+                            )
+                        }
+                        lastPoint = currentPoint
+                    }
+                }
+
+                if (dotPoints.size >= 2) {
+                    val mbLine = com.mapbox.geojson.LineString.fromLngLats(dotPoints)
+                    _routeLine.value = mbLine.toMapLibre()
+                    val geoJson = mbLine.toJson()
+                    
+                    _currentRouteGeoJson.value = geoJson
+                    _expectedDistance.value = totalDistance
+                    // For duration, if we don't have it from ORR, we can't do much. 
+                    // Let's assume a default speed of 50km/h (13.8 m/s)
+                    val estimatedDuration = totalDistance / 13.8 
+                    _expectedDuration.value = estimatedDuration
+                    
+                    val speeds = List(dotPoints.size) { 13.8 }
+                    _segmentSpeeds.value = speeds
+
+                    processRouteSuccess(geoJson, totalDistance, pushToService = _isAlarmSet.value, speeds = speeds)
+                    AppLogger.d("MapViewModel", "✅ 'Connect-the-Dots' Route rendered! Total Points: ${dotPoints.size}")
+                } else {
+                    throw Exception("Insufficient coordinates for even a dot-to-dot route.")
+                }
             }
 
         } catch (e: Exception) {
@@ -1317,6 +1465,12 @@ class MapViewModel(
         } catch (e: Exception) {
             arrivalTimeStr
         }
+    }
+
+    private fun calculateHaversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val results = FloatArray(1)
+        Location.distanceBetween(lat1, lon1, lat2, lon2, results)
+        return results[0].toDouble()
     }
 
     private fun formatDistance(meters: Int): String {

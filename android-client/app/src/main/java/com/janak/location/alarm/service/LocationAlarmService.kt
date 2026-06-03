@@ -127,12 +127,15 @@ class LocationAlarmService : Service() {
                     AppLogger.d("LocationAlarmService", "🔄 Polling live telemetry for train $tNum")
                     val response = com.janak.location.alarm.api.RetrofitClient.railwayTelemetryApi.getTrainTelemetry(tNum)
                     if (response.isSuccessful && response.body() != null) {
-                        val sequence = response.body()!!.stationSequence
+                        val body = response.body()!!
+                        val sequence = body.stationSequence
                         val json = Json.encodeToString(sequence)
                         
                         sendBroadcast(Intent(ACTION_TELEMETRY_UPDATED).apply {
                             setPackage(packageName)
                             putExtra("STATION_SEQUENCE_JSON", json)
+                            putExtra("SERVER_TIME", body.serverTime ?: 0L)
+                            putExtra("TIMESTAMP_FETCHED", body.timestampFetched ?: 0L)
                         })
                         AppLogger.d("LocationAlarmService", "✅ Dynamic telemetry refresh successful")
                     }
