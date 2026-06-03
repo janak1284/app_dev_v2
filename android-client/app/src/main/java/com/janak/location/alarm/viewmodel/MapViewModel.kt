@@ -54,6 +54,10 @@ import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
 import kotlinx.coroutines.flow.asStateFlow
 import android.os.SystemClock
 import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(FlowPreview::class)
 class MapViewModel(
@@ -1068,21 +1072,21 @@ class MapViewModel(
         val bearingToStartStation = calculateBearing(start.latitude, start.longitude, sStation.latitude, sStation.longitude)
         val bearingToEndStation = calculateBearing(start.latitude, start.longitude, eStation.latitude, eStation.longitude)
 
-        fun angleDiff(a: Double, b: Double) = Math.abs(((a - b + 540) % 360) - 180)
+        fun angleDiff(a: Double, b: Double) = abs(((a - b + 540) % 360) - 180)
 
         return angleDiff(bearingToDest, bearingToStartStation) < 90.0 &&
                angleDiff(bearingToDest, bearingToEndStation) < 90.0
     }
 
     private fun calculateBearing(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val y = Math.sin(Math.toRadians(lon2 - lon1)) * Math.cos(Math.toRadians(lat2))
-        val x = Math.cos(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) -
-                Math.sin(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(
+        val y = sin(Math.toRadians(lon2 - lon1)) * cos(Math.toRadians(lat2))
+        val x = cos(Math.toRadians(lat1)) * sin(Math.toRadians(lat2)) -
+                sin(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) * cos(
             Math.toRadians(
                 lon2 - lon1
             )
         )
-        return Math.toDegrees(Math.atan2(y, x))
+        return Math.toDegrees(atan2(y, x))
     }
 
 
@@ -1371,7 +1375,7 @@ class MapViewModel(
                         )
 
                         if (etaMinutes != Double.MAX_VALUE) {
-                            _remainingEta.value = etaMinutes.roundToInt()
+                            _remainingEta.value = kotlin.math.ceil(etaMinutes).toInt()
                             AppLogger.d(
                                 "MapViewModel",
                                 "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps"

@@ -447,7 +447,7 @@ class LocationAlarmService : Service() {
             distance = results[0].toDouble()
         }
         
-        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.roundToInt()} min" else ""}")
+        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${kotlin.math.ceil(etaMinutes).toInt()} min" else ""}")
         adjustPollingInterval(distance)
         lastKnownRemainingDistanceMeters = distance
 
