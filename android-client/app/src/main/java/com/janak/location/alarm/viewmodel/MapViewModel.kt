@@ -169,8 +169,8 @@ class MapViewModel(
     private val _distanceToDestination = MutableStateFlow<String?>(null)
     val distanceToDestination: StateFlow<String?> = _distanceToDestination.asStateFlow()
 
-    private val _remainingEta = MutableStateFlow<Int?>(null)
-    val remainingEta: StateFlow<Int?> = _remainingEta.asStateFlow()
+    private val _remainingEta = MutableStateFlow<Double?>(null)
+    val remainingEta: StateFlow<Double?> = _remainingEta.asStateFlow()
 
     private val _isRouting = MutableStateFlow(false)
     val isRouting: StateFlow<Boolean> = _isRouting.asStateFlow()
@@ -267,6 +267,7 @@ class MapViewModel(
     private var lastReRouteTime = 0L
     private var lastCheckedLocation: Location? = null
     private var needsInitialCalculation: Boolean = true
+    private var lastDisplayedEta: Double? = null
 
     private val reRouteReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -1202,6 +1203,7 @@ class MapViewModel(
         routeDistanceEngine.resetStats()
         lastCheckedLocation = null
         needsInitialCalculation = true
+        lastDisplayedEta = null
     }
 
     fun resetJourneyCompleted() {
@@ -1292,7 +1294,7 @@ class MapViewModel(
                 _remainingEta.value = null // Clear math-based ETA
             } else {
                 // Fallback: 60 km/h average = 1 km/min
-                val estimatedMinutes = (straightLineDistance / 1000.0).roundToInt()
+                val estimatedMinutes = (straightLineDistance / 1000.0)
                 _remainingEta.value = estimatedMinutes
                 _railwayEtaStatus.value = null
             }
@@ -1320,7 +1322,7 @@ class MapViewModel(
             // If in Preview Mode, prioritize the expected distance
             if (_isPreviewMode.value && _expectedDistance.value > 0) {
                 _distanceToDestination.value = formatDistance(_expectedDistance.value.toInt())
-                _remainingEta.value = (_expectedDuration.value / 60.0).roundToInt()
+                _remainingEta.value = (_expectedDuration.value / 60.0)
                 return
             }
 
@@ -1375,13 +1377,22 @@ class MapViewModel(
                         )
 
                         if (etaMinutes != Double.MAX_VALUE) {
-                            _remainingEta.value = kotlin.math.ceil(etaMinutes).toInt()
+                            val newEta = etaMinutes
+                            
+                            // Visual Damper: Lower threshold to 0.1 minutes (6 seconds of ETA change)
+                            // to allow smooth decimal updates without UI flickering.
+                            if (lastDisplayedEta == null || abs(newEta - (lastDisplayedEta ?: 0.0)) >= 0.1) {
+                                _remainingEta.value = newEta
+                                lastDisplayedEta = newEta
+                            }
+
                             AppLogger.d(
                                 "MapViewModel",
-                                "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps"
+                                "checkDistance: distance=${distance.toInt()}m, eta=${String.format(Locale.US, "%.1f", etaMinutes)}min, speed=${currentLocation.speed}mps"
                             )
                         } else {
                             _remainingEta.value = null
+                            lastDisplayedEta = null
                             AppLogger.d(
                                 "MapViewModel",
                                 "checkDistance: distance=${distance.toInt()}m, eta=WAITING_FOR_SPEED"
@@ -1391,7 +1402,7 @@ class MapViewModel(
                     } catch (e: Exception) {
                         // Turf lineSlice throws exception if start and end are the same point (arrived)
                         _distanceToDestination.value = formatDistance(0)
-                        _remainingEta.value = 0
+                        _remainingEta.value = 0.0
                         AppLogger.d(
                             "MapViewModel",
                             "checkDistance: Arrived at exact destination point"
@@ -1578,6 +1589,7 @@ class MapViewModel(
             _currentRouteGeoJson.value = preLoadedRouteGeoJson
             _expectedDistance.value = preLoadedDistance
             _expectedDuration.value = preLoadedDuration.toDouble() / 1000.0
+            _remainingEta.value = (preLoadedDuration.toDouble() / 60000.0)
 
             try {
                 val mbRoute = com.mapbox.geojson.LineString.fromJson(preLoadedRouteGeoJson)

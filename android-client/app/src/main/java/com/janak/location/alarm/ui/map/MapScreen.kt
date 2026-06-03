@@ -59,6 +59,7 @@ import androidx.compose.material.icons.outlined.Refresh
 import android.os.SystemClock
 import android.view.MotionEvent
 import androidx.compose.ui.draw.alpha
+import java.util.Locale
 import kotlinx.coroutines.delay
 
 @Composable
@@ -705,8 +706,9 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                     onRefreshClick = { viewModel.manualRefresh() }
                                 )
                             } else if (remainingEta != null) {
+                                val formattedEta = String.format(Locale.US, "%.1f", remainingEta)
                                 Text(
-                                    text = "ETA: $remainingEta min",
+                                    text = "ETA: $formattedEta min",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Medium
@@ -761,8 +763,9 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                     onRefreshClick = { viewModel.manualRefresh() }
                                 )
                             } else if (remainingEta != null) {
+                                val formattedEta = String.format(Locale.US, "%.1f", remainingEta)
                                 Text(
-                                    text = "ETA: $remainingEta min",
+                                    text = "ETA: $formattedEta min",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.secondary,
                                     fontWeight = FontWeight.Medium

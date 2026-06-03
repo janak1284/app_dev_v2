@@ -99,6 +99,7 @@ class LocationAlarmService : Service() {
         const val CHANNEL_ID = "LocationAlarmChannel"
         const val GPS_LOSS_THRESHOLD_MS = 15000L 
         const val RAILWAY_BULLETPROOF_THRESHOLD = 2000.0 // 2km
+        const val ALARM_WARMUP_MS = 60000L // 1 minute grace period for stabilization
     }
 // ...
     private fun getDynamicPollingInterval(remainingMeters: Double): Long {
@@ -190,9 +191,9 @@ class LocationAlarmService : Service() {
             val estimatedRemainingDistance = leg.distanceMeters * (1.0 - progress).coerceAtLeast(0.0)
             val estimatedETA = if (leg.durationMillis > 0) (leg.durationMillis - elapsedInLeg).toDouble() / 60000.0 else 0.0
 
-            AppLogger.w("LocationAlarmService", "GPS Lost. Dead Reckoning: Dist=${estimatedRemainingDistance.toInt()}m, ETA=${estimatedETA.toInt()}min")
+            AppLogger.w("LocationAlarmService", "GPS Lost. Dead Reckoning: Dist=${estimatedRemainingDistance.toInt()}m, ETA=${String.format(Locale.US, "%.1f", estimatedETA)}min")
             
-            updateNotification("GPS Lost - Estimating...", "Distance: ${formatDistance(estimatedRemainingDistance.toInt())} | ETA: ${estimatedETA.roundToInt()} min")
+            updateNotification("GPS Lost - Estimating...", "Distance: ${formatDistance(estimatedRemainingDistance.toInt())} | ETA: ${String.format(Locale.US, "%.1f", estimatedETA)} min")
 
             if (!isAlarmSilenced) {
                 val isRailway = transportMode == TransportMode.TRAIN
@@ -447,7 +448,8 @@ class LocationAlarmService : Service() {
             distance = results[0].toDouble()
         }
         
-        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${kotlin.math.ceil(etaMinutes).toInt()} min" else ""}")
+        val formattedEta = if (etaMinutes != Double.MAX_VALUE) String.format(Locale.US, " | ETA: %.1f min", etaMinutes) else ""
+        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}$formattedEta")
         adjustPollingInterval(distance)
         lastKnownRemainingDistanceMeters = distance
 
@@ -460,6 +462,12 @@ class LocationAlarmService : Service() {
             val isTimeTriggered = isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold
             
             if (isDistanceTriggered || isTimeTriggered) {
+                // Warm-up guard: Don't trigger alarm in the first minute of the journey to allow GPS/ETA stabilization
+                if (System.currentTimeMillis() - startTimeMillis < ALARM_WARMUP_MS) {
+                    AppLogger.d("LocationAlarmService", "Alarm trigger suppressed: Still in warm-up period.")
+                    return
+                }
+
                 val isTransfer = currentLegs.isNotEmpty() && currentLegIndex < currentLegs.size - 1
                 triggerAlarm(isTransfer, forceMaxVolume = isRailway)
             }
