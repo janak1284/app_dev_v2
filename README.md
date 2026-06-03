@@ -1,97 +1,100 @@
-# Location Alarm MVP 📍⏰
+# Location Alarm V2 📍⏰
+### *The Smart Commuter Engine*
 
-Location Alarm is a smart, GPS-based alarm application designed specifically for commuters. It ensures you never miss your stop by triggering a high-priority alarm as you approach your destination, even if you've fallen asleep or are distracted during your travel.
+Location Alarm V2 is a high-precision, route-aware travel assistant designed for commuters. Unlike standard proximity alarms that only check "as the crow flies" distance, this app uses a **Smart Routing Engine** to track your actual progress along roads and highways. 
 
-## 🌟 Key Features
-
-- **Real-Time Destination Search:** Powered by the **Photon API (OpenStreetMap)**, featuring 500ms debouncing, location-biased auto-suggestions, and persistent search history.
-- **Interactive MapLibre Integration:** Smooth map interface with **Auto-Zoom** to selected destinations and floating controls for **One-Tap Refocus** and **Location Refresh**.
-- **Proximity & Time-Based Alarms:** High-precision distance calculations combined with a **Backup Time-Based Alarm** system to ensure arrival coverage.
-- **Background Guardian:** A dedicated **Foreground Service** tracks your location and maintains alarm readiness even when the app is in the background or the screen is off.
-- **Hardware-Level Alarm Engine:** High-priority sound and haptic vibration loops that bypass standard notification limitations.
-- **Modern Material 3 UI:** Entirely built with Jetpack Compose, featuring a "Deep Dark" mode for OLED efficiency and a seamless "Guardian" status system.
-- **Full Customization:** User-configurable wake-up distance, system ringtone selection, vibration toggles, and persistent Theme Management (Light/Dark/System).
+It ensures you never miss your stop by triggering an alarm based on **real road distance** or **predicted arrival time**, even if the app is in your pocket or the screen is off.
 
 ---
 
-## 🏗️ Architecture Overview
+## 🌟 Why V2 is Different?
+Standard GPS alarms often fail because they use a straight line to measure distance. If your bus is traveling a winding road, a 1km "straight line" alarm might go off 15 minutes too early. 
 
-The project follows a robust **Clean Architecture** pattern with a unidirectional data flow.
-
-### 🗺️ Data & Logic Flow
-`UI (Compose)` ↔ `ViewModel` ↔ `Service / API / Engine`
-
-- **UI Layer:** State-only Jetpack Compose screens. `MapScreen` observes state flows and handles navigation to `SettingsScreen`.
-- **ViewModel Layer:** `MapViewModel` manages state, persists history/preferences via `SharedPreferences`, and orchestrates search/alarm logic.
-- **Service/Engine Layer:**
-    - `LocationAlarmService`: Foreground Service for background tracking and distance monitoring.
-    - `LocationTrackingManager`: Handles the FusedLocationProviderClient.
-    - `AlarmEngine`: Hardware abstraction for Ringtone and Vibrator APIs.
-    - `AlarmScheduler`: Manages system-level exact alarms for time-based backups.
+**V2 solves this by:**
+- **Road Snapping:** It "snaps" your GPS position to the actual road path.
+- **Route Tracking:** It knows exactly how much road distance is left, not just how close you are to the dot on the map.
+- **Performance Ratio Scaling:** It tracks the specific speed limit of your current road segment (e.g., city vs. highway) and calculates your real-time efficiency (Performance Ratio) to adjust the entire remaining journey dynamically.
+- **Predictive Timing:** It calculates your ETA by scaling the OSRM base time by your actual performance ratio, ensuring humanized arrival estimates.
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Key Features
 
-- **Language:** [Kotlin](https://kotlinlang.org/)
-- **UI Framework:** [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- **Map SDK:** [MapLibre Native for Android](https://maplibre.org/)
-- **Networking:** [Retrofit](https://square.github.io/retrofit/) & [OkHttp](https://square.github.io/okhttp/)
-- **Serialization:** [Kotlinx Serialization](https://github.com/Kotlin/kotlinx.serialization)
-- **Persistence:** SharedPreferences with JSON Serialization
-- **Architecture Components:** ViewModel, StateFlow, Coroutines, Foreground Services
-- **Location Services:** Google Play Services (FusedLocationProvider)
+### 🛣️ Smart Routing & Alarms
+- **Road-Aware Distance:** High-precision tracking that follows the curves of the road using the OSRM (Open Source Routing Machine) engine.
+- **Performance Ratio ETA:** A sophisticated model that scales OSRM's expected duration by your real-time performance against segment limits. This ensures accurate predictions even when transitioning between slow traffic and fast highways.
+- **Real-Time Route Slicing:** The map route line dynamically shortens (slices) as you move, providing immediate visual feedback of your progress.
+- **Smart ETA Alarms:** Set an alarm to wake you up exactly **10 minutes before you arrive**, regardless of traffic or distance.
+
+### 🔋 Efficiency & Reliability
+- **Smart Polling (Battery-Saver):** Dynamically adjusts GPS update frequency based on distance to the destination (e.g., 30s polling when 10km away, 2s polling when within 2km).
+- **WakeLock Management:** Ensures the tracking engine stays active even when the phone enters "Deep Sleep" during long commutes.
+- **State Recovery:** Automatically resumes tracking if the system kills the app or if the device restarts.
+
+### 🗺️ Advanced Map Experience
+- **Center Lock (Auto-Follow):** Toggle a "locked" mode that keeps the user centered on the map. It automatically disengages if you manually pan the map.
+- **Interactive MapLibre Interface:** A smooth, battery-efficient map using OpenStreetMap data.
+- **Journey Preview:** See your entire route line and total distance before you even start the trip.
+- **One-Tap Search:** Instant destination search with history and "smart suggestions."
+
+### 🚆 Multi-Modal Transit (New in V3)
+- **Road-Rail-Road Integration:** Seamlessly combines OSRM (Road) and OpenRailRouting (Rail) into a single continuous journey.
+- **Smart Station Selection:** Automatically finds the best railway stations for your journey by evaluating actual road commute times to nearby candidates.
+- **Visual Mode Differentiation:** Clearly see which parts of your trip are by road and which are by rail via color-coded map lines and segment icons.
+
+### 📂 History & Management
+- **High-Fidelity Saving:** Automatically captures your **actual path taken**, total distance, and duration.
+- **Improved UI/UX:** Data-rich cards for Saved Routes and History, displaying real-world metrics (KM, minutes) and active alarm settings.
+- **Route Reuse:** When you reuse a saved journey, the app uses your previously traversed high-precision path instead of the OSRM API, ensuring 100% consistency.
+- **Reliable Background Engine:** Enhanced with state recovery and deep-sleep optimization (WakeLocks) to ensure long journeys are recorded without interruption.
+
+### 🛡️ Reliability (The "Guardian" System)
+- **Background Tracking:** A dedicated service keeps the app alive and monitoring your location even when you are using other apps or the phone is locked.
+- **Hardware-Level Alerts:** Alarms use a continuous loop of sound and vibration that won't be silenced by standard notification filters.
 
 ---
 
-## 📂 Project Structure
+## 🛠️ The Tech Stack (Simplified)
 
-```text
-app/src/main/java/com/janak/location/alarm/
-├── alarm/                  # AlarmEngine, Handler, Receiver, Scheduler
-├── api/                    # Retrofit service & Photon API client
-├── location/               # Fused Location Provider manager
-├── model/                  # Data models (PhotonResponse, AlarmSettings)
-├── service/                # LocationAlarmService (Background Tracking)
-├── ui/                     # Compose Screens & Components
-│   ├── alarm/              # Configuration sheets
-│   ├── components/         # Reusable UI elements (SearchField, WheelPicker)
-│   ├── map/                # MapScreen & MapContent
-│   ├── settings/           # SettingsScreen & Theme Controls
-│   └── theme/              # Material 3 Design Tokens & Custom Colors
-├── viewmodel/              # MapViewModel & Factory
-└── MainActivity.kt         # Entry point & Theme Orchestration
-```
+- **User Interface:** **Jetpack Compose** (Modern, smooth Android UI).
+- **Offline Database:** **Room / SQLite** (Stores your saved routes and travel history safely on your phone).
+- **Mapping:** **MapLibre & OSRM** (High-performance, open-source mapping and routing).
+- **Spatial Math:** **Turf-Java** (The "brain" that handles complex road calculations).
+- **Background Engine:** **Android Foreground Services** (Ensures 100% reliability during travel).
 
 ---
 
 ## 🚀 Getting Started
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/janak1284/app_dev_v2.git
-   ```
-2. **Open in Android Studio:**
-   Import the project as a Gradle project.
-3. **Permissions:**
-   The app requires `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, and `POST_NOTIFICATIONS` (on Android 13+). Ensure these are granted.
-4. **Build & Run:**
-   Connect an Android device or use an emulator with GPS simulation capabilities.
+### Prerequisites
+- An Android device running Android 8.0 (Oreo) or higher.
+- GPS/Location permissions (Fine Location).
+
+### Installation
+1. Clone the repo: `git clone https://github.com/janak1284/app_dev_v2.git`
+2. Open in **Android Studio Jellyfish** or newer.
+3. Build and install the `debug` variant.
+
+---
+
+## 📂 Project Logic
+The app is built using **Clean Architecture**, which means the code is separated into three simple parts:
+1. **The UI (View):** What you see and click (Compose).
+2. **The Logic (ViewModel):** The bridge that handles search results and button clicks.
+3. **The Engine (Service/Repository):** The background workers that track GPS, talk to the map servers, and save data to your phone.
 
 ---
 
 ## 🗺️ Roadmap
-
-- [x] **MVP Core:** Map + Search + Proximity Alarm.
-- [x] **Phase 2:** Background Service integration for tracking when the screen is off.
-- [x] **Phase 2:** Backup Time-Based Alarm (AlarmManager).
-- [x] **Phase 3:** Search History and Persistent Preferences.
-- [ ] **Phase 3:** Battery optimization and "Smart Polling" based on distance.
-- [ ] **Phase 4:** Multiple saved destinations (Bookmarks).
-- [ ] **Phase 4:** Advanced "Quiet Hours" and Location-based profiles.
+- [x] **Phase 5:** Home Screen, Saved Routes, and Journey History.
+- [x] **Phase 6:** Predictive Routing Engine & Road-Snapping logic.
+- [x] **Phase 7:** High-Fidelity Path Saving & Route Slicing.
+- [x] **Phase 8:** Refinement Phase (Stability fixes & UX polish).
+- [x] **Phase 9:** Battery-saver mode (Smart Polling) & Segment-Aware Speed Correction.
+- [x] **Phase 10:** Multi-Modal Transit Engine (V3 - Initial Release).
+- [ ] **Phase 11:** Further Optimizations (NxN station evaluation, walking logic).
 
 ---
 
 ## ⚖️ License
-
-Built for the Location Alarm MVP Project. All rights reserved.
+Built for the Location Alarm V2 Project. All rights reserved.

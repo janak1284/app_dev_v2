@@ -1,50 +1,65 @@
-# Project Updates - Location Alarm MVP
+# Project Updates - Location Alarm V3
 
-## Features Implemented
-- **Visual Countdown Timer (New):**
-    - Implemented a `BackupTimerPill` composable to display a dynamic progress bar and a formatted (MM:SS) timer directly on the map overlay.
-    - Updated `MapViewModel` with coroutine-based countdown logic to track `remainingSeconds` and `totalSeconds` when a backup alarm is set.
-    - Synced the UI countdown state with the Android `AlarmManager` for precise time tracking.
-- **Smart Search Interaction (New):**
-    - Search suggestions and history now follow a focus-driven lifecycle: they appear only when the search field is focused.
-    - Integrated `LocalFocusManager` with the Map UI; tapping the map or selecting a destination automatically clears focus and hides search results.
-    - Added `pointerInput` gesture detection to the map container for a more responsive "tap-to-dismiss" behavior.
-- **Search History & Local Bias (New):**
-    - Search now persists the last 10 selected destinations using `SharedPreferences`.
-    - Local history matches are prioritized and merged with remote Photon API results for faster access.
-    - Integrated history-specific iconography (History vs. Location) in the search dropdown.
-- **Theme Customization & UI Modernization (New):**
-    - Created a dedicated **Settings Screen** accessible from the search bar.
-    - Full support for **Light, Dark, and System Default** theme modes.
-    - Implemented "Deep Dark" color palette for improved battery efficiency on OLED screens.
-- **Enhanced Map Interaction (New):**
-    - **One-Tap Refocus:** Added a dedicated floating button to instantly center the map on the user's current GPS position.
-    - **Active Refresh:** Manual refresh button to restart location tracking collectors.
-    - **Smart Camera:** The map now automatically pans and zooms to the destination upon selection.
-- **Background Readiness (Phase 2):**
-    - Fully implemented `LocationAlarmService` as a Foreground Service with persistent notifications.
-    - Established `RingingActivity` for high-priority wake-up states that survive background execution.
-    - Configured `AndroidManifest.xml` with Foreground Service declarations and necessary permissions (`FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`, `SCHEDULE_EXACT_ALARM`).
-- **Destination Search:** Integrated the Photon API (OpenStreetMap) for real-time location auto-suggestions.
-- **Networking Foundation:** Setup Retrofit, OkHttp, and Kotlinx Serialization for client-side API communication.
-- **Search Logic:** Implemented 500ms debouncing and location-biasing in the ViewModel to prioritize local search results.
-- **Search UI:** Created a modern `DestinationSearchField` component with loading indicators and animated suggestion lists.
-- **Map Integration:**
-    - **Camera Animation:** The map now smoothly flys to the selected destination.
-    - **Destination Markers:** Visual markers are placed at the selected coordinates.
-    - **Style Safety:** Implemented listeners to ensure markers persist across map style reloads.
-- **Alarm Engine:**
-    - Created `AlarmEngine.kt` to handle hardware interactions (Sound & Haptics).
-    - Integrated `AlarmEngine` into `MapViewModel` and `MainActivity`.
-    - Connected distance-trigger logic to start the alarm hardware.
-    - Added vibration preference support, allowing users to toggle haptics on/off from the UI.
-- **Advanced Configuration (Modern Configuration Sheet):**
-    - **Material 3 Time Integration:** Replaced the custom scroll wheel with the official Jetpack Compose `TimeInput` for faster, keyboard-friendly time selection.
-    - **Backup Time-Based Alarm:** Integrated a secondary backup alarm using `AlarmManager` for specific arrival times.
-    - **Custom Ringtones:** Added a system ringtone picker allowing users to select their preferred alert sound.
+## Version 3.0.0 Release (May 2026)
+- **Chronological Recent Searches:** Fixed search box suggestions where recent searches were incorrectly sorted by distance instead of remaining in chronological order (newest first).
+- **Static Back Button Alignment:** Fixed MapScreen layout where the back button would shift downward to align with the combined height of the search box and suggestions widget. Changing vertical alignment to top and applying fine-tuned top padding keeps the back button static.
+- **Version Bump:** Bumped version to `3.0.0` (versionCode `3`) to mark the transition to the V3 release.
 
-## Technical Fixes
-- **Location Collector Stability:** Resolved a race condition where multiple location collectors could be launched simultaneously; implemented job cancellation to ensure only one active tracking session.
-- **State Management:** Refactored `MapViewModel` to use `SharedPreference` for persisting history and theme settings.
-- **UI Logic:** Optimized the "Guardian" status card with better animations and clearer state transitions.
-- **Architecture Cleanup:** Introduced `AlarmScheduler` to decouple time-based alarm logic from the proximity engine.
+## Predictive ETA Trigger (Dev 1)
+- **Smart Alarms:** Implemented dual-trigger logic in `LocationAlarmService`. Users can now choose to be woken up based on a distance threshold OR a predictive ETA threshold (e.g., "Wake me 10 minutes before arrival").
+- **UI Configuration:** Added a "Smart ETA Alarm" section to the configuration sheet with a toggle and minute slider.
+- **Model Expansion:** Updated `AlarmSettings` to persist predictive alarm states.
+- **Service Handshake:** Integrated the predictive parameters into the `MapViewModel` -> `LocationAlarmService` intent flow.
+- **Service State Machine:** Refactored `LocationAlarmService` with a robust state machine (`TRACKING`, `ALARM_RINGING`). The service now remains active post-alarm for continuous breadcrumb recording.
+- **Dynamic Re-routing Handshake:** Implemented a bidirectional loop where the service signals deviations (>100m) and `MapViewModel` pushes updated OSRM paths.
+- **Spatial Math Engine:** Integrated `Turf-Java` for route-based distance calculation, route snapping, and cross-track deviation detection.
+- **Predictive ETA:** Implemented a sliding window speed algorithm to provide real-time, road-aware ETAs.
+- **Global Terminology Alignment:** Standardized on "Distance Alarm" and "Time Alarm" across the service and logic layers.
+
+## Home Screen & Journey Summary Refinement (Dev 2)
+- **Home Screen:** Overhauled the landing screen with a modern "Deep Dark" aesthetic, featuring a dynamic header and rich `RouteCard` components displaying journey metadata.
+- **Journey Summary Sheet:** Replaced the basic save dialog with a polished `ModalBottomSheet` that triggers upon journey completion, allowing users to gracefully save or discard their routes.
+- **Navigation Flow:** Unified the transition from journey tracking back to the saved routes list.
+- **Visual Consistency:** Standardized colors and component shapes across the V2 UI layer.
+
+## High-Fidelity Routing & UI (Dev 1 & 2)
+- **Real-Time Route Slicing:** Implemented dynamic map updates where the route line shortens as the user progresses, using Turf-Java for high-precision snapping and slicing.
+- **Calibrated ETA UI:** Exposed real-time ETA minutes to the MapScreen, providing commuters with a road-aware arrival countdown.
+- **Center Lock Mode:** Added an auto-follow camera mode for the user location, complete with visual state feedback on the focus button and automatic disengagement on manual map interaction.
+- **High-Fidelity Journey Backend:** 
+    - Updated entities to store **Actual Path (GeoJSON)**, **Actual Distance**, and **Actual Duration**.
+    - **Tracking Pipeline Robustness Optimizations:**
+    - Implemented strict 40m GPS accuracy gating to filter signal noise.
+    - Added 60s debounce cooldown to the re-routing broadcast receiver.
+    - Implemented a 180s switching penalty (hysteresis) to prevent jarring mid-journey route changes.
+    - Implemented concurrent Cartesian product evaluation for multi-modal journeys (Road-Rail-Road).
+    - Decoupled OSRM pre-fetching to minimize redundant network calls.
+    - Introduced Coroutine Semaphore (limit=3) for API rate limiting (OSRM, ORR, Photon).
+    - Implemented a weighted cost function (Road 1.5x vs Rail 1.0x) for time-optimal route selection.
+    - Refactored candidate culling using Haversine distance via Turf-Java.
+    - Implemented **Route Reuse** logic in `MapViewModel` that prioritizes stored high-precision paths over API calls, ensuring consistency for repeated journeys.
+- **Auto-Arrival Save Prompt:** Integrated a 50m arrival detection trigger that automatically prompts the user to save the journey once they reach their destination.
+- **Database Migration:** Bumped Room database to **v6** to support new journey metadata and high-fidelity paths.
+
+## Lean V4 Railway Tracking Engine (June 2026)
+- **Live On-Train UX:** Implemented a simplified "already on train" tracking model, eliminating the multi-modal road-rail sandwich for a cleaner commuter experience.
+- **Dynamic Track Snapping:** Integrated Turf-Java math loop in `LocationAlarmService` for real-time GPS-to-track snapping on ORR geometry.
+- **High-Frequency Final Approach:** Automated polling interval adjustment to 1 second when within 2km of the destination station.
+- **Bulletproof 2km Trigger:** Hardcoded safety trigger that activates the alarm at 2km remaining distance, regardless of user settings.
+- **Force Max Volume:** Enhanced `AlarmEngine` to override system volume to maximum for railway arrival alerts, bypassing "Do Not Disturb" and silent modes.
+- **Critical Alert UI:** Updated `RingingActivity` with a "CRITICAL" state and error-themed visuals for high-priority railway alarms.
+
+## Railway Logic Optimization (June 2026)
+- **Hybrid Route Line Implementation:** Developed a dual-layer rendering system for railway journeys. Macro-routing connects stations with straight lines for continuous visual coverage, while Micro-routing (ORR API) provides high-precision curvature for the final approach segment.
+- **Hybrid ETA & Status Engine:** Decoupled UI metrics to prioritize reliability. Distance and arrival triggers are powered by local high-frequency GPS (Haversine math) and strictly honor user-defined alarm ranges. ETA and delay status are synced with official railway telemetry, providing a relative "hours/mins" countdown.
+- **Final Approach Geometry Fetching:** Refined the `fetchRailwayRoute` pipeline to strictly request track geometry from the penultimate station to the destination. This prevents "ConnectionNotFound" and timeout errors associated with long-distance rail pathing in ORR.
+
+## System Maintenance & Standardization (June 2026)
+- **App-wide Logging Standardization:** Migrated from `android.util.Log` to a centralized `AppLogger` utility. This ensures consistent logcat tagging (`LOCATION_ALARM_V4`) and structured component-based messaging across repositories, services, and viewmodels.
+- **Handshake Finalization:** Removed the `testLiveHandshake` bootstrap logic from `MainActivity` as the production network loop between the Android client and the railway telemetry microservice is now fully verified.
+- **Microservice Refinement:** Optimized `scraper.js` with improved request interception to further reduce memory footprint during headless telemetry extraction.
+
+## Technical Foundation
+- **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.
+- **Retrofit Client:** Dual-service configuration for Photon (Search) and OSRM (Routing).
+- **Lifecycle Management:** Fixed memory leaks related to `BroadcastReceiver` unregistration and ensured foreground service persistence.

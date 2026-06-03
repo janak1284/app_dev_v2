@@ -1,0 +1,164 @@
+# REFACTOR APP (VERSION 2) - [MOVED TO V3]
+
+> **Note:** As of May 2026, the project has transitioned to **Version 3 (V3)** to support Multi-Modal Transit and Leg-Based Tracking. Please refer to `V3_app.md` for the current roadmap and technical architecture.
+
+## Phase 1: The Data Foundation (Room DB)
+Before touching the UI or the map, we need to establish where the data lives. Room will act as our single source of truth.
+
+* [x] **Implement Room Dependencies:** Add the required Room Gradle dependencies (room-runtime, room-ktx, room-compiler) and migrated to KSP.
+* [x] **Define SavedRoute Entity:** Create a table to store the metadata of the journey. Columns should include routeId (Primary Key), destinationName, targetTime (if applicable), and dateSaved.
+* [x] **Define RouteBreadcrumb Entity:** Create a table to hold the actual GPS trail. Columns should include pointId, routeId (Foreign Key linked to SavedRoute), latitude, longitude, speed, and timestamp.
+* [x] **Create DAOs:** Write the Data Access Objects to insert breadcrumbs in batches and to fetch a Flow<List<SavedRoute>> for your new Home Screen.
+* [x] **Repository Layer:** Abstract the Room DB behind a Repository so your ViewModels can seamlessly observe the saved routes.
+
+## Phase 2: Network & Visuals (OSRM + MapLibre)
+Next, we connect to the routing engine and get the path rendering on the screen.
+
+* [x] **OSRM Retrofit Interface:** Build a new API service for http://router.project-osrm.org. Construct the GET request to fetch the driving/walking route between the user's current location and the destination.
+* [x] **GeoJSON Parsing:** Set up Kotlinx Serialization to parse the OSRM response, specifically extracting the LineString coordinates and the duration (estimated time).
+* [x] **MapLibre Rendering:** Feed the parsed LineString directly into MapLibre as a GeoJsonSource and draw it using a LineLayer. This gives the user a visual path to follow.
+
+## Phase 3: The Engine Room (Spatial Math & Predictive ETA)
+This is where the application becomes intelligent. It leans heavily into data science principles, processing real-time streams to make predictions.
+
+* [x] **Turf-Java Integration:** Add the Turf library. This is crucial for local, on-device spatial calculations without pinging an API.
+* [x] **Route Snapping & Distance:** Update the Foreground Service. Every time a new GPS coordinate arrives, use Turf to calculate the distance along the OSRM LineString from the user's snapped position to the final destination.
+* [x] **The 100m Deviation Trigger:** Calculate the cross-track distance (how far the raw GPS point is from the OSRM line). If deviation > 100 meters, drop the current polyline and trigger Phase 2 again to fetch a new route.
+* [x] **Sliding Window Speed Algorithm:** Implement an Exponential Moving Average (EMA) or a simple queue (e.g., the last 30 location updates) to calculate the user's actual average speed.
+* [x] **Dynamic ETA Calculation:** Divide the Turf remaining route distance by your sliding average speed. This yields a highly accurate, real-time ETA that adapts to traffic or train delays.
+
+## Phase 4: Service State Machine Overhaul
+The background service must evolve from a simple trigger to a continuous recording engine.
+
+* [x] **Breadcrumb Buffering:** As the FusedLocation Provider emits locations, store them in a local MutableList<Location>.
+* [x] **State Redesign:** Change the service states. Instead of terminating when the alarm fires, transition from TRACKING to ALARM_RINGING.
+* [x] **Journey Termination:** The location collectors and the breadcrumb buffer must keep running until the user explicitly triggers an End Journey Intent.
+* [x] **Save Mechanism:** When the journey ends, pass the buffered coordinate list to the Room Repository via a bulk insert to save the actual path taken.
+
+## Phase 5: UI Refactoring & Terminology
+Finally, align the Jetpack Compose layer with the new backend reality.
+
+* [x] **Scrub Old Terminology:** Search and replace all instances of "Guard" and "Backup Alarm". Rename them to Distance Alarm and Time Alarm in the UI strings and ViewModel states.
+* [x] **Home Screen Implementation:** Build a new landing screen. It should observe the Room DB via the ViewModel and display a neat list of past SavedRoute cards.
+* [x] **Journey Summary Sheet:** When the user clicks "End Journey", pop up a Compose Bottom Sheet asking: "Save this route?". If they say yes, execute the Room database insert from Phase 4.
+* [x] **Alarm Configuration:** Update the setup sheet. Users now select either a Distance threshold (e.g., "Wake me 2km away") OR a Time threshold (e.g., "Wake me 10 minutes before arrival", which relies on your dynamic ETA algorithm).
+* [x] **Saved Journeys & History UI:** Implemented `SavedRoutesScreen` for managing/editing routes and `JourneyHistoryScreen` for viewing past logs, including history pruning.
+
+## Phase 6: Journey Preview & Speed-Adjusted ETA
+Enhance the transition from Home to Map with a preview state and a more robust predictive engine.
+
+* [x] **Journey Preview State:** Consolidated into the "DESTINATION SET" card. Users see the full road distance and route line immediately.
+* [x] **Streamlined Setup:** Replaced multistep confirmation with a unified "SET UP ALARM" flow.
+* [x] **OSRM Speed Calibration:** Capture the initial `duration` from the OSRM response. Calculate the "Expected Speed" ($Distance / Duration$).
+* [x] **Dynamic Speed Ratio ETA:** Calculate a "Speed Ratio" ($\text{User Avg Speed} / \text{OSRM Expected Speed}$) to provide an accurate, road-aware ETA.
+* [x] **Search History Persistence:** Silently update recent search entries with OSRM road distance for accurate future lookups.
+
+## Phase 7: High-Fidelity Routing & User Experience
+Final polish and implementation of "Smart Commuter" features for maximum reliability.
+
+* [x] **Real-Time Route Slicing:** Update the `MapViewModel` to use `TurfMisc.lineSlice` on every location update. This visually shortens the route line as the user moves.
+* [x] **Center Lock (Auto-Follow):** Add a toggleable state in `MapScreen` that centers the camera on the user. Automatically disable it if the user manually pans or zooms.
+* [x] **High-Fidelity Journey Backend:** Update the Room entities (`SavedRouteEntity`, `JourneyHistoryEntity`) to store the actual path (GeoJSON), total distance, and duration of the trip.
+* [x] **Route Reuse Logic:** Modify the `MapViewModel` to check if a saved route has a stored GeoJSON path. If so, load it directly and skip the OSRM API call.
+* [x] **Auto-Arrival Save Prompt:** Add a 50m arrival detection trigger in both the Service and ViewModel to show the "Save Journey" prompt automatically.
+* [x] **Database Migration (v6):** Bump the Room version and handle schema updates for the new journey metadata.
+
+## Phase 8: Refinement & Stability (Completed)
+* [x] **Edit Mode Implementation:** Added `EditRouteSheet.kt` to allow renaming and re-configuring saved routes.
+* [x] **Keyboard Input Optimization:** Implemented `imePadding` and scroll support for all input sheets.
+* [x] **GPX Simulation:** Use Android Studio's location emulator to run simulated trips with varying speeds to verify calibrated ETA accuracy and route slicing.
+* [x] **Arrival Stability Fix:** Resolved fatal `Turf` library crashes by wrapping `lineSlice` in arrival-aware try-catch blocks.
+* [x] **Persistent Tracking:** Decoupled alarm dismissal from service termination. Tracking now persists until arrival or explicit end.
+* [x] **UI Polish (Skeleton Loaders):** Integrated `SkeletonLoader.kt` for a smoother experience during asynchronous data fetching.
+* [x] **History Optimization:** Capped `JourneyHistory` at 10 items and simplified the UI to a lightweight "gist" of past trips.
+* [x] **Home Screen Saved Routes:** Replaced "Recent Journeys" with full-featured "Saved Routes" cards on the Home Screen using a shared `SavedRouteCard` component.
+* [x] **Persistent Tracking (1.3km Fix):** Solved the 1.3km route truncation bug by persisting breadcrumbs directly to Room DB in real-time and implementing Service State Recovery to survive unexpected OS kills.
+* [ ] **WakeLock & Doze Verification:** Ensure the service stays active during long periods of device inactivity using `adb shell dumpsys deviceidle force-idle`.
+* [x] **Final Field Testing:** Real-world verification of the predictive routing engine on actual roads.
+
+## ~~Phase 9: Multi-Modal Transit & Leg-Based Alarms~~ [MOVED TO V3]
+*The next evolution to support commuters using trains and buses with intermediate transfers is now handled in Version 3.*
+
+## The Onboarding Brief (Read this first)
+**The Big Pivot:**
+We are shifting the Location Alarm MVP from a simple "proximity trigger" to a smart, predictive, and multi-modal routing engine. Previously, the app drew a straight circle around the destination. This caused false positives if the user was on a winding road or a V-shaped junction.
+
+**The Solution:**
+We are integrating OSRM for roadway paths and Valhalla/OTP for multi-modal transit paths. For transit, we use "Leg-Based Tracking" to wake the user up before intermediate transfers. As the user moves, we snap their GPS coordinates to the path (or current leg), calculate the actual remaining distance using Turf-Java, and predict dynamic ETAs.
+
+## Work Division Strategy
+
+### Developer 1: The Spatial & Data Engineer
+**Focus:** Background Services, Spatial Mathematics, and Database Architecture.
+
+**1. The Room Database Foundation:**
+* Set up the Room entities (`SavedRoute`, `RouteBreadcrumb`).
+* Expose data via Repository.
+
+**2. The Spatial Math & Leg Engine:**
+* Integrate Turf-Java for cross-track deviation and route slicing.
+* **NEW:** Implement Leg-Based Tracking logic to handle multi-modal journey segments and transfer point alarms.
+
+**3. Service State Machine Overhaul:**
+* Update `LocationAlarmService` to handle multi-leg transitions and persistent tracking across transfers.
+
+### Developer 2: The Network & UI Engineer
+**Focus:** External APIs, Map Rendering, and Jetpack Compose Interfaces.
+
+**1. The Routing API Integration:**
+* **OSRM:** Roadway routing (Driving/Walking).
+* **NEW (Valhalla/OTP):** Multi-modal transit routing (Rail/Bus/Walk).
+* Parse GeoJSON `LineString` responses into internal `JourneyLeg` models.
+
+**2. MapLibre GeoJSON Rendering:**
+* Render multi-leg routes with distinct visual styles for different transport modes.
+
+**3. UI/UX Refactoring:**
+* **NEW:** Implement the "Transport Mode Selector" (Road vs Transit) in the journey setup flow.
+* Update `JourneySummarySheet` to display leg-by-leg breakdowns.
+
+## The Handshake (Where your code meets)
+To work in parallel without blocking each other, you need to agree on data contracts.
+
+**1. The Route Contract:** Dev 2 will fetch the OSRM route. Dev 1 needs that route to do spatial math.
+* **Agreement:** Dev 2 will expose the parsed OSRM LineString via a StateFlow in the ViewModel. Dev 1 will observe this flow in the service to run the Turf-Java calculations.
+
+**2. The Database Contract:** Dev 2 needs to display saved routes on the UI, but Dev 1 is building the database.
+* **Agreement:** Dev 1 will quickly define the SavedRoute data class and a mock repository first. Dev 2 can use this mock data to build the Home Screen UI immediately, while Dev 1 wires up the actual SQLite backend.
+
+## Branching Strategy
+Here is a tailored, lightweight Feature Branching strategy (inspired by GitHub Flow) designed specifically for a frontend/backend split.
+
+### The Branch Hierarchy
+* **main:** The untouchable source of truth. This currently holds your working MVP. Do not commit anything here during the pivot.
+* **v2-develop:** Your shared integration branch. This is the new "main" for the duration of this pivot. All completed features merge here.
+* **Feature Branches:** Short-lived branches where the actual coding happens.
+
+### Branch Naming Conventions
+Use standardized prefixes so it is instantly clear who is working on what and what part of the app is being touched.
+
+**Format:** type/domain-short-description
+
+**For Developer 1 (Spatial/Data):**
+* feat/data-room-schema
+* feat/engine-turf-distance
+* fix/service-breadcrumb-buffer
+
+**For Developer 2 (Network/UI):**
+* feat/net-osrm-retrofit
+* feat/ui-maplibre-geojson
+* refactor/ui-terminology-cleanup
+
+### The Daily Workflow
+1. **Branch Off:** Both developers always cut their new feature branches from the latest version of v2-develop.
+2. **Commit Often:** Keep commits logical and small.
+3. **Pull Request (PR):** When a feature is done, open a PR against v2-develop.
+4. **The Rule of Two:** You must review and approve each other's code before merging. This ensures the UI developer understands the database changes, and the Database developer understands the network models.
+5. **Merge and Delete:** Once approved, squash-merge into v2-develop and delete the feature branch to keep the repo clean.
+
+### Managing the "Handshake" (Avoiding Blockers)
+Since the UI relies on the Database, and the Spatial Math relies on the Network, you need a strategy to prevent one developer from sitting idle while the other finishes a prerequisite.
+
+* **The Interface First Approach:** Developer 1 (Room) and Developer 2 (Retrofit) should agree on the exact data class structures first (e.g., the SavedRoute data class and the LineString model).
+* **Create a stub branch:** Push a quick branch to v2-develop that only contains these empty data classes and interface definitions.
+* **Work in Parallel:** Now, Developer 2 can build the Home Screen UI using a hardcoded, fake list of SavedRoute objects, while Developer 1 spends the next few days actually wiring up SQLite to output that exact list. When you both merge, the real data flows into the finished UI seamlessly.
