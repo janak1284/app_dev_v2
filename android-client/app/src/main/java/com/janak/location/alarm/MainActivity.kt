@@ -74,17 +74,14 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navigationStack = remember { mutableStateListOf("home") }
-                val currentScreen by derivedStateOf { navigationStack.last() }
+                val currentScreen by remember { derivedStateOf { navigationStack.last() } }
                 
-                fun navigateTo(screen: String) {
-                    navigationStack.add(screen)
-                }
-
-                fun navigateBack() {
+                val navigateTo = remember { { screen: String -> navigationStack.add(screen) } }
+                val navigateBack = remember { { 
                     if (navigationStack.size > 1) {
                         navigationStack.removeAt(navigationStack.size - 1)
                     }
-                }
+                } }
 
                 val themeMode by viewModel.themeMode.collectAsState()
                 val darkTheme = when (themeMode) {
@@ -105,8 +102,8 @@ class MainActivity : ComponentActivity() {
                             "home" -> {
                                 HomeScreen(
                                     viewModel = viewModel,
-                                    onNewJourneyClick = {
-                                        viewModel.resetRouteState()
+                                    onNewJourneyClick = { resetState ->
+                                        if (resetState) viewModel.resetRouteState()
                                         navigateTo("map")
                                     },
                                     onSettingsClick = { navigateTo("settings") },

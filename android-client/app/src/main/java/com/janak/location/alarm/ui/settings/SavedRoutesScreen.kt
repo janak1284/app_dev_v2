@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.data.entity.SavedRouteEntity
 import com.janak.location.alarm.ui.components.SavedRouteCard
+import com.janak.location.alarm.util.AppLogger
 import com.janak.location.alarm.viewmodel.MapViewModel
 import java.util.Locale
 
@@ -28,6 +29,43 @@ fun SavedRoutesScreen(
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val selectedRoutes = remember { mutableStateMapOf<Long, SavedRouteEntity>() }
     var isSelectionMode by remember { mutableStateOf(false) }
+
+    val routeToDelete by viewModel.routeToDelete.collectAsState()
+    val deleteMultiple by viewModel.deleteMultipleRoutes.collectAsState()
+
+    if (routeToDelete != null || deleteMultiple) {
+        AlertDialog(
+            onDismissRequest = {
+                viewModel.setRouteToDelete(null)
+                viewModel.setDeleteMultipleRoutes(false)
+            },
+            title = { Text("Delete Route(s)?") },
+            text = { Text("Are you sure you want to delete the selected route(s)? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (deleteMultiple) {
+                        viewModel.deleteRoutes(selectedRoutes.values.toList())
+                        isSelectionMode = false
+                        selectedRoutes.clear()
+                    } else {
+                        routeToDelete?.let { viewModel.deleteRoute(it) }
+                    }
+                    viewModel.setRouteToDelete(null)
+                    viewModel.setDeleteMultipleRoutes(false)
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    viewModel.setRouteToDelete(null)
+                    viewModel.setDeleteMultipleRoutes(false)
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -48,9 +86,7 @@ fun SavedRoutesScreen(
                 actions = {
                     if (isSelectionMode) {
                         IconButton(onClick = {
-                            viewModel.deleteRoutes(selectedRoutes.values.toList())
-                            isSelectionMode = false
-                            selectedRoutes.clear()
+                            viewModel.setDeleteMultipleRoutes(true)
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Selected")
                         }
@@ -84,7 +120,9 @@ fun SavedRoutesScreen(
                         isSelected = isSelected,
                         isSelectionMode = isSelectionMode,
                         onEditClick = { onEditRouteClick(route) },
-                        onDeleteClick = { viewModel.deleteRoute(route) },
+                        onDeleteClick = { 
+                            viewModel.setRouteToDelete(route)
+                        },
                         onStartClick = {
                             onRouteClick(route)
                         },

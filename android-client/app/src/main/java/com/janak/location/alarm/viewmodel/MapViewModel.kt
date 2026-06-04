@@ -51,13 +51,13 @@ import java.util.Locale
 import com.janak.location.alarm.api.*
 import com.janak.location.alarm.util.PolylineDecoder
 import com.janak.location.alarm.data.entity.RouteBreadcrumbEntity
-import kotlinx.coroutines.flow.asStateFlow
 import android.os.SystemClock
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 class MapViewModel(
@@ -237,7 +237,7 @@ class MapViewModel(
             } finally {
                 _isRefreshing.value = false
                 // Enforce 120-second cooldown
-                delay(120_000L)
+                delay(120_000L.milliseconds)
                 _isRefreshEnabled.value = true
             }
         }
@@ -370,7 +370,7 @@ class MapViewModel(
         val historyJson = sharedPrefs.getString("search_history", null) ?: return emptyList()
         return try {
             Json.decodeFromString<List<PhotonFeature>>(historyJson)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
@@ -388,7 +388,7 @@ class MapViewModel(
     private fun setupSearchDebounce() {
         viewModelScope.launch {
             _searchQuery
-                .debounce(350)
+                .debounce(350.milliseconds)
                 .distinctUntilChanged()
                 .collect { query ->
                     if (query.length >= 3) {
@@ -652,7 +652,7 @@ class MapViewModel(
                 
                 if (lat != null && lon != null) {
                     // Use Locale.US to ensure decimal point '.' instead of locale-specific ','
-                    val formatted = String.format(java.util.Locale.US, "%.6f,%.6f", lat, lon)
+                    val formatted = String.format(Locale.US, "%.6f,%.6f", lat, lon)
                     routePoints.add(formatted)
                 } else {
                     missingCoords.add(station.stationName ?: station.stationCode)
@@ -1462,9 +1462,9 @@ class MapViewModel(
             val m = diffMins % 60
             
             if (h > 0) {
-                "${h} hr ${m} min"
+                "$h hr $m min"
             } else {
-                "${m} min"
+                "$m min"
             }
         } catch (e: Exception) {
             arrivalTimeStr
@@ -1516,6 +1516,35 @@ class MapViewModel(
         viewModelScope.launch {
             routeRepository.updateSavedRoute(route)
         }
+    }
+
+    // --- UI State ---
+    private val _routeToDelete = MutableStateFlow<SavedRouteEntity?>(null)
+    val routeToDelete = _routeToDelete.asStateFlow()
+
+    fun setRouteToDelete(route: SavedRouteEntity?) {
+        _routeToDelete.value = route
+    }
+
+    private val _deleteMultipleRoutes = MutableStateFlow(false)
+    val deleteMultipleRoutes = _deleteMultipleRoutes.asStateFlow()
+
+    fun setDeleteMultipleRoutes(value: Boolean) {
+        _deleteMultipleRoutes.value = value
+    }
+
+    private val _deleteMultipleJourneys = MutableStateFlow(false)
+    val deleteMultipleJourneys = _deleteMultipleJourneys.asStateFlow()
+
+    fun setDeleteMultipleJourneys(value: Boolean) {
+        _deleteMultipleJourneys.value = value
+    }
+
+    private val _itemToRemove = MutableStateFlow<PhotonFeature?>(null)
+    val itemToRemove = _itemToRemove.asStateFlow()
+
+    fun setItemToRemove(feature: PhotonFeature?) {
+        _itemToRemove.value = feature
     }
 
     fun deleteJourneys(journeys: List<JourneyHistoryEntity>) {

@@ -35,15 +35,51 @@ import org.maplibre.android.geometry.LatLng
 @Composable
 fun HomeScreen(
     viewModel: MapViewModel,
-    onNewJourneyClick: () -> Unit,
+    onNewJourneyClick: (Boolean) -> Unit,
     onSettingsClick: () -> Unit,
     onManageJourneysClick: () -> Unit,
     onManageSearchesClick: () -> Unit
 ) {
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val searchHistory by viewModel.searchHistory.collectAsState()
+    val routeToDelete by viewModel.routeToDelete.collectAsState()
+    val itemToRemove by viewModel.itemToRemove.collectAsState()
     var showModeSelection by remember { mutableStateOf(false) }
     var showRailwaySetup by remember { mutableStateOf(false) }
+
+    if (routeToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setRouteToDelete(null) },
+            title = { Text("Delete Route?") },
+            text = { Text("Are you sure you want to delete this route?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    routeToDelete?.let { viewModel.deleteRoute(it) }
+                    viewModel.setRouteToDelete(null)
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.setRouteToDelete(null) }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (itemToRemove != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setItemToRemove(null) },
+            title = { Text("Remove from history?") },
+            text = { Text("Are you sure you want to remove this item from your search history?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    itemToRemove?.let { viewModel.removeFromHistory(it) }
+                    viewModel.setItemToRemove(null)
+                }) { Text("Remove") }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.setItemToRemove(null) }) { Text("Cancel") }
+            }
+        )
+    }
 
     if (showModeSelection) {
         AlertDialog(
@@ -68,7 +104,7 @@ fun HomeScreen(
                             AppLogger.d("HomeScreen", "Selecting ROAD mode")
                             viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.ROAD))
                             showModeSelection = false
-                            onNewJourneyClick()
+                            onNewJourneyClick(true)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
@@ -108,10 +144,10 @@ fun HomeScreen(
             viewModel = viewModel,
             onDismiss = { showRailwaySetup = false },
             onStartTracking = { trainNumber, destName, destCode, lat, lon ->
-                AppLogger.d("HomeScreen", "Starting Railway tracking: $trainNumber to $destName ($destCode)")
-                viewModel.startRailwayJourney(trainNumber, destName, destCode, lat, lon)
-                showRailwaySetup = false
-                onNewJourneyClick()
+            AppLogger.d("HomeScreen", "Starting Railway tracking: $trainNumber to $destName ($destCode)")
+            viewModel.startRailwayJourney(trainNumber, destName, destCode, lat, lon)
+            showRailwaySetup = false
+            onNewJourneyClick(true)
             }
         )
     }
@@ -137,7 +173,7 @@ fun HomeScreen(
             HomeHeader(onSettingsClick = onSettingsClick)
 
             if (savedRoutes.isEmpty() && searchHistory.isEmpty()) {
-                EmptyState(onNewJourneyClick)
+                EmptyState { onNewJourneyClick(true) }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -170,8 +206,8 @@ fun HomeScreen(
                             val dismissState = rememberSwipeToDismissBoxState(
                                 confirmValueChange = {
                                     if (it == SwipeToDismissBoxValue.EndToStart) {
-                                        viewModel.deleteRoute(route)
-                                        true
+                                        viewModel.setRouteToDelete(route)
+                                        false
                                     } else false
                                 }
                             )
@@ -185,11 +221,11 @@ fun HomeScreen(
                                         route = route,
                                         onClick = {
                                             viewModel.startJourneyFromSavedRoute(route)
-                                            onNewJourneyClick()
+                                            onNewJourneyClick(false)
                                         },
                                         onStartClick = {
                                             viewModel.startJourneyFromSavedRoute(route)
-                                            onNewJourneyClick()
+                                            onNewJourneyClick(false)
                                         }
                                     )
                                 }
@@ -233,8 +269,8 @@ fun HomeScreen(
                             val dismissState = rememberSwipeToDismissBoxState(
                                 confirmValueChange = {
                                     if (it == SwipeToDismissBoxValue.EndToStart) {
-                                        viewModel.removeFromHistory(feature)
-                                        true
+                                        viewModel.setItemToRemove(feature)
+                                        false
                                     } else false
                                 }
                             )
@@ -260,9 +296,7 @@ fun HomeScreen(
                                         },
                                         trailingContent = {
                                             IconButton(onClick = {
-                                                viewModel.removeFromHistory(
-                                                    feature
-                                                )
+                                                viewModel.setItemToRemove(feature)
                                             }) {
                                                 Icon(
                                                     Icons.Default.Delete,
@@ -275,7 +309,7 @@ fun HomeScreen(
                                             .background(MaterialTheme.colorScheme.surfaceVariant)
                                             .clickable {
                                                 viewModel.selectSearchResult(feature)
-                                                onNewJourneyClick()
+                                                onNewJourneyClick(false)
                                             }
                                     )
                                 }

@@ -27,6 +27,30 @@ fun SearchHistoryScreen(
 ) {
     val searchHistory by viewModel.searchHistory.collectAsState()
     var showClearAllDialog by remember { mutableStateOf(false) }
+    val itemToRemove by viewModel.itemToRemove.collectAsState()
+
+    if (itemToRemove != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setItemToRemove(null) },
+            title = { Text("Remove from history?") },
+            text = { Text("Are you sure you want to remove this item from your search history?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        itemToRemove?.let { viewModel.removeFromHistory(it) }
+                        viewModel.setItemToRemove(null)
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.setItemToRemove(null) }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -93,7 +117,7 @@ fun SearchHistoryScreen(
                             )
                         },
                         trailingContent = {
-                            IconButton(onClick = { viewModel.removeFromHistory(feature) }) {
+                            IconButton(onClick = { viewModel.setItemToRemove(feature) }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Remove")
                             }
                         },

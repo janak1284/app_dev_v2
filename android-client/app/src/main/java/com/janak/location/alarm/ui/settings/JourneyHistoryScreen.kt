@@ -70,6 +70,32 @@ fun JourneyHistoryScreen(
     val selectedJourneys = remember { mutableStateMapOf<Long, JourneyHistoryEntity>() }
     var isSelectionMode by remember { mutableStateOf(false) }
     var showClearAllDialog by remember { mutableStateOf(false) }
+    val deleteMultiple by viewModel.deleteMultipleJourneys.collectAsState()
+
+    if (deleteMultiple) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setDeleteMultipleJourneys(false) },
+            title = { Text("Delete Journey(s)?") },
+            text = { Text("Are you sure you want to delete the selected journey(s)? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteJourneys(selectedJourneys.values.toList())
+                        isSelectionMode = false
+                        selectedJourneys.clear()
+                        viewModel.setDeleteMultipleJourneys(false)
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.setDeleteMultipleJourneys(false) }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -90,9 +116,7 @@ fun JourneyHistoryScreen(
                 actions = {
                     if (isSelectionMode) {
                         IconButton(onClick = {
-                            viewModel.deleteJourneys(selectedJourneys.values.toList())
-                            isSelectionMode = false
-                            selectedJourneys.clear()
+                            viewModel.setDeleteMultipleJourneys(true)
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Selected")
                         }

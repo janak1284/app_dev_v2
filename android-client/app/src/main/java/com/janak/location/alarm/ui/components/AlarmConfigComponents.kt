@@ -25,8 +25,9 @@ fun DistanceSection(
     onDistanceChange: (Float) -> Unit
 ) {
     var isKm by remember { mutableStateOf(distanceMeters >= 1000) }
-    var textValue by remember(distanceMeters) { 
-        mutableStateOf(if (isKm) (distanceMeters / 1000f).toString() else distanceMeters.toInt().toString()) 
+    var textValue by remember(distanceMeters, isKm) { 
+        val displayValue = if (isKm) (distanceMeters / 1000f) else distanceMeters.toInt()
+        mutableStateOf(if (displayValue == 0f) "" else displayValue.toString())
     }
 
     AnimatedCard(modifier = Modifier.fillMaxWidth()) {
@@ -72,13 +73,14 @@ fun DistanceSection(
                         OutlinedTextField(
                             value = textValue,
                             onValueChange = { newValue ->
-                                if (newValue.all { it.isDigit() || it == '.' }) {
+                                if (newValue.isEmpty() || newValue.all { it.isDigit() || it == '.' }) {
                                     textValue = newValue
                                     val numericValue = newValue.toFloatOrNull() ?: 0f
                                     onDistanceChange(if (isKm) numericValue * 1000f else numericValue)
                                 }
                             },
                             label = { Text("Distance") },
+                            placeholder = { Text("0") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             singleLine = true,
@@ -121,7 +123,7 @@ fun PredictiveSection(
     minutes: Float,
     onMinutesChange: (Float) -> Unit
 ) {
-    var textValue by remember(minutes) { mutableStateOf(minutes.toInt().toString()) }
+    var textValue by remember(minutes) { mutableStateOf(if (minutes == 0f) "" else minutes.toInt().toString()) }
 
     AnimatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -161,13 +163,14 @@ fun PredictiveSection(
                     OutlinedTextField(
                         value = textValue,
                         onValueChange = { newValue ->
-                            if (newValue.all { it.isDigit() }) {
+                            if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
                                 textValue = newValue
                                 val numericValue = newValue.toFloatOrNull() ?: 0f
                                 onMinutesChange(numericValue)
                             }
                         },
                         label = { Text("Minutes before arrival") },
+                        placeholder = { Text("0") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
