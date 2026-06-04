@@ -73,9 +73,18 @@ class MainActivity : ComponentActivity() {
                     )
                 )
 
-                var currentScreen by remember { mutableStateOf("home") }
-                var selectedHistoryId by remember { mutableStateOf<Long?>(null) }
-                var routeToEdit by remember { mutableStateOf<SavedRouteEntity?>(null) }
+                val navigationStack = remember { mutableStateListOf("home") }
+                val currentScreen by derivedStateOf { navigationStack.last() }
+                
+                fun navigateTo(screen: String) {
+                    navigationStack.add(screen)
+                }
+
+                fun navigateBack() {
+                    if (navigationStack.size > 1) {
+                        navigationStack.removeAt(navigationStack.size - 1)
+                    }
+                }
 
                 val themeMode by viewModel.themeMode.collectAsState()
                 val darkTheme = when (themeMode) {
@@ -83,6 +92,9 @@ class MainActivity : ComponentActivity() {
                     2 -> true
                     else -> isSystemInDarkTheme()
                 }
+
+                var selectedHistoryId by remember { mutableStateOf<Long?>(null) }
+                var routeToEdit by remember { mutableStateOf<SavedRouteEntity?>(null) }
 
                 LocationAlarmTheme(darkTheme = darkTheme) {
                     Surface(
@@ -93,65 +105,71 @@ class MainActivity : ComponentActivity() {
                             "home" -> {
                                 HomeScreen(
                                     viewModel = viewModel,
-                                    onNewJourneyClick = { currentScreen = "map" },
-                                    onSettingsClick = { currentScreen = "settings" },
-                                    onManageJourneysClick = { currentScreen = "saved_routes" },
-                                    onManageSearchesClick = { currentScreen = "search_history" }
+                                    onNewJourneyClick = {
+                                        viewModel.resetRouteState()
+                                        navigateTo("map")
+                                    },
+                                    onSettingsClick = { navigateTo("settings") },
+                                    onManageJourneysClick = { navigateTo("saved_routes") },
+                                    onManageSearchesClick = { navigateTo("search_history") }
                                 )
                             }
                             "map" -> {
-                                androidx.activity.compose.BackHandler { currentScreen = "home" }
+                                androidx.activity.compose.BackHandler { navigateBack() }
                                 MapScreen(
                                     viewModel = viewModel,
-                                    onNavigateHome = { currentScreen = "home" }
+                                    onNavigateHome = { navigationStack.clear(); navigationStack.add("home") }
                                 )
                             }
                             "settings" -> {
-                                androidx.activity.compose.BackHandler { currentScreen = "home" }
+                                androidx.activity.compose.BackHandler { navigateBack() }
                                 com.janak.location.alarm.ui.settings.SettingsScreen(
                                     viewModel = viewModel,
-                                    onBackClick = { currentScreen = "home" },
-                                    onNavigateToSearchHistory = { currentScreen = "search_history" },
-                                    onNavigateToJourneyHistory = { currentScreen = "journey_history" },
-                                    onNavigateToSavedRoutes = { currentScreen = "saved_routes" }
+                                    onBackClick = { navigateBack() },
+                                    onNavigateToSearchHistory = { navigateTo("search_history") },
+                                    onNavigateToJourneyHistory = { navigateTo("journey_history") },
+                                    onNavigateToSavedRoutes = { navigateTo("saved_routes") }
                                 )
                             }
                             "saved_routes" -> {
-                                 androidx.activity.compose.BackHandler { currentScreen = "settings" }
+                                 androidx.activity.compose.BackHandler { navigateBack() }
                                  com.janak.location.alarm.ui.settings.SavedRoutesScreen(
                                      viewModel = viewModel,
-                                     onBackClick = { currentScreen = "settings" },
+                                     onBackClick = { navigateBack() },
                                      onEditRouteClick = { route -> routeToEdit = route },
-                                     onRouteClick = { currentScreen = "map" }
+                                     onRouteClick = { route ->
+                                         viewModel.startJourneyFromSavedRoute(route)
+                                         navigateTo("map")
+                                     }
                                  )
                              }
                             "journey_history" -> {
-                                androidx.activity.compose.BackHandler { currentScreen = "settings" }
+                                androidx.activity.compose.BackHandler { navigateBack() }
                                 com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
                                     viewModel = viewModel,
-                                    onBackClick = { currentScreen = "settings" },
-                                    onHistoryItemClick = { historyId ->
-                                        selectedHistoryId = historyId
-                                        currentScreen = "journey_details"
+                                    onBackClick = { navigateBack() },
+                                    onHistoryItemClick = { history ->
+                                        viewModel.startJourneyFromHistory(history)
+                                        navigateTo("map")
                                     },
-                                    onReactivateClick = { currentScreen = "home" }
+                                    onReactivateClick = { navigateTo("map") }
                                 )
                             }                            "journey_details" -> {
-                                androidx.activity.compose.BackHandler { currentScreen = "journey_history" }
+                                androidx.activity.compose.BackHandler { navigateBack() }
                                 com.janak.location.alarm.ui.settings.JourneyHistoryDetailsScreen(
                                     viewModel = viewModel,
                                     historyId = selectedHistoryId ?: 0,
-                                    onBackClick = { currentScreen = "journey_history" }
+                                    onBackClick = { navigateBack() }
                                 )
                             }
                             "search_history" -> {
-                                androidx.activity.compose.BackHandler { currentScreen = "settings" }
+                                androidx.activity.compose.BackHandler { navigateBack() }
                                 com.janak.location.alarm.ui.settings.SearchHistoryScreen(
                                     viewModel = viewModel,
-                                    onBackClick = { currentScreen = "settings" },
+                                    onBackClick = { navigateBack() },
                                     onItemClick = { feature ->
                                         viewModel.selectSearchResult(feature)
-                                        currentScreen = "map"
+                                        navigateTo("map")
                                     }
                                 )
                             }

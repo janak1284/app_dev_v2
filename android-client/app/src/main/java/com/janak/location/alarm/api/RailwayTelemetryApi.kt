@@ -5,6 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import com.janak.location.alarm.BuildConfig
 
 @Serializable
 data class TelemetryResponse(
@@ -29,7 +30,7 @@ data class StationSequenceItem(
 
 interface RailwayTelemetryApi {
     companion object {
-        const val BASE_URL = "https://coil-pledge-dares.ngrok-free.dev/"
+        const val BASE_URL = BuildConfig.BASE_URL
     }
 
     @GET("api/v4/train/track")

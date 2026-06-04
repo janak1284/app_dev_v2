@@ -23,7 +23,7 @@ fun SavedRoutesScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
     onEditRouteClick: (SavedRouteEntity) -> Unit,
-    onRouteClick: () -> Unit
+    onRouteClick: (SavedRouteEntity) -> Unit
 ) {
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val selectedRoutes = remember { mutableStateMapOf<Long, SavedRouteEntity>() }
@@ -86,8 +86,7 @@ fun SavedRoutesScreen(
                         onEditClick = { onEditRouteClick(route) },
                         onDeleteClick = { viewModel.deleteRoute(route) },
                         onStartClick = {
-                            viewModel.startJourneyFromSavedRoute(route)
-                            onRouteClick()
+                            onRouteClick(route)
                         },
                         onLongClick = {
                             isSelectionMode = true
@@ -99,8 +98,7 @@ fun SavedRoutesScreen(
                                 if (isSelected) selectedRoutes.remove(route.routeId) else selectedRoutes[route.routeId] = route
                                 if (selectedRoutes.isEmpty()) isSelectionMode = false
                             } else {
-                                viewModel.startJourneyFromSavedRoute(route)
-                                onRouteClick()
+                                onRouteClick(route)
                             }
                         }
                     )

@@ -1287,7 +1287,7 @@ class MapViewModel(
                 if (trainStatus.contains("Delay", ignoreCase = true)) {
                     _railwayEtaStatus.value = "ETA: ${relativeEta ?: confirmTktEta} ($trainStatus) ⚠️"
                 } else {
-                    _railwayEtaStatus.value = "ETA: ${relativeEta ?: confirmTktEta} ✅"
+                    _railwayEtaStatus.value = "ETA: ${relativeEta ?: confirmTktEta}"
                 }
                 _remainingEta.value = null // Clear math-based ETA
             } else {
@@ -1574,6 +1574,8 @@ class MapViewModel(
         _alarmSettings.value = settings
         _isPreviewMode.value = true
 
+        AppLogger.d("MapViewModel", "startJourneyDirect: Set Destination: $name")
+
         if (preLoadedRouteGeoJson != null) {
             _currentRouteGeoJson.value = preLoadedRouteGeoJson
             _expectedDistance.value = preLoadedDistance
@@ -1597,11 +1599,12 @@ class MapViewModel(
         }
 
         _userLocation.value?.let {
+            AppLogger.d("MapViewModel", "startJourneyDirect: User location available, checking distance")
             checkDistance(it)
             if (preLoadedRouteGeoJson == null) {
                 fetchRoute(it, LatLng(lat, lng))
             }
-        }
+        } ?: AppLogger.d("MapViewModel", "startJourneyDirect: Waiting for user location")
     }
 
     fun startJourneyFromSavedRoute(route: SavedRouteEntity) {

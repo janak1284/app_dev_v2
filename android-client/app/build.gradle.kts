@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -16,6 +18,11 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        val baseUrl: String = gradleLocalProperties(
+            rootDir,
+            providers = providers
+        ).getProperty("BASE_URL")
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -43,6 +50,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {

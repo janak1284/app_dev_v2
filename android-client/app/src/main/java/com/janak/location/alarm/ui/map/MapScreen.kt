@@ -3,22 +3,75 @@ package com.janak.location.alarm.ui.map
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
+import android.view.MotionEvent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocationOff
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.LocationSearching
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import com.janak.location.alarm.data.entity.SavedRouteEntity
+import com.janak.location.alarm.ui.settings.SavedRoutesScreen
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,8 +87,9 @@ import com.janak.location.alarm.ui.alarm.ModernConfigurationSheet
 import com.janak.location.alarm.ui.components.DestinationSearchField
 import com.janak.location.alarm.ui.components.JourneySummarySheet
 import com.janak.location.alarm.ui.settings.SettingsScreen
-import com.janak.location.alarm.viewmodel.MapViewModel
 import com.janak.location.alarm.util.AppLogger
+import com.janak.location.alarm.viewmodel.MapViewModel
+import kotlinx.coroutines.delay
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -45,30 +99,19 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.geojson.Point
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.outlined.Refresh
-import android.os.SystemClock
-import android.view.MotionEvent
-import androidx.compose.ui.draw.alpha
-import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
+    AppLogger.d("MapScreen", "MapScreen rendering")
     var showSettings by remember { mutableStateOf(false) }
     var showSearchHistory by remember { mutableStateOf(false) }
     var showJourneyHistory by remember { mutableStateOf(false) }
+    var showSavedRoutes by remember { mutableStateOf(false) }
 
     when {
         showSearchHistory -> {
+            AppLogger.d("MapScreen", "Showing SearchHistoryScreen")
             com.janak.location.alarm.ui.settings.SearchHistoryScreen(
                 viewModel = viewModel,
                 onBackClick = { showSearchHistory = false },
@@ -80,23 +123,46 @@ fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
             )
         }
         showJourneyHistory -> {
+            AppLogger.d("MapScreen", "Showing JourneyHistoryScreen")
             com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
                 viewModel = viewModel,
                 onBackClick = { showJourneyHistory = false },
-                onHistoryItemClick = { /* Handle click if needed */ },
-                onReactivateClick = { showJourneyHistory = false }
+                onHistoryItemClick = { history -> 
+                    AppLogger.d("MapScreen", "History item clicked, starting journey")
+                    viewModel.startJourneyFromHistory(history)
+                    showJourneyHistory = false
+                    showSettings = false
+                },
+                onReactivateClick = { showJourneyHistory = false; showSettings = false}
+            )
+        }
+        showSavedRoutes -> {
+            AppLogger.d("MapScreen", "Showing SavedRoutesScreen")
+            SavedRoutesScreen(
+                viewModel = viewModel,
+                onBackClick = { showSavedRoutes = false },
+                onEditRouteClick = { route: SavedRouteEntity ->
+                    AppLogger.d("MapScreen", "Editing route: ${route.routeId}")
+                },
+                onRouteClick = { route: SavedRouteEntity ->
+                    viewModel.startJourneyFromSavedRoute(route)
+                    showSavedRoutes = false
+                    showSettings = false
+                }
             )
         }
         showSettings -> {
+            AppLogger.d("MapScreen", "Showing SettingsScreen")
             SettingsScreen(
                 viewModel = viewModel,
                 onBackClick = { showSettings = false },
                 onNavigateToSearchHistory = { showSearchHistory = true },
                 onNavigateToJourneyHistory = { showJourneyHistory = true },
-                onNavigateToSavedRoutes = { /* Add navigation logic if needed */ }
+                onNavigateToSavedRoutes = { showSavedRoutes = true }
             )
         }
         else -> {
+            AppLogger.d("MapScreen", "Showing MapContent")
             MapContent(
                 viewModel = viewModel, 
                 onOpenSettings = { showSettings = true },
@@ -108,6 +174,7 @@ fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
 
 @Composable
 fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHome: () -> Unit) {
+    AppLogger.d("MapScreen", "MapContent rendering")
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val focusManager = LocalFocusManager.current
@@ -117,6 +184,11 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val destinationName by viewModel.destinationName.collectAsState()
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val isPreviewMode by viewModel.isPreviewMode.collectAsState()
+    
+    LaunchedEffect(destination, isPreviewMode) {
+        AppLogger.d("MapScreen", "MapContent state changed: dest=$destinationName, isPreview=$isPreviewMode")
+    }
+
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val remainingEta by viewModel.remainingEta.collectAsState()
     val railwayEtaStatus by viewModel.railwayEtaStatus.collectAsState()
@@ -145,7 +217,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 val distKm = try {
                     if (distStr.contains("km")) distStr.replace("km", "").toDouble()
                     else 0.0 // meters
-                } catch (e: Exception) { 0.0 }
+                } catch (_: Exception) { 0.0 }
 
                 val intervalMins = when {
                     distKm > 150.0 -> 45
@@ -162,7 +234,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 lastUpdatedText = null
                 nextRefreshText = null
             }
-            delay(10000)
+            delay(10000.milliseconds)
         }
     }
 

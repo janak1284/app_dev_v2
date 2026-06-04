@@ -63,7 +63,7 @@ import java.util.Locale
 fun JourneyHistoryScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
-    onHistoryItemClick: (Long) -> Unit,
+    onHistoryItemClick: (JourneyHistoryEntity) -> Unit,
     onReactivateClick: () -> Unit
 ) {
     val historyEntries by viewModel.journeyHistory.collectAsState(initial = emptyList())
@@ -143,7 +143,7 @@ fun JourneyHistoryScreen(
                                 if (isSelected) selectedJourneys.remove(entry.historyId) else selectedJourneys[entry.historyId] = entry
                                 if (selectedJourneys.isEmpty()) isSelectionMode = false
                             } else {
-                                onHistoryItemClick(entry.historyId)
+                                onHistoryItemClick(entry)
                             }
                         }
                     )
