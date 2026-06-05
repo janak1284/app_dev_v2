@@ -25,9 +25,20 @@ fun DistanceSection(
     onDistanceChange: (Float) -> Unit
 ) {
     var isKm by remember { mutableStateOf(distanceMeters >= 1000) }
-    var textValue by remember(distanceMeters, isKm) { 
+    var textValue by remember { 
         val displayValue = if (isKm) (distanceMeters / 1000f) else distanceMeters.toInt()
         mutableStateOf(if (displayValue == 0f) "" else displayValue.toString())
+    }
+
+    // Sync textValue if external distanceMeters changes significantly
+    LaunchedEffect(distanceMeters, isKm) {
+        val displayValue = if (isKm) (distanceMeters / 1000f) else distanceMeters.toInt()
+        val currentTextAsFloat = textValue.toFloatOrNull() ?: 0f
+        val expectedTextAsFloat = if (isKm) (distanceMeters / 1000f) else distanceMeters.toInt().toFloat()
+        
+        if (currentTextAsFloat != expectedTextAsFloat) {
+            textValue = if (displayValue == 0f) "" else displayValue.toString()
+        }
     }
 
     AnimatedCard(modifier = Modifier.fillMaxWidth()) {
@@ -123,7 +134,15 @@ fun PredictiveSection(
     minutes: Float,
     onMinutesChange: (Float) -> Unit
 ) {
-    var textValue by remember(minutes) { mutableStateOf(if (minutes == 0f) "" else minutes.toInt().toString()) }
+    var textValue by remember { mutableStateOf(if (minutes == 0f) "" else minutes.toInt().toString()) }
+
+    // Sync textValue if external minutes changes significantly
+    LaunchedEffect(minutes) {
+        val currentTextAsFloat = textValue.toFloatOrNull() ?: 0f
+        if (currentTextAsFloat != minutes) {
+            textValue = if (minutes == 0f) "" else minutes.toInt().toString()
+        }
+    }
 
     AnimatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp)) {

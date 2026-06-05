@@ -24,6 +24,14 @@ fun RailwaySetupDialog(
     var selectedLon by remember { mutableStateOf(0.0) }
     
     val availableStations by viewModel.stationSequence.collectAsState() 
+    val searchError by viewModel.railwaySearchError.collectAsState()
+
+    // Reset searching state if error or stations arrive
+    LaunchedEffect(availableStations, searchError) {
+        if (availableStations.isNotEmpty() || searchError != null) {
+            isSearching = false
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -52,6 +60,16 @@ fun RailwaySetupDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 
+                if (searchError != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = searchError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 Button(
@@ -62,7 +80,7 @@ fun RailwaySetupDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium
                 ) {
-                    Text(if (isSearching && availableStations.isEmpty()) "Searching..." else "Find Stations")
+                    Text(if (isSearching && availableStations.isEmpty() && searchError == null) "Searching..." else "Find Stations")
                 }
 
                 if (availableStations.isNotEmpty()) {

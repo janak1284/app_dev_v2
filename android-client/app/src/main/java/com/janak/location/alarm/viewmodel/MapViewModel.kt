@@ -74,20 +74,36 @@ class MapViewModel(
     private val _stationSequence = MutableStateFlow<List<StationSequenceItem>>(emptyList())
     val stationSequence: StateFlow<List<StationSequenceItem>> = _stationSequence.asStateFlow()
 
+    private val _railwaySearchError = MutableStateFlow<String?>(null)
+    val railwaySearchError: StateFlow<String?> = _railwaySearchError.asStateFlow()
+
+    fun clearRailwaySearchError() {
+        _railwaySearchError.value = null
+    }
+
     fun fetchTelemetryForDropdown(trainNum: String) {
+        _railwaySearchError.value = null
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNum)
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
-                    _stationSequence.value = body.stationSequence
-                    
-                    // Update age tracking states
-                    _dataAgeAtFetchMs.value = (body.serverTime ?: 0L) - (body.timestampFetched ?: 0L)
-                    _localUptimeAtFetchMs.value = SystemClock.elapsedRealtime()
+                    if (body.stationSequence.isEmpty()) {
+                        _railwaySearchError.value = "Train not found or no stations available."
+                    } else {
+                        _stationSequence.value = body.stationSequence
+
+                        // Update age tracking states
+                        _dataAgeAtFetchMs.value =
+                            (body.serverTime ?: 0L) - (body.timestampFetched ?: 0L)
+                        _localUptimeAtFetchMs.value = SystemClock.elapsedRealtime()
+                    }
+                } else {
+                    _railwaySearchError.value = "Train not found or server error."
                 }
             } catch (e: Exception) {
                 AppLogger.e("MapViewModel", "Failed to fetch telemetry for dropdown", e)
+                _railwaySearchError.value = "Network error. Please try again."
             }
         }
     }
@@ -547,6 +563,17 @@ class MapViewModel(
         locationJob = viewModelScope.launch {
             locationTrackingManager.getLocationUpdates().collect { location ->
                 _userLocation.value = location
+
+                // If a destination is set but no route exists, fetch it now that we have location
+                val dest = _destination.value
+                if (dest != null && _routeLine.value == null && !_isRouting.value) {
+                    AppLogger.d(
+                        "MapViewModel",
+                        "Location received, fetching deferred route to ${dest.latitude}, ${dest.longitude}"
+                    )
+                    fetchRoute(location, dest)
+                }
+
                 checkDistance(location)
             }
         }
