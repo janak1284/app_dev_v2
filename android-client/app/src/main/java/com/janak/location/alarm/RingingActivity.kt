@@ -51,6 +51,8 @@ class RingingActivity : ComponentActivity() {
         val transferName = intent.getStringExtra("TRANSFER_NAME")
         val isTransfer = intent.getBooleanExtra("IS_TRANSFER", false)
         val isCritical = intent.getBooleanExtra("FORCE_MAX_VOLUME", false)
+        val triggerDistance = intent.getDoubleExtra("TRIGGER_DISTANCE", -1.0)
+        val triggerEta = intent.getDoubleExtra("TRIGGER_ETA", -1.0)
 
         setContent {
             // A simple full-screen UI to dismiss the alarm
@@ -72,12 +74,33 @@ class RingingActivity : ComponentActivity() {
                         )
                     }
 
+                    val mainText = if (isTransfer) "Transfer!" else "Approaching!"
+                    val subText = buildString {
+                        if (triggerDistance >= 0) {
+                            append(formatDistance(triggerDistance.toInt()))
+                            append(" away")
+                        }
+                        if (triggerEta >= 0 && triggerEta < 1000) { // arbitrary sanity check for ETA
+                            if (isNotEmpty()) append(" | ")
+                            append("${triggerEta.toInt()} min left")
+                        }
+                    }
+
                     Text(
-                        if (isTransfer) "Transfer!" else "Arrived!", 
+                        mainText, 
                         fontSize = 48.sp, 
                         fontWeight = FontWeight.Bold,
                         color = if (isTransfer) MaterialTheme.colorScheme.primary else (if (isCritical) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary)
                     )
+
+                    if (subText.isNotEmpty()) {
+                        Text(
+                            text = subText,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
                     
                     if (isTransfer && !transferName.isNullOrBlank()) {
                         Text(
@@ -108,6 +131,10 @@ class RingingActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun formatDistance(meters: Int): String {
+        return if (meters >= 1000) String.format(java.util.Locale.getDefault(), "%.1fkm", meters / 1000f) else "${meters}m"
     }
 
     private fun dismissAlarm() {

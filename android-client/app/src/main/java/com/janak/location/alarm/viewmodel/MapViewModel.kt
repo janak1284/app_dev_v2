@@ -1375,7 +1375,7 @@ class MapViewModel(
                         )
 
                         if (etaMinutes != Double.MAX_VALUE) {
-                            _remainingEta.value = kotlin.math.ceil(etaMinutes).toInt()
+                            _remainingEta.value = etaMinutes.toInt()
                             AppLogger.d(
                                 "MapViewModel",
                                 "checkDistance: distance=${distance.toInt()}m, eta=${etaMinutes.roundToInt()}min, speed=${currentLocation.speed}mps"

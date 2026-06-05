@@ -68,20 +68,20 @@ class LocationAlarmService : Service() {
     private var destinationLat: Double = 0.0
     private var destinationLng: Double = 0.0
     private var destinationName: String = "Unknown Destination"
-    private var distanceThreshold: Float = 500f
-    private var isDistanceAlarmEnabled: Boolean = true
-    private var predictiveMinutesThreshold: Int = 10
-    private var isPredictiveAlarmEnabled: Boolean = false
+    @Volatile private var distanceThreshold: Float = 500f
+    @Volatile private var isDistanceAlarmEnabled: Boolean = true
+    @Volatile private var predictiveMinutesThreshold: Int = 10
+    @Volatile private var isPredictiveAlarmEnabled: Boolean = false
     private var ringtoneUri: String? = null
     private var isVibrateEnabled: Boolean = true
     private var hasSentArrivalBroadcast = false
-    private var isAlarmSilenced = false
+    @Volatile private var isAlarmSilenced = false
     private var startTimeMillis: Long = 0
     
-    private var currentRoute: LineString? = null
-    private var currentLegs: List<JourneyLeg> = emptyList()
-    private var currentLegIndex: Int = 0
-    private var expectedSpeedMps: Double = 0.0
+    @Volatile private var currentRoute: LineString? = null
+    @Volatile private var currentLegs: List<JourneyLeg> = emptyList()
+    @Volatile private var currentLegIndex: Int = 0
+    @Volatile private var expectedSpeedMps: Double = 0.0
     private var segmentSpeeds: List<Double> = emptyList()
     private var historyId: Long = -1L
     private var trainNumber: String? = null
@@ -192,13 +192,13 @@ class LocationAlarmService : Service() {
 
             AppLogger.w("LocationAlarmService", "GPS Lost. Dead Reckoning: Dist=${estimatedRemainingDistance.toInt()}m, ETA=${estimatedETA.toInt()}min")
             
-            updateNotification("GPS Lost - Estimating...", "Distance: ${formatDistance(estimatedRemainingDistance.toInt())} | ETA: ${estimatedETA.roundToInt()} min")
+            updateNotification("GPS Lost - Estimating...", "Distance: ${formatDistance(estimatedRemainingDistance.toInt())} | ETA: ${estimatedETA.toInt()} min")
 
             if (!isAlarmSilenced) {
                 val isRailway = transportMode == TransportMode.TRAIN
 
                 if ((isDistanceAlarmEnabled && estimatedRemainingDistance <= distanceThreshold) || 
-                    (isPredictiveAlarmEnabled && estimatedETA <= predictiveMinutesThreshold)) {
+                    (isPredictiveAlarmEnabled && estimatedETA.toInt() <= predictiveMinutesThreshold)) {
                     triggerAlarm(currentLegIndex < currentLegs.size - 1, forceMaxVolume = isRailway)
                 }
             }
@@ -299,10 +299,12 @@ class LocationAlarmService : Service() {
             startForeground(NOTIFICATION_ID, createNotification("Distance Alarm Active", "Monitoring distance to destination..."))
             startLocationTracking()
         } else {
+            AppLogger.d("LocationAlarmService", "Service already running, updating settings and route data")
             distanceThreshold = intent.getFloatExtra("DISTANCE_THRESHOLD", distanceThreshold)
             isDistanceAlarmEnabled = intent.getBooleanExtra("DISTANCE_ALARM_ENABLED", isDistanceAlarmEnabled)
             predictiveMinutesThreshold = intent.getIntExtra("PREDICTIVE_MINUTES", predictiveMinutesThreshold)
             isPredictiveAlarmEnabled = intent.getBooleanExtra("PREDICTIVE_ALARM_ENABLED", isPredictiveAlarmEnabled)
+            updateRouteData(intent)
             saveStateToPrefs()
         }
 
@@ -447,9 +449,11 @@ class LocationAlarmService : Service() {
             distance = results[0].toDouble()
         }
         
-        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${kotlin.math.ceil(etaMinutes).toInt()} min" else ""}")
+        updateNotification("Distance Alarm Active", "Distance: ${formatDistance(distance.toInt())}${if (etaMinutes != Double.MAX_VALUE) " | ETA: ${etaMinutes.toInt()} min" else ""}")
         adjustPollingInterval(distance)
         lastKnownRemainingDistanceMeters = distance
+
+        AppLogger.d("LocationAlarmService", "Processing update: dist=${distance.toInt()}m, eta=${if(etaMinutes == Double.MAX_VALUE) "MAX" else etaMinutes.toInt()}min, distEnabled=$isDistanceAlarmEnabled, timeEnabled=$isPredictiveAlarmEnabled, distThresh=$distanceThreshold, timeThresh=$predictiveMinutesThreshold")
 
         if (distance <= 50) handleArrivalAtPoint()
 
@@ -457,11 +461,12 @@ class LocationAlarmService : Service() {
             val isRailway = transportMode == TransportMode.TRAIN
             
             val isDistanceTriggered = isDistanceAlarmEnabled && distance <= distanceThreshold
-            val isTimeTriggered = isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold
+            val isTimeTriggered = isPredictiveAlarmEnabled && etaMinutes.toInt() <= predictiveMinutesThreshold
             
             if (isDistanceTriggered || isTimeTriggered) {
+                AppLogger.d("LocationAlarmService", "Alarm Triggered! distTriggered=$isDistanceTriggered, timeTriggered=$isTimeTriggered")
                 val isTransfer = currentLegs.isNotEmpty() && currentLegIndex < currentLegs.size - 1
-                triggerAlarm(isTransfer, forceMaxVolume = isRailway)
+                triggerAlarm(isTransfer, forceMaxVolume = isRailway, triggerDistance = distance, triggerEta = etaMinutes)
             }
         }
     }
@@ -490,7 +495,7 @@ class LocationAlarmService : Service() {
         locationTrackingManager.updateInterval(interval, priority)
     }
 
-    private fun triggerAlarm(isTransfer: Boolean, forceMaxVolume: Boolean = false) {
+    private fun triggerAlarm(isTransfer: Boolean, forceMaxVolume: Boolean = false, triggerDistance: Double? = null, triggerEta: Double? = null) {
         currentState = if (isTransfer) ServiceState.ALARM_TRANSFER else ServiceState.ALARM_RINGING
         val ringingIntent = Intent(this, com.janak.location.alarm.RingingActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -498,6 +503,8 @@ class LocationAlarmService : Service() {
             putExtra("VIBRATE", isVibrateEnabled)
             putExtra("IS_TRANSFER", isTransfer)
             putExtra("FORCE_MAX_VOLUME", forceMaxVolume)
+            putExtra("TRIGGER_DISTANCE", triggerDistance ?: -1.0)
+            putExtra("TRIGGER_ETA", triggerEta ?: -1.0)
             if (isTransfer && currentLegIndex in currentLegs.indices) {
                 putExtra("TRANSFER_NAME", currentLegs[currentLegIndex].endName ?: "Transfer Point")
             }
@@ -505,7 +512,7 @@ class LocationAlarmService : Service() {
         try { startActivity(ringingIntent) } catch (e: Exception) {}
         alarmEngine.start(shouldVibrate = isVibrateEnabled, forceMaxVolume = forceMaxVolume)
         
-        updateNotification(if (isTransfer) "Transfer Alert!" else "Arrived!", if (isTransfer) "Time to change..." else "Within range of $destinationName")
+        updateNotification(if (isTransfer) "Transfer Alert!" else "Approaching!", if (isTransfer) "Time to change..." else "Within range of $destinationName")
     }
 
     private fun stopAlarmRinging() {
