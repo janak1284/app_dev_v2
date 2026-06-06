@@ -624,16 +624,16 @@ class MapViewModel(
     }
 
     fun startRailwayJourney(trainNumber: String, destinationName: String, destinationCode: String, destLat: Double, destLon: Double) {
-        AppLogger.d("MapViewModel", "startRailwayJourney: $trainNumber to $destinationName ($destinationCode)")
+        AppLogger.d("MapViewModel", "startRailwayJourney START: $trainNumber to $destinationName ($destinationCode)")
 
         // Preserve the current sequence before resetting state
         val currentSequence = _stationSequence.value
+        AppLogger.d("MapViewModel", "startRailwayJourney: Preserved sequence with ${currentSequence.size} stations")
 
         resetRouteState()
 
         // Restore the sequence so fetchRailwayRoute can use it
         _stationSequence.value = currentSequence
-
         _currentTrainNumber = trainNumber
 
         _destination.value = LatLng(destLat, destLon)
@@ -641,25 +641,37 @@ class MapViewModel(
         _destinationCode.value = destinationCode
         _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.TRAIN)
         _isPreviewMode.value = true
-        
+
+        AppLogger.d("MapViewModel", "startRailwayJourney: State set. isPreviewMode=${_isPreviewMode.value}, dest=${_destination.value}, mode=${_alarmSettings.value.transportMode}")
+
         viewModelScope.launch {
+            // Give the UI a tiny moment to process the state change before starting heavy routing
+            delay(50L.milliseconds)
             fetchRailwayRoute(trainNumber, destinationCode)
         }
     }
 
     private suspend fun fetchRailwayRoute(trainNumber: String, destinationCode: String) {
+        AppLogger.d("MapViewModel", "fetchRailwayRoute: Calculating Hybrid Route for $destinationCode...")
         _isRouting.value = true
         try {
-            AppLogger.d("MapViewModel", "Calculating Hybrid Route geometry for $destinationCode...")
-            
             // 1. Grab the sequence we already fetched in the UI Dialog
             val sequence = _stationSequence.value 
+            AppLogger.d("MapViewModel", "fetchRailwayRoute: Using sequence with ${sequence.size} stations")
+
+            if (sequence.isEmpty()) {
+                AppLogger.e("MapViewModel", "fetchRailwayRoute FAIL: Station sequence is empty!")
+                throw Exception("Internal Error: Station sequence lost.")
+            }
+
             val destIndex = sequence.indexOfFirst { it.stationCode == destinationCode }
-            
+            AppLogger.d("MapViewModel", "fetchRailwayRoute: Destination index for $destinationCode is $destIndex")
+
             if (destIndex <= 0) {
+                AppLogger.e("MapViewModel", "fetchRailwayRoute Error: Destination $destinationCode index is $destIndex (Invalid or Source)")
                 throw Exception("Destination is invalid or is the starting station.")
             }
-            
+
             // 1. Collect all valid station coordinates for the sequence
             val routePoints = mutableListOf<String>()
             val missingCoords = mutableListOf<String>()

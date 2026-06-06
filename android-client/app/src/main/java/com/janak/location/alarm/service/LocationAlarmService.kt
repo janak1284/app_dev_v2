@@ -457,6 +457,20 @@ class LocationAlarmService : Service() {
 
         if (distance <= 50) handleArrivalAtPoint()
 
+        // Re-arm alarm if user falls back out of trigger zone due to traffic/delays
+        if (isAlarmSilenced) {
+            val distanceBufferMeters = 500
+            val etaBufferMinutes = 2
+            
+            val isDistanceSafe = !isDistanceAlarmEnabled || distance > (distanceThreshold + distanceBufferMeters)
+            val isEtaSafe = !isPredictiveAlarmEnabled || (etaMinutes != Double.MAX_VALUE && etaMinutes.toInt() >= (predictiveMinutesThreshold + etaBufferMinutes))
+            
+            if ((!isDistanceAlarmEnabled || isDistanceSafe) && (!isPredictiveAlarmEnabled || isEtaSafe)) {
+                isAlarmSilenced = false
+                AppLogger.d("LocationAlarmService", "Alarm re-armed due to delay. Dist: ${distance.toInt()}m, ETA: ${etaMinutes.toInt()}min")
+            }
+        }
+
         if ((currentState == ServiceState.TRACKING || currentState == ServiceState.WAITING_FOR_CONNECTION) && !isAlarmSilenced) {
             val isRailway = transportMode == TransportMode.TRAIN
             

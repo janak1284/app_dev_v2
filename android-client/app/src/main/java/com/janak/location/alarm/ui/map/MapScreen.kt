@@ -436,7 +436,9 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeatures(features))
                 } else {
                     val feature = org.maplibre.geojson.Feature.fromGeometry(routeLine!!)
-                    feature.addStringProperty("mode", "ROAD")
+                    // Use the current transport mode from settings if legs are empty
+                    val mode = alarmSettings.transportMode.name
+                    feature.addStringProperty("mode", mode)
                     routeSource.setGeoJson(org.maplibre.geojson.FeatureCollection.fromFeature(feature))
                 }
             } else {
@@ -640,45 +642,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
             }
 
-            // --- Floating Buttons ---
+        // Buttons moved to Bottom UI Group below
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = if (isPaneVisible) 320.dp else 32.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            SmallFloatingActionButton(
-                onClick = { 
-                    isFollowMode = true
-                    userLocation?.let { loc ->
-                        mapInstance?.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(loc.latitude, loc.longitude),
-                                15.0
-                            )
-                        )
-                    }
-                },
-                containerColor = if (isFollowMode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary,
-                shape = CircleShape
-            ) {
-                Icon(
-                    if (isFollowMode) Icons.Default.LocationSearching else Icons.Default.MyLocation, 
-                    contentDescription = "Focus on User"
-                )
-            }
-
-            SmallFloatingActionButton(
-                onClick = { viewModel.refreshLocation() },
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Refresh Location")
-            }
-        }
         
         if (journeyCompleted) {
             JourneySummarySheet(
@@ -711,168 +676,212 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             }
         }
 
-        // --- Animated Status Card ---
-        AnimatedVisibility(
-            visible = isPaneVisible,
-            enter = slideInVertically { it } + fadeIn(),
-            exit = slideOutVertically { it } + fadeOut(),
-            modifier = Modifier.align(Alignment.BottomCenter)
+        // --- Bottom UI Group (Buttons + Status Card) ---
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd),
+            horizontalAlignment = Alignment.End
         ) {
-            Card(
+            // Floating Buttons
+            Column(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isAlarmSet) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-                ),
-                shape = RoundedCornerShape(28.dp)
+                    .padding(end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (!isAlarmSet) {
-                        IconButton(
-                            onClick = { viewModel.clearDestination() },
-                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = "Discard Location")
+                SmallFloatingActionButton(
+                    onClick = { 
+                        isFollowMode = true
+                        userLocation?.let { loc ->
+                            mapInstance?.animateCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    LatLng(loc.latitude, loc.longitude),
+                                    15.0
+                                )
+                            )
                         }
-                    }
+                    },
+                    containerColor = if (isFollowMode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        if (isFollowMode) Icons.Default.LocationSearching else Icons.Default.MyLocation, 
+                        contentDescription = "Focus on User"
+                    )
+                }
 
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (isAlarmSet) {
-                            StatusHeader(
-                                title = "ALARM ACTIVE",
-                                icon = Icons.Default.Lock,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            if (distanceToDestination != null) {
-                                Text(
-                                    text = distanceToDestination!!,
-                                    style = MaterialTheme.typography.displaySmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
+                SmallFloatingActionButton(
+                    onClick = { viewModel.refreshLocation() },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh Location")
+                }
+            }
+
+            // --- Animated Status Card ---
+            AnimatedVisibility(
+                visible = isPaneVisible,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut()
+            ) {
+                Card(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isAlarmSet) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        if (!isAlarmSet) {
+                            IconButton(
+                                onClick = { viewModel.clearDestination() },
+                                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Discard Location")
                             }
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
+                        }
 
-                            if (railwayEtaStatus != null) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (isAlarmSet) {
+                                StatusHeader(
+                                    title = "ALARM ACTIVE",
+                                    icon = Icons.Default.Lock,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                if (distanceToDestination != null) {
+                                    Text(
+                                        text = distanceToDestination!!,
+                                        style = MaterialTheme.typography.displaySmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                } else {
+                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
+                                }
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                if (railwayEtaStatus != null) {
+                                    Text(
+                                        text = railwayEtaStatus!!,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TelemetrySyncIndicator(
+                                        lastUpdatedText = lastUpdatedText ?: "Updated: Now",
+                                        nextRefreshText = nextRefreshText,
+                                        isRefreshing = isRefreshing,
+                                        isRefreshEnabled = isRefreshEnabled,
+                                        onRefreshClick = { viewModel.manualRefresh() }
+                                    )
+                                } else if (remainingEta != null) {
+                                    Text(
+                                        text = "ETA: $remainingEta min",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                } else {
+                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                                }
+
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(
+                                    onClick = { viewModel.toggleAlarm() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Icon(Icons.Default.Stop, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("TURN OFF")
+                                }
+                            } else if (isPreviewMode) {
+                                StatusHeader(
+                                    title = "DESTINATION SET",
+                                    icon = Icons.Default.Route,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                if (distanceToDestination != null) {
+                                    Text(
+                                        text = distanceToDestination!!,
+                                        style = MaterialTheme.typography.displaySmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                } else {
+                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                if (railwayEtaStatus != null) {
+                                    Text(
+                                        text = railwayEtaStatus!!,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TelemetrySyncIndicator(
+                                        lastUpdatedText = lastUpdatedText ?: "Updated: Now",
+                                        nextRefreshText = nextRefreshText,
+                                        isRefreshing = isRefreshing,
+                                        isRefreshEnabled = isRefreshEnabled,
+                                        onRefreshClick = { viewModel.manualRefresh() }
+                                    )
+                                } else if (remainingEta != null) {
+                                    Text(
+                                        text = "ETA: $remainingEta min",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                } else {
+                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                                }
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = railwayEtaStatus!!,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium
+                                    text = destinationName ?: "Selected Destination",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(
+                                    onClick = { showBottomSheet = true },
+                                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Icon(Icons.Default.Shield, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("SET UP ALARM")
+                                }
+                            } else {
+                                StatusHeader(
+                                    title = "SELECT DESTINATION",
+                                    icon = Icons.Default.LocationOn,
+                                    color = MaterialTheme.colorScheme.secondary
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
-                                TelemetrySyncIndicator(
-                                    lastUpdatedText = lastUpdatedText ?: "Updated: Now",
-                                    nextRefreshText = nextRefreshText,
-                                    isRefreshing = isRefreshing,
-                                    isRefreshEnabled = isRefreshEnabled,
-                                    onRefreshClick = { viewModel.manualRefresh() }
-                                )
-                            } else if (remainingEta != null) {
                                 Text(
-                                    text = "ETA: $remainingEta min",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium
+                                    text = "Tap on map or use search",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            } else {
-                                com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                             }
-
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Button(
-                                onClick = { viewModel.toggleAlarm() },
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                                modifier = Modifier.fillMaxWidth().height(56.dp),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Icon(Icons.Default.Stop, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("TURN OFF")
-                            }
-                        } else if (isPreviewMode) {
-                            StatusHeader(
-                                title = "DESTINATION SET",
-                                icon = Icons.Default.Route,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            if (distanceToDestination != null) {
-                                Text(
-                                    text = distanceToDestination!!,
-                                    style = MaterialTheme.typography.displaySmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                com.janak.location.alarm.ui.components.SkeletonBox(width = 160.dp, height = 48.dp)
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            if (railwayEtaStatus != null) {
-                                Text(
-                                    text = railwayEtaStatus!!,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                TelemetrySyncIndicator(
-                                    lastUpdatedText = lastUpdatedText ?: "Updated: Now",
-                                    nextRefreshText = nextRefreshText,
-                                    isRefreshing = isRefreshing,
-                                    isRefreshEnabled = isRefreshEnabled,
-                                    onRefreshClick = { viewModel.manualRefresh() }
-                                )
-                            } else if (remainingEta != null) {
-                                Text(
-                                    text = "ETA: $remainingEta min",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            } else {
-                                com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
-                            }
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = destinationName ?: "Selected Destination",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                maxLines = 1
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Button(
-                                onClick = { showBottomSheet = true },
-                                modifier = Modifier.fillMaxWidth().height(56.dp),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Icon(Icons.Default.Shield, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("SET UP ALARM")
-                            }
-                        } else {
-                            StatusHeader(
-                                title = "SELECT DESTINATION",
-                                icon = Icons.Default.LocationOn,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Tap on map or use search",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
                     }
                 }

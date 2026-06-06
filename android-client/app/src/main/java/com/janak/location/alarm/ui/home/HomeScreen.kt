@@ -147,7 +147,8 @@ fun HomeScreen(
             AppLogger.d("HomeScreen", "Starting Railway tracking: $trainNumber to $destName ($destCode)")
             viewModel.startRailwayJourney(trainNumber, destName, destCode, lat, lon)
             showRailwaySetup = false
-            onNewJourneyClick(true)
+            onNewJourneyClick(false) // Changed to false to avoid wiping the railway state we just set
+
             }
         )
     }
