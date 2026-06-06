@@ -1,6 +1,7 @@
 package com.janak.location.alarm.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -109,9 +110,32 @@ fun RailwaySetupDialog(
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            availableStations.forEach { station ->
+                            val upcomingStations = availableStations.filter { !it.hasDeparted }
+                            
+                            upcomingStations.forEachIndexed { index, station ->
                                 DropdownMenuItem(
-                                    text = { Text("${station.stationName ?: station.stationCode} (${station.stationCode})") },
+                                    text = { 
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                        ) {
+                                            Text("${station.stationName ?: station.stationCode} (${station.stationCode})")
+                                            if (index == 0) {
+                                                Surface(
+                                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                                    shape = RoundedCornerShape(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "NEXT",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
                                     onClick = {
                                         selectedDestination = station.stationName ?: station.stationCode
                                         selectedStationCode = station.stationCode
@@ -119,6 +143,14 @@ fun RailwaySetupDialog(
                                         selectedLon = station.longitude ?: 0.0
                                         expanded = false
                                     }
+                                )
+                            }
+                            
+                            if (upcomingStations.isEmpty() && availableStations.isNotEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("No upcoming stations found.") },
+                                    onClick = { expanded = false },
+                                    enabled = false
                                 )
                             }
                         }

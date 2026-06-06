@@ -45,7 +45,7 @@ async function scrapeTrainTelemetry(trainNumber) {
             console.log("⚠️ Main container '.running-status' not found. Checking for alternative selectors...");
         }
 
-        // 1. Extract raw data from the page
+        // 1. Extract raw data from the page using visual indicators (SVGs and classes)
         const rawStationData = await page.$$eval('.rs__station-row', (rows) => {
             return rows.map((row, index) => {
                 const stationNameText = row.querySelector('.rs__station-name')?.innerText.trim() || "";
@@ -54,18 +54,29 @@ async function scrapeTrainTelemetry(trainNumber) {
                 const departureTime = columns[3]?.innerText.trim() || "Destination";
                 const delayStatus = row.querySelector('.rs__station-delay')?.innerText.trim() || "";
 
+                // Visual status detection (more reliable than text parsing)
+                // The green checkmark indicates the station has been departed
+                const hasCheckmark = row.querySelector('svg.bi-check-circle') !== null;
+                // The blinking circle indicates the train is currently at or approaching this station
+                const isBlinking = row.querySelector('.circle.blink') !== null;
+
+                let state = "pending";
+                if (hasCheckmark) state = "passed";
+                else if (isBlinking) state = "current";
+
                 return {
                     station_name: stationNameText,
                     sequence_index: index + 1,
                     arrival: arrivalTime,
                     departure: departureTime,
-                    status: delayStatus
+                    status: delayStatus,
+                    state: state // internal flag for cascading logic
                 };
             });
         });
 
         // 2. Map standardized station data using the dictionary + Supabase
-        const stationSequence = await Promise.all(rawStationData.map(async item => {
+        const mappedSequence = await Promise.all(rawStationData.map(async item => {
             const resolved = await resolveStationData(item.station_name);
             return {
                 ...item,
@@ -74,6 +85,23 @@ async function scrapeTrainTelemetry(trainNumber) {
                 longitude: resolved.lon
             };
         }));
+
+        // 3. Smart Filtering: Determine which stations have already been passed
+        // Use a cascading index to ensure all stations before a 'passed' station are also marked passed
+        let lastDepartedIndex = -1;
+        mappedSequence.forEach((station, index) => {
+            if (station.state === "passed") {
+                lastDepartedIndex = index;
+            }
+        });
+
+        const stationSequence = mappedSequence.map((station, index) => {
+            const { state, ...cleanStation } = station; // Remove internal state flag
+            return {
+                ...cleanStation,
+                has_departed: index <= lastDepartedIndex
+            };
+        });
 
         // Extract the Overall Live Status (ETA)
         let etaText = "Data unavailable";

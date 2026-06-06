@@ -1,6 +1,7 @@
 package com.janak.location.alarm.util
 
 import com.mapbox.geojson.Point
+import kotlin.math.roundToInt
 
 object PolylineDecoder {
     fun decode(encoded: String): List<Point> {
@@ -39,5 +40,34 @@ object PolylineDecoder {
             poly.add(p)
         }
         return poly
+    }
+
+    fun encode(path: List<Point>): String {
+        val result = StringBuilder()
+        var prevLat = 0
+        var prevLng = 0
+
+        for (point in path) {
+            val lat = (point.latitude() * 1e5).roundToInt()
+            val lng = (point.longitude() * 1e5).roundToInt()
+
+            encodeValue(lat - prevLat, result)
+            encodeValue(lng - prevLng, result)
+
+            prevLat = lat
+            prevLng = lng
+        }
+
+        return result.toString()
+    }
+
+    private fun encodeValue(v: Int, result: StringBuilder) {
+        var value = v
+        value = if (value < 0) (value shl 1).inv() else value shl 1
+        while (value >= 0x20) {
+            result.append(((0x20 or (value and 0x1f)) + 63).toChar())
+            value = value shr 5
+        }
+        result.append((value + 63).toChar())
     }
 }

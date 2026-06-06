@@ -59,6 +59,8 @@ class MainActivity : ComponentActivity() {
             } else {
                 val photonApiService = remember { RetrofitClient.photonApiService }
                 val osrmApiService = remember { RetrofitClient.osrmApiService }
+                val database = AppDatabase.getDatabase(context)
+                val railwayTrackCacheDao = database.railwayTrackCacheDao()
 
                 val viewModel: MapViewModel = viewModel(
                     factory = MapViewModelFactory(
@@ -69,6 +71,7 @@ class MainActivity : ComponentActivity() {
                         routeRepository!!,
                         historyRepository!!,
                         stationRepository!!,
+                        railwayTrackCacheDao,
                         context
                     )
                 )
