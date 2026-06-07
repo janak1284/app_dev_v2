@@ -1,3 +1,4 @@
 # Normalize all text files
 * text=auto
-
+*.sh text=lf
+*.bat text=crlf
