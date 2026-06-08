@@ -76,7 +76,7 @@ async function scrapeTrainTelemetry(trainNumber) {
         });
 
         // 2. Map standardized station data using the dictionary + Supabase
-        const mappedSequence = await Promise.all(rawStationData.map(async item => {
+        const mappedSequenceRaw = await Promise.all(rawStationData.map(async item => {
             const resolved = await resolveStationData(item.station_name);
             return {
                 ...item,
@@ -85,6 +85,14 @@ async function scrapeTrainTelemetry(trainNumber) {
                 longitude: resolved.lon
             };
         }));
+
+        // Filter out stations that resolved to placeholder codes and have no coordinates
+        // This removes "HALT" entries and other technical stops that break routing
+        const mappedSequence = mappedSequenceRaw.filter(s => s.latitude !== null && s.longitude !== null);
+
+        if (mappedSequence.length < mappedSequenceRaw.length) {
+            console.log(`🧹 Filtered out ${mappedSequenceRaw.length - mappedSequence.length} stations with missing coordinates.`);
+        }
 
         // 3. Smart Filtering: Determine which stations have already been passed
         // Use a cascading index to ensure all stations before a 'passed' station are also marked passed
@@ -126,9 +134,6 @@ async function scrapeTrainTelemetry(trainNumber) {
         console.log(`- Stations Found: ${stationSequence.length}`);
         console.log(`- Current Status: ${extractedData.eta_string}`);
         
-        // Detailed log for verification
-        // console.log(JSON.stringify(extractedData, null, 2));
-
         return extractedData;
 
     } catch (error) {

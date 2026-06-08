@@ -27,6 +27,15 @@ fun RailwaySetupDialog(
     val availableStations by viewModel.stationSequence.collectAsState() 
     val searchError by viewModel.railwaySearchError.collectAsState()
 
+    // Reset local state and ViewModel data when the dialog is FIRST opened
+    LaunchedEffect(Unit) {
+        viewModel.clearRailwayData()
+        trainNumber = ""
+        isSearching = false
+        selectedDestination = "Select Destination Station"
+        selectedStationCode = ""
+    }
+
     // Reset searching state if error or stations arrive
     LaunchedEffect(availableStations, searchError) {
         if (availableStations.isNotEmpty() || searchError != null) {
@@ -35,7 +44,10 @@ fun RailwaySetupDialog(
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            viewModel.clearRailwayData()
+            onDismiss()
+        },
         title = { 
             Text(
                 "Railway Setup",

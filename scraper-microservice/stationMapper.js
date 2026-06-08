@@ -20,6 +20,9 @@ const PRESENTATION_FALLBACKS = {
   "villupuram": { code: "VM", lat: 11.9401, lon: 79.4861 },
   "vridhachalam": { code: "VRI", lat: 11.5176, lon: 79.3251 },
   "trichy": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
+  "tiruchirappalli": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
+  "tiruchchirappalli": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
+  "pudukkottai": { code: "PDKT", lat: 10.3725, lon: 78.8019 },
   "karaikkuidi": { code: "KKDI", lat: 10.0747, lon: 78.7854 }
 };
 
@@ -114,6 +117,18 @@ function initializeMapper() {
 async function resolveStationData(rawScrapedName) {
     if (!rawScrapedName) return { code: "UNKNOWN", lat: null, lon: null };
 
+    // Step -1: Code Extraction from name (e.g., "Tiruchchirappalli Jn (TPJ)" or "CHENNAI - MS")
+    const codeMatch = rawScrapedName.match(/\(([A-Z0-9]{2,6})\)/) || rawScrapedName.match(/\s-\s([A-Z0-9]{2,6})$/);
+    if (codeMatch) {
+        const extractedCode = codeMatch[1].toUpperCase();
+        // Look up this code in our dictionary
+        const entry = normalizedStationList.find(e => e.code === extractedCode);
+        if (entry) return entry;
+        
+        // If not in local dict, it might be valid but missing coords. 
+        // We'll try to find it by code in Supabase later.
+    }
+
     const scrapedNormal = normalizeStationName(rawScrapedName);
 
     // Step 0: Presentation Fallbacks (High Priority for Demo)
@@ -123,14 +138,14 @@ async function resolveStationData(rawScrapedName) {
 
     // Step 1: Strict Normal Match
     for (const entry of normalizedStationList) {
-        if (entry.normalizedName === scrapedNormal) {
+        if (entry.normalizedName === scrapedNormal || entry.code === scrapedNormal.toUpperCase()) {
             return entry;
         }
     }
 
     // Step 2: Substring/Token Containment Match
     for (const entry of normalizedStationList) {
-        if (scrapedNormal.includes(entry.normalizedName) || entry.normalizedName.includes(scrapedNormal)) {
+        if (scrapedNormal.length > 3 && (scrapedNormal.includes(entry.normalizedName) || entry.normalizedName.includes(scrapedNormal))) {
             return entry;
         }
     }
@@ -138,7 +153,7 @@ async function resolveStationData(rawScrapedName) {
     // Step 3: Fuzzy Levenshtein Distance Match
     let bestMatch = null;
     let highestSimilarity = 0;
-    const SIM_THRESHOLD = 0.70;
+    const SIM_THRESHOLD = 0.75; // Increased threshold for better accuracy
 
     for (const entry of normalizedStationList) {
         const similarity = getStringSimilarity(scrapedNormal, entry.normalizedName);
@@ -153,13 +168,18 @@ async function resolveStationData(rawScrapedName) {
         return bestMatch;
     }
 
-    // Step 4: Supabase Fallback
+    // Step 4: Supabase Fallback (By Code or Name)
     try {
-        const { data } = await supabase
-            .from('stations')
-            .select('station_name, station_code, latitude, longitude')
-            .ilike('station_name', `%${scrapedNormal}%`)
-            .limit(1);
+        const searchCode = codeMatch ? codeMatch[1].toUpperCase() : null;
+        let query = supabase.from('stations').select('station_name, station_code, latitude, longitude');
+        
+        if (searchCode) {
+            query = query.eq('station_code', searchCode);
+        } else {
+            query = query.ilike('station_name', `%${scrapedNormal}%`);
+        }
+        
+        const { data } = await query.limit(1);
 
         if (data && data.length > 0) {
             return {
@@ -174,8 +194,9 @@ async function resolveStationData(rawScrapedName) {
 
     // Step 5: Absolute Fallback
     console.error(`🚨 Fatal Mapping Failure: Unable to resolve code for "${rawScrapedName}"`);
+    const finalCode = codeMatch ? codeMatch[1].toUpperCase() : rawScrapedName.toUpperCase().replace(/[^A-Z]/g, "").substring(0, 5);
     return {
-        code: rawScrapedName.toUpperCase().replace(/[^A-Z]/g, "").substring(0, 5),
+        code: finalCode || "HALT",
         lat: null,
         lon: null
     };
