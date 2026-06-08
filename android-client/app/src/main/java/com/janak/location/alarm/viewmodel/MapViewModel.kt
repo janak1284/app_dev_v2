@@ -61,6 +61,12 @@ class MapViewModel(
 
     fun clearRailwaySearchError() { _railwaySearchError.value = null }
 
+    fun clearRailwayData() {
+        _stationSequence.value = emptyList()
+        _railwaySearchError.value = null
+        _railwayGlobalStatus.value = null
+    }
+
     fun fetchTelemetryForDropdown(trainNum: String) {
         _railwaySearchError.value = null
         viewModelScope.launch {
@@ -72,6 +78,7 @@ class MapViewModel(
                         _railwaySearchError.value = "Train not found or no stations available."
                     } else {
                         _stationSequence.value = body.stationSequence
+                        _railwayGlobalStatus.value = body.etaString
                         _dataAgeAtFetchMs.value = (body.serverTime ?: 0L) - (body.timestampFetched ?: 0L)
                         _localUptimeAtFetchMs.value = SystemClock.elapsedRealtime()
                     }
@@ -99,6 +106,9 @@ class MapViewModel(
     private var _currentTrainNumber: String? = null
     private val _railwayEtaStatus = MutableStateFlow<String?>(null)
     val railwayEtaStatus: StateFlow<String?> = _railwayEtaStatus.asStateFlow()
+
+    private val _railwayGlobalStatus = MutableStateFlow<String?>(null)
+    val railwayGlobalStatus: StateFlow<String?> = _railwayGlobalStatus.asStateFlow()
 
     private val _currentRouteGeoJson = MutableStateFlow<String?>(null)
     val currentRouteGeoJson: StateFlow<String?> = _currentRouteGeoJson.asStateFlow()
@@ -184,6 +194,26 @@ class MapViewModel(
         _searchHistory.value = loadSearchHistory()
         setupSearchDebounce()
         startLocationUpdates()
+        checkLocationStatus()
+        registerLocationStatusReceiver()
+    }
+
+    private fun registerLocationStatusReceiver() {
+        val filter = IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                checkLocationStatus()
+            }
+        }
+        context.registerReceiver(receiver, filter)
+    }
+
+    private fun checkLocationStatus() {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        _isLocationEnabled.value = isGpsEnabled || isNetworkEnabled
+        AppLogger.d("MapViewModel", "Location Status: GPS=$isGpsEnabled, Network=$isNetworkEnabled, Overall=${_isLocationEnabled.value}")
     }
 
     // --- Helper for LngLat mapping ---
@@ -367,27 +397,66 @@ class MapViewModel(
 
     private suspend fun fetchRailwayRoute(trainNumber: String, destinationCode: String) {
         _isRouting.value = true
+        AppLogger.d("MapViewModel", "fetchRailwayRoute: Starting for train $trainNumber to $destinationCode")
         try {
-            val seq = _stationSequence.value; if (seq.isEmpty()) throw Exception("No sequence")
-            val dIdx = seq.indexOfFirst { it.stationCode == destinationCode }; if (dIdx < 0) throw Exception("Dest not found")
-            var sIdx = seq.indexOfLast { it.hasDeparted }; if (sIdx < 0) sIdx = 0
-            if (sIdx >= dIdx) return
+            val seq = _stationSequence.value; if (seq.isEmpty()) {
+                AppLogger.e("MapViewModel", "fetchRailwayRoute: Station sequence is empty")
+                throw Exception("No sequence")
+            }
+            val dIdx = seq.indexOfFirst { it.stationCode == destinationCode }
+            AppLogger.d("MapViewModel", "fetchRailwayRoute: Found destination $destinationCode at index $dIdx in sequence of size ${seq.size}")
+            if (dIdx < 0) {
+                AppLogger.e("MapViewModel", "fetchRailwayRoute: Destination code $destinationCode not found in sequence")
+                throw Exception("Dest not found")
+            }
+            var sIdx = seq.indexOfLast { it.hasDeparted }
+            AppLogger.d("MapViewModel", "fetchRailwayRoute: Last departed station index: $sIdx")
+            if (sIdx < 0) sIdx = 0
+            if (sIdx >= dIdx) {
+                AppLogger.d("MapViewModel", "fetchRailwayRoute: Already at or past destination (sIdx=$sIdx, dIdx=$dIdx)")
+                return
+            }
 
             val stitched = mutableListOf<com.mapbox.geojson.Point>(); var totalDist = 0.0; var totalTime = 0.0
-            for (i in sIdx until dIdx) {
-                val s1 = seq[i]; val s2 = seq[i+1]
-                val p1 = getStationCoords(s1); val p2 = getStationCoords(s2)
-                if (p1 != null && p2 != null) {
-                    var segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode)
-                    if (segment == null) { delay(1500L); segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode) }
-                    if (segment != null) { stitched.addAll(segment.points); totalDist += segment.distance; totalTime += segment.duration }
-                    else {
-                        val c1 = p1.split(","); val c2 = p2.split(",")
-                        stitched.add(com.mapbox.geojson.Point.fromLngLat(c1[1].toDouble(), c1[0].toDouble()))
-                        stitched.add(com.mapbox.geojson.Point.fromLngLat(c2[1].toDouble(), c2[0].toDouble()))
-                    }
+            
+            // Filter sequence to only include stations with valid coordinates
+            val validSeq = mutableListOf<Pair<StationSequenceItem, String>>()
+            for (i in sIdx..dIdx) {
+                val station = seq[i]
+                val coords = getStationCoords(station)
+                if (coords != null) {
+                    validSeq.add(station to coords)
+                } else {
+                    AppLogger.w("MapViewModel", "fetchRailwayRoute: Skipping station ${station.stationCode} (${station.stationName}) due to missing coordinates")
                 }
             }
+
+            AppLogger.d("MapViewModel", "fetchRailwayRoute: Valid station sequence size: ${validSeq.size} (original: ${dIdx - sIdx + 1})")
+
+            for (i in 0 until validSeq.size - 1) {
+                val (s1, p1) = validSeq[i]
+                val (s2, p2) = validSeq[i+1]
+                
+                AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment $i: ${s1.stationCode} to ${s2.stationCode}")
+                
+                var segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode)
+                if (segment == null) { 
+                    AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} failed, retrying...")
+                    delay(1500L); segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode) 
+                }
+                
+                if (segment != null) { 
+                    AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} success: ${segment.points.size} points")
+                    stitched.addAll(segment.points); totalDist += segment.distance; totalTime += segment.duration 
+                } else {
+                    AppLogger.w("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} failed after retry, falling back to direct line")
+                    val c1 = p1.split(","); val c2 = p2.split(",")
+                    stitched.add(com.mapbox.geojson.Point.fromLngLat(c1[1].toDouble(), c1[0].toDouble()))
+                    stitched.add(com.mapbox.geojson.Point.fromLngLat(c2[1].toDouble(), c2[0].toDouble()))
+                }
+            }
+            
+            AppLogger.d("MapViewModel", "fetchRailwayRoute: Stitched route has ${stitched.size} points")
             if (stitched.size >= 2) {
                 val mb = com.mapbox.geojson.LineString.fromLngLats(stitched)
                 fullRouteLine = mb
@@ -412,8 +481,13 @@ class MapViewModel(
     // --- State Handlers ---
 
     fun startRailwayJourney(tNum: String, name: String, code: String, lat: Double, lon: Double) {
-        val seq = _stationSequence.value; resetRouteState(); _stationSequence.value = seq
-        _currentTrainNumber = tNum; _destination.value = LatLng(lat, lon)
+        val seq = _stationSequence.value
+        val globalStatus = _railwayGlobalStatus.value
+        resetRouteState()
+        _stationSequence.value = seq
+        _railwayGlobalStatus.value = globalStatus
+        _currentTrainNumber = tNum
+        _destination.value = LatLng(lat, lon)
         _destinationName.value = name; _destinationCode.value = code
         _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.TRAIN)
         _isPreviewMode.value = true; viewModelScope.launch { delay(50); fetchRailwayRoute(tNum, code) }

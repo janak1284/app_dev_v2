@@ -192,6 +192,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val remainingEta by viewModel.remainingEta.collectAsState()
     val railwayEtaStatus by viewModel.railwayEtaStatus.collectAsState()
+    val railwayGlobalStatus by viewModel.railwayGlobalStatus.collectAsState()
     
     // --- Data Age Calculation ---
     val dataAgeAtFetchMs by viewModel.dataAgeAtFetchMs.collectAsState()
@@ -776,6 +777,21 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Medium
                                     )
+                                }
+                                if (railwayGlobalStatus != null) {
+                                    val statusColor = when {
+                                        railwayGlobalStatus!!.contains("On Time", ignoreCase = true) -> Color(0xFF34A853)
+                                        railwayGlobalStatus!!.contains("Delay", ignoreCase = true) -> MaterialTheme.colorScheme.error
+                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                    Text(
+                                        text = railwayGlobalStatus!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = statusColor.copy(alpha = 0.9f),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     TelemetrySyncIndicator(
                                         lastUpdatedText = lastUpdatedText ?: "Updated: Now",
@@ -832,6 +848,16 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                         color = MaterialTheme.colorScheme.secondary,
                                         fontWeight = FontWeight.Medium
                                     )
+                                }
+                                if (railwayGlobalStatus != null) {
+                                    Text(
+                                        text = railwayGlobalStatus!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     TelemetrySyncIndicator(
                                         lastUpdatedText = lastUpdatedText ?: "Updated: Now",
