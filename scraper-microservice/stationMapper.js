@@ -23,7 +23,10 @@ const PRESENTATION_FALLBACKS = {
   "tiruchirappalli": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
   "tiruchchirappalli": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
   "pudukkottai": { code: "PDKT", lat: 10.3725, lon: 78.8019 },
-  "karaikkuidi": { code: "KKDI", lat: 10.0747, lon: 78.7854 }
+  "karaikkuidi": { code: "KKDI", lat: 10.0747, lon: 78.7854 },
+  "prayagrajcheoki": { code: "PCOI", lat: 25.3770586, lon: 81.8671292 },
+  "dildarnagar jn": { code: "DLN", lat: 25.4194, lon: 83.6683 },
+  "ara jn": { code: "ARA", lat: 25.5645, lon: 84.6641 }
 };
 
 /**
@@ -32,11 +35,19 @@ const PRESENTATION_FALLBACKS = {
  */
 function normalizeStationName(name) {
     if (!name) return "";
-    return name
+    let stripped = name
         .toLowerCase()
         .replace(/\b(jn|junction|terminal|term|cantt|cnt|central|ctc|halt|hltr|gld|rck|road|rd)\b/g, "")
         .replace(/[^a-z0-9]/g, "") // Remove spaces and special characters for phonetic compression
         .trim();
+        
+    // If stripping removed everything (e.g., station is literally named "HALT" or "ROAD"),
+    // return the compressed original name instead to avoid empty strings.
+    if (stripped === "") {
+        return name.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+    }
+    
+    return stripped;
 }
 
 /**
@@ -144,11 +155,13 @@ async function resolveStationData(rawScrapedName) {
     }
 
     // Step 2: Substring/Token Containment Match
-    for (const entry of normalizedStationList) {
-        if (scrapedNormal.length > 3 && (scrapedNormal.includes(entry.normalizedName) || entry.normalizedName.includes(scrapedNormal))) {
-            return entry;
-        }
-    }
+    // (Removed because it aggressively matches false positives like "agra" in "prayagrajcheoki")
+    // for (const entry of normalizedStationList) {
+    //     if (entry.normalizedName.length < 4) continue;
+    //     if (scrapedNormal.length > 3 && (scrapedNormal.includes(entry.normalizedName) || entry.normalizedName.includes(scrapedNormal))) {
+    //         return entry;
+    //     }
+    // }
 
     // Step 3: Fuzzy Levenshtein Distance Match
     let bestMatch = null;

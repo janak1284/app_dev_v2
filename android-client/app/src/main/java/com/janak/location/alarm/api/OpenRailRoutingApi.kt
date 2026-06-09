@@ -13,7 +13,8 @@ interface OpenRailRoutingApi {
         @Query("point") points: List<String>, // format: ["lat,lon", "lat,lon", ...]
         @Query("profile") profile: String = "all_tracks",
         @Query("points_encoded") encoded: Boolean = true,
-        @Query("type") type: String = "json"
+        @Query("type") type: String = "json",
+        @Query("radiuses") radiuses: String? = null
     ): Response<ORRRouteResponse>
 
     @GET("nearest")

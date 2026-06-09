@@ -346,12 +346,12 @@ class MapViewModel(
     // --- Railway (Hybrid Granular Cloud) ---
     private data class ORRResult(val points: List<com.mapbox.geojson.Point>, val distance: Double, val duration: Double)
 
-    private suspend fun callGlobalRoute(points: List<String>, sCode: String? = null, eCode: String? = null): ORRResult? {
+    private suspend fun callGlobalRoute(points: List<String>, sCode: String? = null, eCode: String? = null, bypassCache: Boolean = false, radiuses: String? = null): ORRResult? {
         if (points.size < 2) return null
         val uniquePoints = points.distinctUntilChangedList(); if (uniquePoints.size < 2) return null
         val segmentKey = if (sCode != null && eCode != null) "$sCode-$eCode" else null
 
-        if (segmentKey != null) {
+        if (!bypassCache && segmentKey != null) {
             try {
                 val cacheRes = RetrofitClient.railwayTelemetryApi.getGlobalRouteCache(segmentKey)
                 if (cacheRes.isSuccessful && cacheRes.body() != null) {
@@ -363,12 +363,12 @@ class MapViewModel(
         }
 
         return try {
-            AppLogger.d("MapViewModel", "🌐 Direct ORR: $segmentKey")
-            val res = RetrofitClient.openRailRoutingApi.getTrackGeometry(uniquePoints)
+            AppLogger.d("MapViewModel", "🌐 Direct ORR: $segmentKey" + if (bypassCache) " (bypass cache)" else "")
+            val res = RetrofitClient.openRailRoutingApi.getTrackGeometry(points = uniquePoints, radiuses = radiuses)
             if (res.isSuccessful && res.body() != null) {
                 val path = res.body()!!.paths.firstOrNull() ?: return null
                 val result = ORRResult(PolylineDecoder.decode(path.points), path.distanceMeters, path.timeMillis / 1000.0)
-                if (segmentKey != null) {
+                if (!bypassCache && segmentKey != null) {
                     viewModelScope.launch {
                         try { RetrofitClient.railwayTelemetryApi.saveGlobalRouteCache(RouteCacheSaveRequest(segmentKey, path.points, path.distanceMeters, result.duration)) } catch (e: Exception) {}
                     }
@@ -376,6 +376,7 @@ class MapViewModel(
                 result
             } else {
                 val error = res.errorBody()?.string() ?: ""
+                AppLogger.e("MapViewModel", "Direct ORR failed with error: $error | Code: ${res.code()}")
                 if (error.contains("Connection between locations not found") && sCode != null && eCode != null) { performAutoSnapFix(sCode, eCode, uniquePoints.first(), uniquePoints.last()) }
                 null
             }
@@ -393,6 +394,75 @@ class MapViewModel(
             } catch (e: Exception) { }
         }
         snap(sCode, sCoords); snap(eCode, eCoords)
+    }
+    private fun trimPolylineUturns(
+        polyline: List<com.mapbox.geojson.Point>, 
+        startCoords: String, 
+        endCoords: String
+    ): Pair<List<com.mapbox.geojson.Point>, Double> {
+        if (polyline.size < 5) return Pair(polyline, 0.0)
+        
+        val startLat = startCoords.split(",")[0].toDouble()
+        val startLon = startCoords.split(",")[1].toDouble()
+        val endLat = endCoords.split(",")[0].toDouble()
+        val endLon = endCoords.split(",")[1].toDouble()
+
+        var cutStartIndex = 0
+        var cutEndIndex = polyline.size - 1
+
+        val results = FloatArray(1)
+
+        // 1. Find the absolute closest point to the destination
+        var minEndDist = Float.MAX_VALUE
+        var closestEndIdx = polyline.size - 1
+        for (i in 0 until polyline.size) {
+            val pt = polyline[i]
+            android.location.Location.distanceBetween(pt.latitude(), pt.longitude(), endLat, endLon, results)
+            if (results[0] < minEndDist) {
+                minEndDist = results[0]
+                closestEndIdx = i
+            }
+        }
+        
+        cutEndIndex = closestEndIdx
+
+        // 2. Find the absolute closest point to the start (search backwards from cutEndIndex)
+        var minStartDist = Float.MAX_VALUE
+        var closestStartIdx = 0
+        for (i in cutEndIndex downTo 0) {
+            val pt = polyline[i]
+            android.location.Location.distanceBetween(pt.latitude(), pt.longitude(), startLat, startLon, results)
+            if (results[0] < minStartDist) {
+                minStartDist = results[0]
+                closestStartIdx = i
+            }
+        }
+        
+        cutStartIndex = closestStartIdx
+
+        if (cutStartIndex >= cutEndIndex) {
+            return Pair(polyline, 0.0)
+        }
+
+        val trimmed = polyline.subList(cutStartIndex, cutEndIndex + 1)
+        
+        var newDistance = 0.0
+        for (i in 0 until trimmed.size - 1) {
+            val p1 = trimmed[i]
+            val p2 = trimmed[i+1]
+            android.location.Location.distanceBetween(p1.latitude(), p1.longitude(), p2.latitude(), p2.longitude(), results)
+            newDistance += results[0]
+        }
+        
+        return Pair(trimmed, newDistance)
+    }
+
+    private fun calculateStraightLineDistance(p1: String, p2: String): Double {
+        val c1 = p1.split(",")
+        val c2 = p2.split(",")
+        val loc1 = Location("").apply { latitude = c1[0].toDouble(); longitude = c1[1].toDouble() }
+        val loc2 = Location("").apply { latitude = c2[0].toDouble(); longitude = c2[1].toDouble() }
+        return loc1.distanceTo(loc2).toDouble()
     }
 
     private suspend fun fetchRailwayRoute(trainNumber: String, destinationCode: String) {
@@ -421,38 +491,104 @@ class MapViewModel(
             
             // Filter sequence to only include stations with valid coordinates
             val validSeq = mutableListOf<Pair<StationSequenceItem, String>>()
+            var lastCoords: String? = null
             for (i in sIdx..dIdx) {
                 val station = seq[i]
                 val coords = getStationCoords(station)
-                if (coords != null) {
+                if (coords != null && coords != lastCoords) {
                     validSeq.add(station to coords)
-                } else {
+                    lastCoords = coords
+                } else if (coords == null) {
                     AppLogger.w("MapViewModel", "fetchRailwayRoute: Skipping station ${station.stationCode} (${station.stationName}) due to missing coordinates")
+                } else {
+                    AppLogger.w("MapViewModel", "fetchRailwayRoute: Skipping duplicate consecutive station ${station.stationCode} at $coords")
                 }
             }
 
             AppLogger.d("MapViewModel", "fetchRailwayRoute: Valid station sequence size: ${validSeq.size} (original: ${dIdx - sIdx + 1})")
 
-            for (i in 0 until validSeq.size - 1) {
-                val (s1, p1) = validSeq[i]
-                val (s2, p2) = validSeq[i+1]
+            val allCoords = validSeq.map { it.second }
+            val radiusesString = List(allCoords.size) { "500" }.joinToString(";")
+            
+            var totalStraightLineDist = 0.0
+            for (i in 0 until allCoords.size - 1) {
+                totalStraightLineDist += calculateStraightLineDistance(allCoords[i], allCoords[i+1])
+            }
+            
+            val isLongDistance = totalStraightLineDist > 200_000.0 // > 200 km
+            
+            var primaryAttemptSuccess = false
+            var fullRouteSegment: ORRResult? = null
+            
+            if (!isLongDistance && allCoords.size >= 2) {
+                AppLogger.d("MapViewModel", "fetchRailwayRoute: Local train detected. Attempting full route multi-waypoint call")
+                fullRouteSegment = callGlobalRoute(allCoords, bypassCache = true, radiuses = radiusesString)
                 
-                AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment $i: ${s1.stationCode} to ${s2.stationCode}")
-                
-                var segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode)
-                if (segment == null) { 
-                    AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} failed, retrying...")
-                    delay(1500L); segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode) 
+                // If full route fails (common for dense local trains due to bad snapping),
+                // attempt an end-to-end route using only the first and last stations.
+                if (fullRouteSegment == null && allCoords.size > 2) {
+                    AppLogger.d("MapViewModel", "fetchRailwayRoute: Full route failed, attempting end-to-end fallback")
+                    fullRouteSegment = callGlobalRoute(listOf(allCoords.first(), allCoords.last()), bypassCache = true)
                 }
+            } else if (isLongDistance) {
+                AppLogger.d("MapViewModel", "fetchRailwayRoute: Long distance train detected (${(totalStraightLineDist / 1000).toInt()} km). Skipping full route, enforcing segment-by-segment")
+            }
+            
+            if (fullRouteSegment != null) {
+                val (trimmedPoints, trimmedDist) = trimPolylineUturns(fullRouteSegment.points, allCoords.first(), allCoords.last())
+                val effectiveDistance = if (trimmedDist > 0.0) trimmedDist else fullRouteSegment.distance
+                val effectivePoints = if (trimmedDist > 0.0) trimmedPoints else fullRouteSegment.points
                 
-                if (segment != null) { 
-                    AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} success: ${segment.points.size} points")
-                    stitched.addAll(segment.points); totalDist += segment.distance; totalTime += segment.duration 
+                if (effectiveDistance > totalStraightLineDist * 2.5) {
+                    AppLogger.w("MapViewModel", "fetchRailwayRoute: Full route discarded due to U-turn heuristic (dist: $effectiveDistance, straight: $totalStraightLineDist)")
                 } else {
-                    AppLogger.w("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} failed after retry, falling back to direct line")
-                    val c1 = p1.split(","); val c2 = p2.split(",")
-                    stitched.add(com.mapbox.geojson.Point.fromLngLat(c1[1].toDouble(), c1[0].toDouble()))
-                    stitched.add(com.mapbox.geojson.Point.fromLngLat(c2[1].toDouble(), c2[0].toDouble()))
+                    AppLogger.d("MapViewModel", "fetchRailwayRoute: Full route success: ${effectivePoints.size} points")
+                    stitched.addAll(effectivePoints)
+                    totalDist += effectiveDistance
+                    totalTime += fullRouteSegment.duration // keeping original duration for simplicity
+                    primaryAttemptSuccess = true
+                }
+            } else {
+                AppLogger.d("MapViewModel", "fetchRailwayRoute: Full route attempt failed")
+            }
+
+            if (!primaryAttemptSuccess) {
+                AppLogger.d("MapViewModel", "fetchRailwayRoute: Falling back to segment-by-segment routing")
+                for (i in 0 until validSeq.size - 1) {
+                    val (s1, p1) = validSeq[i]
+                    val (s2, p2) = validSeq[i+1]
+                    
+                    AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment $i: ${s1.stationCode} to ${s2.stationCode}")
+                    
+                    var segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode)
+                    if (segment == null) { 
+                        AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} failed, retrying...")
+                        delay(1500L); segment = callGlobalRoute(listOf(p1, p2), s1.stationCode, s2.stationCode) 
+                    }
+                    
+                    if (segment != null) {
+                        val (trimmedPoints, trimmedDist) = trimPolylineUturns(segment.points, p1, p2)
+                        if (trimmedDist > 0.0) {
+                            segment = ORRResult(trimmedPoints, trimmedDist, segment.duration)
+                        }
+                    }
+
+                    val straightLineDist = calculateStraightLineDistance(p1, p2)
+                    
+                    if (segment != null && segment.distance > straightLineDist * 2.5) {
+                        AppLogger.w("MapViewModel", "fetchRailwayRoute: Segment discarded due to U-turn heuristic (dist: ${segment.distance}, straight: $straightLineDist)")
+                        segment = null
+                    }
+                    
+                    if (segment != null) { 
+                        AppLogger.d("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} success: ${segment.points.size} points")
+                        stitched.addAll(segment.points); totalDist += segment.distance; totalTime += segment.duration 
+                    } else {
+                        AppLogger.w("MapViewModel", "fetchRailwayRoute: Segment ${s1.stationCode}-${s2.stationCode} failed after retry or heuristic, falling back to direct line")
+                        val c1 = p1.split(","); val c2 = p2.split(",")
+                        stitched.add(com.mapbox.geojson.Point.fromLngLat(c1[1].toDouble(), c1[0].toDouble()))
+                        stitched.add(com.mapbox.geojson.Point.fromLngLat(c2[1].toDouble(), c2[0].toDouble()))
+                    }
                 }
             }
             
