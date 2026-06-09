@@ -274,7 +274,10 @@ class MapViewModel(
         if (_isAlarmSet.value) return
         resetRouteState()
         _destination.value = latLng; _destinationName.value = name; _isPreviewMode.value = true
-        _userLocation.value?.let { fetchRoute(it, latLng) }
+        _userLocation.value?.let { 
+            checkDistance(it)
+            fetchRoute(it, latLng) 
+        }
     }
 
     fun clearDestination() { if (!_isAlarmSet.value) { resetRouteState(); _isPreviewMode.value = false } }
@@ -626,7 +629,9 @@ class MapViewModel(
         _destination.value = LatLng(lat, lon)
         _destinationName.value = name; _destinationCode.value = code
         _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.TRAIN)
-        _isPreviewMode.value = true; viewModelScope.launch { delay(50); fetchRailwayRoute(tNum, code) }
+        _isPreviewMode.value = true
+        _userLocation.value?.let { checkDistance(it) }
+        viewModelScope.launch { delay(50); fetchRailwayRoute(tNum, code) }
     }
 
     fun startJourneyDirect(lat: Double, lng: Double, name: String, settings: AlarmSettings, preRoute: String? = null, preDist: Double = 0.0, preDur: Long = 0) {
@@ -654,13 +659,48 @@ class MapViewModel(
         routeDistanceEngine.resetStats(); lastCheckedLocation = null; needsInitialCalculation = true; hasTriggeredArrival = false
     }
 
-    private fun checkDistance(currentLocation: Location) {
+    private fun checkDistance(currentLocation: Location, force: Boolean = false) {
         val dest = _destination.value ?: return
         val results = FloatArray(1); Location.distanceBetween(currentLocation.latitude, currentLocation.longitude, dest.latitude, dest.longitude, results)
         val dist = results[0]
-        if (!needsInitialCalculation && lastCheckedLocation != null && dist > 100 && currentLocation.distanceTo(lastCheckedLocation!!) < 5) return
+        
+        if (!force && !needsInitialCalculation && lastCheckedLocation != null && dist > 100 && currentLocation.distanceTo(lastCheckedLocation!!) < 5) return
         lastCheckedLocation = currentLocation; needsInitialCalculation = false
-        _distanceToDestination.value = formatDistance(dist.toInt())
+
+        // 1. Distance Calculation (Road Route vs Straight Line)
+        if (_alarmSettings.value.transportMode == TransportMode.ROAD && fullRouteLine != null) {
+            val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
+            val roadDist = routeDistanceEngine.calculateRemainingDistance(fullRouteLine!!, userPoint)
+            _distanceToDestination.value = formatDistance(roadDist.toInt())
+            
+            // 2. ETA Calculation (Road Mode)
+            routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
+            val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(fullRouteLine!!, userPoint, _segmentSpeeds.value)
+            val globalExpectedSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
+            
+            val eta = routeDistanceEngine.calculateCalibratedETA(
+                remainingDistanceMeters = roadDist,
+                globalExpectedSpeedMps = globalExpectedSpeed,
+                currentSegmentSpeedMps = if (currentSegmentSpeed > 0) currentSegmentSpeed else globalExpectedSpeed
+            )
+            if (eta != Double.MAX_VALUE && eta >= 0) {
+                _remainingEta.value = eta.toInt()
+            } else {
+                // Fallback to simple distance-based ETA if moving too slow
+                val fallbackEta = (roadDist / (13.0)) / 60.0 // Assume ~45km/h fallback
+                _remainingEta.value = fallbackEta.toInt()
+            }
+        } else {
+            // Fallback: Straight-line distance
+            _distanceToDestination.value = formatDistance(dist.toInt())
+            
+            // Fallback: Straight-line ETA (Rough estimate at 30km/h average)
+            if (_alarmSettings.value.transportMode != TransportMode.TRAIN) {
+                val speedMps = if (currentLocation.speed > 1.0) currentLocation.speed.toDouble() else 8.33 // 30km/h fallback
+                val estimatedEtaMins = (dist / speedMps) / 60.0
+                _remainingEta.value = estimatedEtaMins.toInt()
+            }
+        }
 
         if (_alarmSettings.value.transportMode == TransportMode.TRAIN) {
             val destStation = _stationSequence.value.find { it.stationCode == _destinationCode.value }
@@ -727,9 +767,23 @@ class MapViewModel(
             }
             context.startService(intent)
         }
+        _userLocation.value?.let { checkDistance(it, force = true) }
     }
 
-    fun startLocationUpdates() { viewModelScope.launch { locationTrackingManager.getLocationUpdates().collect { _userLocation.value = it; checkDistance(it) } } }
+    private var locationJob: Job? = null
+    fun startLocationUpdates() { 
+        if (locationJob?.isActive == true) return
+        locationJob = viewModelScope.launch { 
+            locationTrackingManager.getLocationUpdates().collect { 
+                val wasNull = _userLocation.value == null
+                _userLocation.value = it
+                checkDistance(it)
+                if (wasNull && _destination.value != null && _routeLine.value == null && !_isRouting.value) {
+                    fetchRoute(it, _destination.value!!)
+                }
+            } 
+        } 
+    }
     fun refreshLocation() = startLocationUpdates()
 }
 

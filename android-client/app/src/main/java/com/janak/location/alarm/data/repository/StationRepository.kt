@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import java.io.InputStreamReader
 import com.janak.location.alarm.util.AppLogger
 
@@ -42,6 +43,7 @@ class StationRepository(private val database: AppDatabase, private val context: 
     private val stationDao = database.stationDao()
     private val json = Json { ignoreUnknownKeys = true }
 
+    @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
     suspend fun ensureStationsLoaded() {
         withContext(Dispatchers.IO) {
             val count = stationDao.getStationCount()
@@ -51,13 +53,14 @@ class StationRepository(private val database: AppDatabase, private val context: 
         }
     }
 
+    @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
     private suspend fun loadStationsFromRaw() {
         try {
+            AppLogger.d("StationRepository", "Loading stations from raw resource...")
             val inputStream = context.resources.openRawResource(R.raw.stations)
-            val reader = InputStreamReader(inputStream)
-            val jsonString = reader.readText()
-            val collection = json.decodeFromString<StationFeatureCollection>(jsonString)
+            val collection = json.decodeFromStream<StationFeatureCollection>(inputStream)
             
+            AppLogger.d("StationRepository", "Decoded ${collection.features.size} stations, inserting into database...")
             val entities = collection.features.mapNotNull { feature ->
                 val coords = feature.geometry?.coordinates
                 if (coords != null && coords.size >= 2) {
@@ -76,6 +79,7 @@ class StationRepository(private val database: AppDatabase, private val context: 
             }
             
             stationDao.insertStations(entities)
+            AppLogger.d("StationRepository", "Successfully loaded stations.")
         } catch (e: Exception) {
             AppLogger.e("StationRepository", "Failed to load stations from raw", e)
         }

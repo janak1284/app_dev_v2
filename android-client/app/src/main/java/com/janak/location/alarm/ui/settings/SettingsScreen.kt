@@ -27,11 +27,14 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     onNavigateToSearchHistory: () -> Unit,
     onNavigateToJourneyHistory: () -> Unit,
-    onNavigateToSavedRoutes: () -> Unit
+    onNavigateToSavedRoutes: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("Settings") },

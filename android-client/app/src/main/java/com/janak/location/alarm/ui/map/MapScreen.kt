@@ -102,78 +102,32 @@ import org.maplibre.geojson.Point
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
+fun MapScreen(
+    viewModel: MapViewModel, 
+    onNavigateHome: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     AppLogger.d("MapScreen", "MapScreen rendering")
-    var showSettings by remember { mutableStateOf(false) }
-    var showSearchHistory by remember { mutableStateOf(false) }
-    var showJourneyHistory by remember { mutableStateOf(false) }
-    var showSavedRoutes by remember { mutableStateOf(false) }
-
-    when {
-        showSearchHistory -> {
-            AppLogger.d("MapScreen", "Showing SearchHistoryScreen")
-            com.janak.location.alarm.ui.settings.SearchHistoryScreen(
-                viewModel = viewModel,
-                onBackClick = { showSearchHistory = false },
-                onItemClick = { feature ->
-                    viewModel.selectSearchResult(feature)
-                    showSearchHistory = false
-                    showSettings = false
-                }
-            )
-        }
-        showJourneyHistory -> {
-            AppLogger.d("MapScreen", "Showing JourneyHistoryScreen")
-            com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
-                viewModel = viewModel,
-                onBackClick = { showJourneyHistory = false },
-                onHistoryItemClick = { history -> 
-                    AppLogger.d("MapScreen", "History item clicked, starting journey")
-                    viewModel.startJourneyFromHistory(history)
-                    showJourneyHistory = false
-                    showSettings = false
-                },
-                onReactivateClick = { showJourneyHistory = false; showSettings = false}
-            )
-        }
-        showSavedRoutes -> {
-            AppLogger.d("MapScreen", "Showing SavedRoutesScreen")
-            SavedRoutesScreen(
-                viewModel = viewModel,
-                onBackClick = { showSavedRoutes = false },
-                onEditRouteClick = { route: SavedRouteEntity ->
-                    AppLogger.d("MapScreen", "Editing route: ${route.routeId}")
-                },
-                onRouteClick = { route: SavedRouteEntity ->
-                    viewModel.startJourneyFromSavedRoute(route)
-                    showSavedRoutes = false
-                    showSettings = false
-                }
-            )
-        }
-        showSettings -> {
-            AppLogger.d("MapScreen", "Showing SettingsScreen")
-            SettingsScreen(
-                viewModel = viewModel,
-                onBackClick = { showSettings = false },
-                onNavigateToSearchHistory = { showSearchHistory = true },
-                onNavigateToJourneyHistory = { showJourneyHistory = true },
-                onNavigateToSavedRoutes = { showSavedRoutes = true }
-            )
-        }
-        else -> {
-            AppLogger.d("MapScreen", "Showing MapContent")
-            MapContent(
-                viewModel = viewModel, 
-                onOpenSettings = { showSettings = true },
-                onNavigateHome = onNavigateHome
-            )
-        }
-    }
+    
+    // MapContent is now the primary content of MapScreen.
+    // Sub-screens (Settings, etc.) are handled by the parent (MainActivity)
+    // to ensure consistent animation and persistence.
+    MapContent(
+        viewModel = viewModel, 
+        onOpenSettings = onOpenSettings,
+        onNavigateHome = onNavigateHome,
+        modifier = modifier.fillMaxSize()
+    )
 }
 
 @Composable
-fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHome: () -> Unit) {
+fun MapContent(
+    viewModel: MapViewModel, 
+    onOpenSettings: () -> Unit, 
+    onNavigateHome: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     AppLogger.d("MapScreen", "MapContent rendering")
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -557,7 +511,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val isPaneVisible = destination != null && !isSearchFocused && !isMapInteracting
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
@@ -822,6 +776,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("TURN OFF")
                                 }
+
                             } else if (isPreviewMode) {
                                 StatusHeader(
                                     title = "DESTINATION SET",

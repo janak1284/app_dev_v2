@@ -64,7 +64,8 @@ fun JourneyHistoryScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
     onHistoryItemClick: (JourneyHistoryEntity) -> Unit,
-    onReactivateClick: () -> Unit
+    onReactivateClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val historyEntries by viewModel.journeyHistory.collectAsState(initial = emptyList())
     val selectedJourneys = remember { mutableStateMapOf<Long, JourneyHistoryEntity>() }
@@ -98,6 +99,8 @@ fun JourneyHistoryScreen(
     }
 
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text(if (isSelectionMode) "${selectedJourneys.size} selected" else "Journey History") },

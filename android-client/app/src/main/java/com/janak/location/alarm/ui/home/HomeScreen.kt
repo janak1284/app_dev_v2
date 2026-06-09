@@ -38,7 +38,8 @@ fun HomeScreen(
     onNewJourneyClick: (Boolean) -> Unit,
     onSettingsClick: () -> Unit,
     onManageJourneysClick: () -> Unit,
-    onManageSearchesClick: () -> Unit
+    onManageSearchesClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val searchHistory by viewModel.searchHistory.collectAsState()
@@ -154,6 +155,7 @@ fun HomeScreen(
     }
 
     Scaffold(
+        modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             ExtendedFloatingActionButton(

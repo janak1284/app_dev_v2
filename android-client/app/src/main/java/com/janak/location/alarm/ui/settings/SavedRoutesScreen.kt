@@ -24,7 +24,8 @@ fun SavedRoutesScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
     onEditRouteClick: (SavedRouteEntity) -> Unit,
-    onRouteClick: (SavedRouteEntity) -> Unit
+    onRouteClick: (SavedRouteEntity) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val savedRoutes by viewModel.savedRoutes.collectAsState(initial = emptyList())
     val selectedRoutes = remember { mutableStateMapOf<Long, SavedRouteEntity>() }
@@ -68,6 +69,8 @@ fun SavedRoutesScreen(
     }
 
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text(if (isSelectionMode) "${selectedRoutes.size} selected" else "Saved Routes") },
