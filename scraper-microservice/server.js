@@ -113,11 +113,12 @@ app.post('/api/v4/stations/correct', async (req, res) => {
 app.get('/api/v4/train/track', async (req, res) => {
     const trainNumber = req.query.train_number;
     const forceRefresh = req.query.force_refresh === 'true';
+    const customTtl = req.query.ttl_mins;
     if (!trainNumber) return res.status(400).json({ error: "Missing train_number" });
 
     try {
         const { data: cacheData } = await supabase.from('train_cache').select('*').eq('train_number', trainNumber).maybeSingle();
-        const ttlMinutes = forceRefresh ? 3 : 10;
+        const ttlMinutes = customTtl && !isNaN(customTtl) ? parseInt(customTtl) : (forceRefresh ? 3 : 10);
         if (cacheData) {
             const age = (Date.now() - new Date(cacheData.last_updated).getTime()) / (1000 * 60);
             if (age < ttlMinutes) return res.json({ ...cacheData.payload, cache_hit: true, timestamp_fetched: new Date(cacheData.last_updated).getTime(), server_time: Date.now() });

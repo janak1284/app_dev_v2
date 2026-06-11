@@ -67,11 +67,11 @@ class MapViewModel(
         _railwayGlobalStatus.value = null
     }
 
-    fun fetchTelemetryForDropdown(trainNum: String) {
+    fun fetchTelemetryForDropdown(trainNum: String, forceRefresh: Boolean = false, ttlMins: Int? = 1) {
         _railwaySearchError.value = null
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNum)
+                val response = RetrofitClient.railwayTelemetryApi.getTrainTelemetry(trainNum, forceRefresh, ttlMins)
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
                     if (body.stationSequence.isEmpty()) {
@@ -421,6 +421,10 @@ class MapViewModel(
         for (i in 0 until polyline.size) {
             val pt = polyline[i]
             android.location.Location.distanceBetween(pt.latitude(), pt.longitude(), endLat, endLon, results)
+            if (results[0] <= 200.0) {
+                closestEndIdx = i
+                break
+            }
             if (results[0] < minEndDist) {
                 minEndDist = results[0]
                 closestEndIdx = i
@@ -435,6 +439,10 @@ class MapViewModel(
         for (i in cutEndIndex downTo 0) {
             val pt = polyline[i]
             android.location.Location.distanceBetween(pt.latitude(), pt.longitude(), startLat, startLon, results)
+            if (results[0] <= 200.0) {
+                closestStartIdx = i
+                break
+            }
             if (results[0] < minStartDist) {
                 minStartDist = results[0]
                 closestStartIdx = i
@@ -731,7 +739,8 @@ class MapViewModel(
     fun getBreadcrumbsForHistory(id: Long) = historyRepository.getBreadcrumbsForHistory(id)
     fun resetJourneyCompleted() { _journeyCompleted.value = false; hasTriggeredArrival = false; resetRouteState() }
     fun fetchTelemetryForDropdownAsync(t: String) = fetchTelemetryForDropdown(t)
-    fun manualRefresh() { _currentTrainNumber?.let { fetchTelemetryForDropdown(it) } }
+    fun manualRefresh() { _currentTrainNumber?.let { fetchTelemetryForDropdown(it, forceRefresh = true, ttlMins = null) } }
+    fun setRefreshEnabled(enabled: Boolean) { _isRefreshEnabled.value = enabled }
 
     fun saveRoute(name: String, breadcrumbs: List<RouteBreadcrumbEntity>, settings: AlarmSettings) {
         val dest = _destination.value ?: return

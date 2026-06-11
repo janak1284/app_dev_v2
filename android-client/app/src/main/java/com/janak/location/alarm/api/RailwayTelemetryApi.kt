@@ -39,7 +39,8 @@ interface RailwayTelemetryApi {
     @GET("api/v4/train/track")
     suspend fun getTrainTelemetry(
         @Query("train_number") trainNumber: String,
-        @Query("force_refresh") forceRefresh: Boolean = false
+        @Query("force_refresh") forceRefresh: Boolean = false,
+        @Query("ttl_mins") ttlMins: Int? = null
     ): Response<TelemetryResponse>
 
     @GET("api/v4/train/route/cache")

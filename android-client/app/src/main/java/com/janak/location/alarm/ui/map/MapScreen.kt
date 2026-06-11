@@ -162,6 +162,7 @@ fun MapContent(
             if (localUptimeAtFetchMs > 0) {
                 val currentAgeMs = dataAgeAtFetchMs + (SystemClock.elapsedRealtime() - localUptimeAtFetchMs)
                 val mins = (currentAgeMs / 60000).toInt()
+                viewModel.setRefreshEnabled(mins >= 3)
                 lastUpdatedText = when {
                     mins <= 0 -> "Updated: Now"
                     else -> "Updated: ${mins}m ago"
@@ -731,29 +732,6 @@ fun MapContent(
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Medium
                                     )
-                                }
-                                if (railwayGlobalStatus != null) {
-                                    val statusColor = when {
-                                        railwayGlobalStatus!!.contains("On Time", ignoreCase = true) -> Color(0xFF34A853)
-                                        railwayGlobalStatus!!.contains("Delay", ignoreCase = true) -> MaterialTheme.colorScheme.error
-                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
-                                    Text(
-                                        text = railwayGlobalStatus!!,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = statusColor.copy(alpha = 0.9f),
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    TelemetrySyncIndicator(
-                                        lastUpdatedText = lastUpdatedText ?: "Updated: Now",
-                                        nextRefreshText = nextRefreshText,
-                                        isRefreshing = isRefreshing,
-                                        isRefreshEnabled = isRefreshEnabled,
-                                        onRefreshClick = { viewModel.manualRefresh() }
-                                    )
                                 } else if (remainingEta != null) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
@@ -771,6 +749,32 @@ fun MapContent(
                                     }
                                 } else {
                                     com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                                }
+
+                                if (railwayGlobalStatus != null) {
+                                    val statusColor = when {
+                                        railwayGlobalStatus!!.contains("On Time", ignoreCase = true) -> Color(0xFF34A853)
+                                        railwayGlobalStatus!!.contains("Delay", ignoreCase = true) -> MaterialTheme.colorScheme.error
+                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = railwayGlobalStatus!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = statusColor.copy(alpha = 0.9f),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TelemetrySyncIndicator(
+                                        lastUpdatedText = lastUpdatedText ?: "Updated: Now",
+                                        nextRefreshText = nextRefreshText,
+                                        isRefreshing = isRefreshing,
+                                        isRefreshEnabled = isRefreshEnabled,
+                                        onRefreshClick = { viewModel.manualRefresh() }
+                                    )
                                 }
 
                                 Spacer(modifier = Modifier.height(24.dp))
@@ -811,24 +815,6 @@ fun MapContent(
                                         color = MaterialTheme.colorScheme.secondary,
                                         fontWeight = FontWeight.Medium
                                     )
-                                }
-                                if (railwayGlobalStatus != null) {
-                                    Text(
-                                        text = railwayGlobalStatus!!,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
-                                        fontWeight = FontWeight.Normal
-                                    )
-                                }
-                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    TelemetrySyncIndicator(
-                                        lastUpdatedText = lastUpdatedText ?: "Updated: Now",
-                                        nextRefreshText = nextRefreshText,
-                                        isRefreshing = isRefreshing,
-                                        isRefreshEnabled = isRefreshEnabled,
-                                        onRefreshClick = { viewModel.manualRefresh() }
-                                    )
                                 } else if (remainingEta != null) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
@@ -846,6 +832,27 @@ fun MapContent(
                                     }
                                 } else {
                                     com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                                }
+
+                                if (railwayGlobalStatus != null) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = railwayGlobalStatus!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+
+                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TelemetrySyncIndicator(
+                                        lastUpdatedText = lastUpdatedText ?: "Updated: Now",
+                                        nextRefreshText = nextRefreshText,
+                                        isRefreshing = isRefreshing,
+                                        isRefreshEnabled = isRefreshEnabled,
+                                        onRefreshClick = { viewModel.manualRefresh() }
+                                    )
                                 }
                                 
                                 Spacer(modifier = Modifier.height(8.dp))
