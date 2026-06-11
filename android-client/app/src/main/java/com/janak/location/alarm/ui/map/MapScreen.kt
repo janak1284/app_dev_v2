@@ -36,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DirectionsTransit
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.LocationSearching
@@ -136,6 +137,7 @@ fun MapContent(
     val userLocation by viewModel.userLocation.collectAsState(initial = null)
     val destination by viewModel.destination.collectAsState()
     val destinationName by viewModel.destinationName.collectAsState()
+    val currentTrainNumber by viewModel.currentTrainNumber.collectAsState()
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val isPreviewMode by viewModel.isPreviewMode.collectAsState()
     
@@ -597,7 +599,49 @@ fun MapContent(
                     onFocusChanged = { isSearchFocused = it },
                 )
             }
+
+            // --- Rail Mode Floating Chip ---
+            AnimatedVisibility(
+                visible = alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN && (isAlarmSet || isPreviewMode) && !isSearchFocused,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Surface(
+                        modifier = Modifier.padding(top = 8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shape = RoundedCornerShape(16.dp),
+                        tonalElevation = 4.dp,
+                        shadowElevation = 2.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DirectionsTransit,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (currentTrainNumber != null) {
+                                    "Train $currentTrainNumber • ${destinationName ?: "Unknown"}"
+                                } else {
+                                    "Railway Journey • ${destinationName ?: "Unknown"}"
+                                },
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
             }
+        }
 
         // Buttons moved to Bottom UI Group below
 

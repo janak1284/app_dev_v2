@@ -144,7 +144,9 @@ class MapViewModel(
     val destinationName: StateFlow<String?> = _destinationName.asStateFlow()
 
     private val _destinationCode = MutableStateFlow<String?>(null)
-    private var _currentTrainNumber: String? = null
+    private val _currentTrainNumber = MutableStateFlow<String?>(null)
+    val currentTrainNumber: StateFlow<String?> = _currentTrainNumber.asStateFlow()
+
     private val _railwayEtaStatus = MutableStateFlow<String?>(null)
     val railwayEtaStatus: StateFlow<String?> = _railwayEtaStatus.asStateFlow()
 
@@ -351,7 +353,7 @@ class MapViewModel(
             putExtra("PREDICTIVE_ALARM_ENABLED", settings.isPredictiveAlarmEnabled)
             putExtra("RINGTONE_URI", settings.ringtoneUri?.toString())
             putExtra("VIBRATE", settings.isVibrateEnabled)
-            _currentTrainNumber?.let { putExtra("TRAIN_NUMBER", it) }
+            _currentTrainNumber.value?.let { putExtra("TRAIN_NUMBER", it) }
         }
         context.startForegroundService(intent)
     }
@@ -373,7 +375,7 @@ class MapViewModel(
 
     private fun fetchRoute(start: Location, end: LatLng, pushToService: Boolean = false) {
         if (_alarmSettings.value.transportMode == TransportMode.TRAIN) {
-            _currentTrainNumber?.let { t -> _destinationCode.value?.let { d -> viewModelScope.launch { fetchRailwayRoute(t, d) } } }
+            _currentTrainNumber.value?.let { t -> _destinationCode.value?.let { d -> viewModelScope.launch { fetchRailwayRoute(t, d) } } }
         } else { fetchRoadRoute(start, end, pushToService) }
     }
 
@@ -687,7 +689,7 @@ class MapViewModel(
         _stationSequence.value = seq
         _railwayGlobalStatus.value = globalStatus
         _railwayStaleDataWarning.value = staleWarning
-        _currentTrainNumber = tNum
+        _currentTrainNumber.value = tNum
         _destination.value = LatLng(lat, lon)
         _destinationName.value = name; _destinationCode.value = code
         _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.TRAIN)
@@ -714,6 +716,7 @@ class MapViewModel(
 
     fun resetRouteState() {
         _destination.value = null; _destinationName.value = null; _destinationCode.value = null
+        _currentTrainNumber.value = null
         _railwayEtaStatus.value = null; _railwayGlobalStatus.value = null; _railwayStaleDataWarning.value = null; _distanceToDestination.value = null; _remainingEta.value = null
         _currentRouteGeoJson.value = null; _journeyLegs.value = emptyList(); _stationSequence.value = emptyList()
         _routeLine.value = null; fullRouteLine = null; _expectedDistance.value = 0.0; _expectedDuration.value = 0.0
@@ -804,7 +807,7 @@ class MapViewModel(
     fun getBreadcrumbsForHistory(id: Long) = historyRepository.getBreadcrumbsForHistory(id)
     fun resetJourneyCompleted() { _journeyCompleted.value = false; hasTriggeredArrival = false; resetRouteState() }
     fun fetchTelemetryForDropdownAsync(t: String) = fetchTelemetryForDropdown(t)
-    fun manualRefresh() { _currentTrainNumber?.let { fetchTelemetryForDropdown(it, forceRefresh = true, ttlMins = null) } }
+    fun manualRefresh() { _currentTrainNumber.value?.let { fetchTelemetryForDropdown(it, forceRefresh = true, ttlMins = null) } }
     fun setRefreshEnabled(enabled: Boolean) { _isRefreshEnabled.value = enabled }
 
     fun saveRoute(name: String, breadcrumbs: List<RouteBreadcrumbEntity>, settings: AlarmSettings) {
