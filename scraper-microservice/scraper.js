@@ -126,11 +126,28 @@ async function scrapeTrainTelemetry(trainNumber) {
             console.log("Global status/delay not found.");
         }
 
+        // Extract Last Updated time
+        let lastUpdatedWebsiteMs = null;
+        try {
+            const updateTimeLocator = page.locator('.train-update__time').first();
+            if (await updateTimeLocator.isVisible()) {
+                const updateTimeText = await updateTimeLocator.innerText();
+                // Example text: "Last Updated: 11 Jun 2026 08:57, (Disclaimer..."
+                const match = updateTimeText.match(/Last Updated:\s*([\d]{1,2}\s+[a-zA-Z]{3}\s+[\d]{4}\s+\d{2}:\d{2})/i);
+                if (match && match[1]) {
+                    lastUpdatedWebsiteMs = new Date(match[1]).getTime();
+                }
+            }
+        } catch (e) {
+            console.log("Last updated time not found.");
+        }
+
         const extractedData = {
             train_number: trainNumber,
             eta_string: etaText.replace(/\n/g, ' ').trim(),
             station_sequence: stationSequence,
-            timestamp_fetched: Date.now()
+            timestamp_fetched: Date.now(),
+            last_updated_website_ms: lastUpdatedWebsiteMs
         };
 
         console.log("✅ Scrape Successful. Summary:");

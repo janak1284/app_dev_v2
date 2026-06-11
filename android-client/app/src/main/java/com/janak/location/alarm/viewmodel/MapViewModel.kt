@@ -81,6 +81,47 @@ class MapViewModel(
                         _railwayGlobalStatus.value = body.etaString
                         _dataAgeAtFetchMs.value = (body.serverTime ?: 0L) - (body.timestampFetched ?: 0L)
                         _localUptimeAtFetchMs.value = SystemClock.elapsedRealtime()
+
+                        // Calculate distance-based staleness warning
+                        _railwayStaleDataWarning.value = null
+                        if (body.lastUpdatedWebsiteMs != null && body.serverTime != null) {
+                            val dataAgeMins = ((body.serverTime - body.lastUpdatedWebsiteMs) / 60000).toInt()
+                            
+                            val sIdx = body.stationSequence.indexOfLast { it.hasDeparted }.coerceAtLeast(0)
+                            val nextIdx = (sIdx + 1).coerceAtMost(body.stationSequence.size - 1)
+                            val lastStation = body.stationSequence[sIdx]
+                            val nextStation = body.stationSequence[nextIdx]
+
+                            if (lastStation.latitude != null && lastStation.longitude != null &&
+                                nextStation.latitude != null && nextStation.longitude != null && sIdx != nextIdx) {
+                                
+                                val results = FloatArray(1)
+                                android.location.Location.distanceBetween(
+                                    lastStation.latitude, lastStation.longitude,
+                                    nextStation.latitude, nextStation.longitude,
+                                    results
+                                )
+                                val distanceMeters = results[0]
+                                // Assume 40 km/h average speed (40000m / 60 = 666.6 m/min)
+                                val travelTimeMins = (distanceMeters / 666.6).toInt()
+                                // Min threshold of 45 mins to avoid false alarms on short segments
+                                val thresholdMins = maxOf(45, travelTimeMins)
+                                
+                                AppLogger.d("MapViewModel", "Staleness Check: dataAge=$dataAgeMins mins, threshold=$thresholdMins mins, dist=$distanceMeters")
+
+                                if (dataAgeMins > thresholdMins) {
+                                    _railwayStaleDataWarning.value = "Warning: Train data has not been updated in $dataAgeMins mins."
+                                }
+                            } else if (dataAgeMins > 60) {
+                                AppLogger.d("MapViewModel", "Staleness Check Fallback: dataAge=$dataAgeMins mins")
+                                // Fallback if no valid coordinates found
+                                _railwayStaleDataWarning.value = "Warning: Train data has not been updated in $dataAgeMins mins."
+                            } else {
+                                AppLogger.d("MapViewModel", "Staleness Check: Coordinates missing, but dataAge ($dataAgeMins) <= 60")
+                            }
+                        } else {
+                            AppLogger.d("MapViewModel", "Staleness Check: lastUpdatedWebsiteMs=${body.lastUpdatedWebsiteMs}, serverTime=${body.serverTime}")
+                        }
                     }
                 } else { _railwaySearchError.value = "Train not found or server error." }
             } catch (e: Exception) {
@@ -109,6 +150,9 @@ class MapViewModel(
 
     private val _railwayGlobalStatus = MutableStateFlow<String?>(null)
     val railwayGlobalStatus: StateFlow<String?> = _railwayGlobalStatus.asStateFlow()
+
+    private val _railwayStaleDataWarning = MutableStateFlow<String?>(null)
+    val railwayStaleDataWarning: StateFlow<String?> = _railwayStaleDataWarning.asStateFlow()
 
     private val _currentRouteGeoJson = MutableStateFlow<String?>(null)
     val currentRouteGeoJson: StateFlow<String?> = _currentRouteGeoJson.asStateFlow()
@@ -631,9 +675,11 @@ class MapViewModel(
     fun startRailwayJourney(tNum: String, name: String, code: String, lat: Double, lon: Double) {
         val seq = _stationSequence.value
         val globalStatus = _railwayGlobalStatus.value
+        val staleWarning = _railwayStaleDataWarning.value
         resetRouteState()
         _stationSequence.value = seq
         _railwayGlobalStatus.value = globalStatus
+        _railwayStaleDataWarning.value = staleWarning
         _currentTrainNumber = tNum
         _destination.value = LatLng(lat, lon)
         _destinationName.value = name; _destinationCode.value = code
@@ -661,7 +707,7 @@ class MapViewModel(
 
     fun resetRouteState() {
         _destination.value = null; _destinationName.value = null; _destinationCode.value = null
-        _railwayEtaStatus.value = null; _distanceToDestination.value = null; _remainingEta.value = null
+        _railwayEtaStatus.value = null; _railwayGlobalStatus.value = null; _railwayStaleDataWarning.value = null; _distanceToDestination.value = null; _remainingEta.value = null
         _currentRouteGeoJson.value = null; _journeyLegs.value = emptyList(); _stationSequence.value = emptyList()
         _routeLine.value = null; fullRouteLine = null; _expectedDistance.value = 0.0; _expectedDuration.value = 0.0
         _segmentSpeeds.value = emptyList(); _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.ROAD)

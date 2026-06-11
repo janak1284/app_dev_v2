@@ -16,7 +16,8 @@ data class TelemetryResponse(
     @SerialName("station_sequence") val stationSequence: List<StationSequenceItem>,
     @SerialName("cache_hit") val cacheHit: Boolean,
     @SerialName("timestamp_fetched") val timestampFetched: Long? = null,
-    @SerialName("server_time") val serverTime: Long? = null
+    @SerialName("server_time") val serverTime: Long? = null,
+    @SerialName("last_updated_website_ms") val lastUpdatedWebsiteMs: Long? = null
 )
 
 @Serializable

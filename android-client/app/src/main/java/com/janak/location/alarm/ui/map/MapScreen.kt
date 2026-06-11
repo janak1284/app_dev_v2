@@ -147,6 +147,7 @@ fun MapContent(
     val remainingEta by viewModel.remainingEta.collectAsState()
     val railwayEtaStatus by viewModel.railwayEtaStatus.collectAsState()
     val railwayGlobalStatus by viewModel.railwayGlobalStatus.collectAsState()
+    val railwayStaleDataWarning by viewModel.railwayStaleDataWarning.collectAsState()
     
     // --- Data Age Calculation ---
     val dataAgeAtFetchMs by viewModel.dataAgeAtFetchMs.collectAsState()
@@ -733,18 +734,27 @@ fun MapContent(
                                         fontWeight = FontWeight.Medium
                                     )
                                 } else if (remainingEta != null) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    if (alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = "ETA: $remainingEta min (Estimated)",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "Official ETA unavailable on website",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                    } else {
                                         Text(
-                                            text = "ETA: $remainingEta min (Estimated)",
+                                            text = "ETA: $remainingEta min",
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.Medium
-                                        )
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = "Official ETA unavailable on website",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                                         )
                                     }
                                 } else {
@@ -774,6 +784,18 @@ fun MapContent(
                                         isRefreshing = isRefreshing,
                                         isRefreshEnabled = isRefreshEnabled,
                                         onRefreshClick = { viewModel.manualRefresh() }
+                                    )
+                                }
+                                
+                                if (railwayStaleDataWarning != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = railwayStaleDataWarning!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                     )
                                 }
 
@@ -816,18 +838,27 @@ fun MapContent(
                                         fontWeight = FontWeight.Medium
                                     )
                                 } else if (remainingEta != null) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    if (alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = "ETA: $remainingEta min (Estimated)",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.secondary,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "Official ETA unavailable on website",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                    } else {
                                         Text(
-                                            text = "ETA: $remainingEta min (Estimated)",
+                                            text = "ETA: $remainingEta min",
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.secondary,
                                             fontWeight = FontWeight.Medium
-                                        )
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = "Official ETA unavailable on website",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                                         )
                                     }
                                 } else {
@@ -852,6 +883,18 @@ fun MapContent(
                                         isRefreshing = isRefreshing,
                                         isRefreshEnabled = isRefreshEnabled,
                                         onRefreshClick = { viewModel.manualRefresh() }
+                                    )
+                                }
+                                
+                                if (railwayStaleDataWarning != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = railwayStaleDataWarning!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                     )
                                 }
                                 
@@ -1020,6 +1063,7 @@ fun ConfigSheetWrapper(
         onDismissRequest = stableOnDismiss,
         onSaveSettings = { newSettings ->
             viewModel.updateAlarmSettings(newSettings)
+            viewModel.startAlarm()
             stableOnDismiss()
         },
         scrollState = scrollState,
