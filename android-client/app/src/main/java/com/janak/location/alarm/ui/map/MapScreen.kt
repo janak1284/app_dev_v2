@@ -46,6 +46,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -245,6 +246,18 @@ fun MapContent(
             )
         } else {
             viewModel.startLocationUpdates()
+        }
+    }
+
+    var showWarningPopup by remember { mutableStateOf(false) }
+    var warningText by remember { mutableStateOf("") }
+
+    LaunchedEffect(railwayStaleDataWarning) {
+        if (railwayStaleDataWarning != null) {
+            warningText = railwayStaleDataWarning!!
+            showWarningPopup = true
+            kotlinx.coroutines.delay(5000)
+            showWarningPopup = false
         }
     }
 
@@ -606,7 +619,7 @@ fun MapContent(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                     Surface(
                         modifier = Modifier.padding(top = 8.dp),
                         color = MaterialTheme.colorScheme.primaryContainer,
@@ -628,9 +641,9 @@ fun MapContent(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = if (currentTrainNumber != null) {
-                                    "Train $currentTrainNumber • ${destinationName ?: "Unknown"}"
+                                    "Train $currentTrainNumber"
                                 } else {
-                                    "Railway Journey • ${destinationName ?: "Unknown"}"
+                                    "Railway Journey"
                                 },
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
@@ -805,7 +818,7 @@ fun MapContent(
                                     com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                                 }
 
-                                if (railwayGlobalStatus != null) {
+                                if (railwayGlobalStatus != null && railwayEtaStatus != null) {
                                     val statusColor = when {
                                         railwayGlobalStatus!!.contains("On Time", ignoreCase = true) -> Color(0xFF34A853)
                                         railwayGlobalStatus!!.contains("Delay", ignoreCase = true) -> MaterialTheme.colorScheme.error
@@ -830,20 +843,7 @@ fun MapContent(
                                         onRefreshClick = { viewModel.manualRefresh() }
                                     )
                                 }
-                                
-                                if (railwayStaleDataWarning != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = railwayStaleDataWarning!!,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 8.dp),
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(24.dp))
+                                                               Spacer(modifier = Modifier.height(24.dp))
                                 Button(
                                     onClick = { viewModel.toggleAlarm() },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
@@ -909,7 +909,7 @@ fun MapContent(
                                     com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                                 }
 
-                                if (railwayGlobalStatus != null) {
+                                if (railwayGlobalStatus != null && railwayEtaStatus != null) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         text = railwayGlobalStatus!!,
@@ -929,19 +929,7 @@ fun MapContent(
                                         onRefreshClick = { viewModel.manualRefresh() }
                                     )
                                 }
-                                
-                                if (railwayStaleDataWarning != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = railwayStaleDataWarning!!,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 8.dp),
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                    )
-                                }
-                                
+                                                                
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = destinationName ?: "Selected Destination",
@@ -1028,6 +1016,36 @@ fun MapContent(
                              color = MaterialTheme.colorScheme.onSurfaceVariant
                          )
                      }
+                 }
+             }
+         }
+
+         // --- Stale Data Warning Popup ---
+         AnimatedVisibility(
+             visible = showWarningPopup,
+             enter = slideInVertically { -it } + fadeIn(),
+             exit = slideOutVertically { -it } + fadeOut(),
+             modifier = Modifier
+                 .align(Alignment.TopCenter)
+                 .padding(top = 100.dp, start = 16.dp, end = 16.dp)
+         ) {
+             Surface(
+                 color = MaterialTheme.colorScheme.errorContainer,
+                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                 shape = RoundedCornerShape(16.dp),
+                 shadowElevation = 8.dp
+             ) {
+                 Row(
+                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                     verticalAlignment = Alignment.CenterVertically
+                 ) {
+                     Icon(Icons.Default.Warning, contentDescription = "Warning", modifier = Modifier.size(20.dp))
+                     Spacer(modifier = Modifier.width(8.dp))
+                     Text(
+                         text = warningText, 
+                         style = MaterialTheme.typography.labelMedium, 
+                         fontWeight = FontWeight.Bold
+                     )
                  }
              }
          }
