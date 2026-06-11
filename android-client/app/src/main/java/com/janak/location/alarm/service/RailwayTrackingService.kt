@@ -10,6 +10,9 @@ import com.janak.location.alarm.data.AppDatabase
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.domain.RouteDistanceEngine
 import com.janak.location.alarm.location.LocationTrackingManager
+import com.janak.location.alarm.location.LocationRepository
+import com.janak.location.alarm.location.ProxyLocationRepositoryImpl
+import com.janak.location.alarm.data.SettingsDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,7 +25,7 @@ import kotlinx.coroutines.launch
 class RailwayTrackingService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private lateinit var locationTrackingManager: LocationTrackingManager
+    private lateinit var locationRepository: LocationRepository
     private lateinit var routeDistanceEngine: RouteDistanceEngine
     private lateinit var routeRepository: RouteRepository
     private lateinit var telemetryApi: RailwayTelemetryApi
@@ -30,7 +33,8 @@ class RailwayTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        locationTrackingManager = LocationTrackingManager(this)
+        val realRepo = LocationTrackingManager(this)
+        locationRepository = ProxyLocationRepositoryImpl(this, SettingsDataStore(this), realRepo)
         routeDistanceEngine = RouteDistanceEngine()
         val database = AppDatabase.getDatabase(this)
         routeRepository = RouteRepository(database)
@@ -50,7 +54,7 @@ class RailwayTrackingService : Service() {
 
     private fun startTracking(route: com.mapbox.geojson.LineString, threshold: Double) {
         serviceScope.launch {
-            locationTrackingManager.getLocationUpdates().collect { location ->
+            locationRepository.getLocationUpdates().collect { location ->
                 val userPoint = com.mapbox.geojson.Point.fromLngLat(location.longitude, location.latitude)
                 
                 // Snap, Slice, and Measure using the existing engine

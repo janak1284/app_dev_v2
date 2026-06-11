@@ -12,6 +12,8 @@ import com.janak.location.alarm.api.*
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.*
 import com.janak.location.alarm.service.LocationAlarmService
+import com.janak.location.alarm.location.LocationRepository
+import com.janak.location.alarm.data.SettingsDataStore
 import com.janak.location.alarm.util.AppLogger
 import com.janak.location.alarm.util.PolylineDecoder
 import com.janak.location.alarm.data.repository.RouteRepository
@@ -39,7 +41,8 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 class MapViewModel(
-    private val locationTrackingManager: LocationTrackingManager,
+    private val locationRepository: LocationRepository,
+    private val settingsDataStore: SettingsDataStore,
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
@@ -53,6 +56,8 @@ class MapViewModel(
     private val sharedPrefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     // --- State Flows ---
+    val demoSettingsFlow = settingsDataStore.demoSettingsFlow
+
     private val _stationSequence = MutableStateFlow<List<StationSequenceItem>>(emptyList())
     val stationSequence: StateFlow<List<StationSequenceItem>> = _stationSequence.asStateFlow()
 
@@ -337,10 +342,14 @@ class MapViewModel(
 
     fun toggleAlarm() { if (_isAlarmSet.value) stopAlarm() else startAlarm() }
 
+    private var journeyStartTimeMillis: Long = 0
+
     fun startAlarm() {
         val dest = _destination.value ?: return
         val settings = _alarmSettings.value
         _isAlarmSet.value = true; _isPreviewMode.value = false
+        journeyStartTimeMillis = System.currentTimeMillis()
+        viewModelScope.launch { settingsDataStore.setDemoPlaybackActive(true) }
         val intent = Intent(context, LocationAlarmService::class.java).apply {
             putExtra("DEST_LAT", dest.latitude); putExtra("DEST_LNG", dest.longitude)
             putExtra("DEST_NAME", _destinationName.value ?: "Destination")
@@ -360,6 +369,7 @@ class MapViewModel(
 
     fun stopAlarm() {
         _isAlarmSet.value = false; _isPreviewMode.value = false
+        viewModelScope.launch { settingsDataStore.setDemoPlaybackActive(false) }
         alarmEngine.stop(); context.stopService(Intent(context, LocationAlarmService::class.java))
     }
 
@@ -383,6 +393,37 @@ class MapViewModel(
         _isRouting.value = true
         viewModelScope.launch {
             try {
+                val settings = settingsDataStore.demoSettingsFlow.first()
+                if (settings.isDemoEnabled) {
+                    val fileName = if (settings.selectedRoute == "555S") "555S_variable_speed_route.gpx" else "55v_variable_speed_route.gpx"
+                    val points = parseGpxGeometry(fileName)
+                    if (points.size >= 2) {
+                        val mbLine = com.mapbox.geojson.LineString.fromLngLats(points)
+                        _currentRouteGeoJson.value = mbLine.toJson()
+                        
+                        val lastPoint = points.last()
+                        _destination.value = LatLng(lastPoint.latitude(), lastPoint.longitude())
+                        _destinationName.value = "Demo Route Destination"
+                        
+                        var dist = 0.0
+                        for (i in 0 until points.size - 1) {
+                            val results = FloatArray(1)
+                            android.location.Location.distanceBetween(
+                                points[i].latitude(), points[i].longitude(),
+                                points[i+1].latitude(), points[i+1].longitude(),
+                                results
+                            )
+                            dist += results[0]
+                        }
+                        
+                        _expectedDistance.value = dist
+                        _expectedDuration.value = dist / 10.0 
+                        _segmentSpeeds.value = List(points.size) { 10.0 }
+                        processRouteSuccess(mbLine.toJson(), dist, pushToService, _segmentSpeeds.value)
+                        return@launch
+                    }
+                }
+
                 val coords = "${start.longitude},${start.latitude};${end.longitude},${end.latitude}"
                 val res = osrmApiService.getRoute(coords)
                 if (res.isSuccessful && res.body() != null) {
@@ -397,6 +438,30 @@ class MapViewModel(
             } catch (e: Exception) { AppLogger.e("MapViewModel", "Road routing failed", e) }
             finally { _isRouting.value = false }
         }
+    }
+
+    private fun parseGpxGeometry(fileName: String): List<com.mapbox.geojson.Point> {
+        val points = mutableListOf<com.mapbox.geojson.Point>()
+        try {
+            val inputStream = context.assets.open(fileName)
+            val parser = android.util.Xml.newPullParser()
+            parser.setInput(inputStream, null)
+            var eventType = parser.eventType
+            while (eventType != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                if (eventType == org.xmlpull.v1.XmlPullParser.START_TAG && parser.name == "trkpt") {
+                    val lat = parser.getAttributeValue(null, "lat")?.toDoubleOrNull()
+                    val lon = parser.getAttributeValue(null, "lon")?.toDoubleOrNull()
+                    if (lat != null && lon != null) {
+                        points.add(com.mapbox.geojson.Point.fromLngLat(lon, lat))
+                    }
+                }
+                eventType = parser.next()
+            }
+            inputStream.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return points
     }
 
     // --- Railway (Hybrid Granular Cloud) ---
@@ -722,6 +787,7 @@ class MapViewModel(
         _routeLine.value = null; fullRouteLine = null; _expectedDistance.value = 0.0; _expectedDuration.value = 0.0
         _segmentSpeeds.value = emptyList(); _alarmSettings.value = _alarmSettings.value.copy(transportMode = TransportMode.ROAD)
         routeDistanceEngine.resetStats(); lastCheckedLocation = null; needsInitialCalculation = true; hasTriggeredArrival = false
+        viewModelScope.launch { settingsDataStore.setDemoPlaybackActive(false) }
     }
 
     private fun checkDistance(currentLocation: Location, force: Boolean = false) {
@@ -737,6 +803,11 @@ class MapViewModel(
             val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
             val roadDist = routeDistanceEngine.calculateRemainingDistance(fullRouteLine!!, userPoint)
             _distanceToDestination.value = formatDistance(roadDist.toInt())
+            
+            val slicedRoute = routeDistanceEngine.getSlicedRoute(fullRouteLine!!, userPoint)
+            if (slicedRoute != null) {
+                _routeLine.value = org.maplibre.geojson.LineString.fromLngLats(slicedRoute.coordinates().map { it.toLibre() })
+            }
             
             // 2. ETA Calculation (Active Route Mode)
             routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
@@ -767,7 +838,7 @@ class MapViewModel(
 
         updateRailwayEtaStatus()
 
-        if (dist <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
+        if (dist <= 50 && !hasTriggeredArrival && _destination.value != null) {
             hasTriggeredArrival = true; _journeyCompleted.value = true
         }
     }
@@ -813,10 +884,14 @@ class MapViewModel(
     fun saveRoute(name: String, breadcrumbs: List<RouteBreadcrumbEntity>, settings: AlarmSettings) {
         val dest = _destination.value ?: return
         viewModelScope.launch { 
+            val isDemo = settingsDataStore.demoSettingsFlow.first().isDemoEnabled
+            var durationMillis = if (journeyStartTimeMillis > 0) System.currentTimeMillis() - journeyStartTimeMillis else (_expectedDuration.value * 1000).toLong()
+            if (isDemo) durationMillis *= 30L
+            
             routeRepository.saveJourney(SavedRouteEntity(
                 destinationName = name, mapDestinationName = null, destinationLat = dest.latitude, destinationLng = dest.longitude,
                 transportMode = settings.transportMode, alarmSettings = settings, dateSaved = System.currentTimeMillis(),
-                lastTakenTimestamp = System.currentTimeMillis(), actualDistanceMeters = 0.0, estimatedDurationMillis = 0L, routeGeoJson = _currentRouteGeoJson.value
+                lastTakenTimestamp = System.currentTimeMillis(), actualDistanceMeters = _expectedDistance.value, estimatedDurationMillis = durationMillis, routeGeoJson = _currentRouteGeoJson.value
             ), breadcrumbs) 
         }
     }
@@ -857,7 +932,7 @@ class MapViewModel(
     fun startLocationUpdates() { 
         if (locationJob?.isActive == true) return
         locationJob = viewModelScope.launch { 
-            locationTrackingManager.getLocationUpdates().collect { 
+            locationRepository.getLocationUpdates().collect { 
                 val wasNull = _userLocation.value == null
                 _userLocation.value = it
                 checkDistance(it)
@@ -868,10 +943,14 @@ class MapViewModel(
         } 
     }
     fun refreshLocation() = startLocationUpdates()
+
+    fun setDemoEnabled(isEnabled: Boolean) = viewModelScope.launch { settingsDataStore.setDemoEnabled(isEnabled) }
+    fun setSelectedRoute(route: String) = viewModelScope.launch { settingsDataStore.setSelectedRoute(route) }
 }
 
 class MapViewModelFactory(
-    private val locationTrackingManager: LocationTrackingManager,
+    private val locationRepository: LocationRepository,
+    private val settingsDataStore: SettingsDataStore,
     private val alarmEngine: AlarmEngine,
     private val photonApiService: PhotonApiService,
     private val osrmApiService: PhotonApiService,
@@ -883,6 +962,6 @@ class MapViewModelFactory(
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return MapViewModel(locationTrackingManager, alarmEngine, photonApiService, osrmApiService, routeRepository, historyRepository, stationRepository, railwayTrackCacheDao, context) as T
+        return MapViewModel(locationRepository, settingsDataStore, alarmEngine, photonApiService, osrmApiService, routeRepository, historyRepository, stationRepository, railwayTrackCacheDao, context) as T
     }
 }

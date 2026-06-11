@@ -21,6 +21,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.api.RetrofitClient
 import com.janak.location.alarm.location.LocationTrackingManager
+import com.janak.location.alarm.location.LocationRepository
+import com.janak.location.alarm.location.ProxyLocationRepositoryImpl
+import com.janak.location.alarm.data.SettingsDataStore
 import com.janak.location.alarm.viewmodel.MapViewModel
 import com.janak.location.alarm.viewmodel.MapViewModelFactory
 import com.janak.location.alarm.ui.theme.LocationAlarmTheme
@@ -48,7 +51,8 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<com.janak.location.alarm.data.repository.StationRepository?>(null)
             }
             var alarmEngine by remember { mutableStateOf<AlarmEngine?>(null) }
-            var locationTrackingManager by remember { mutableStateOf<LocationTrackingManager?>(null) }
+            var locationRepository by remember { mutableStateOf<LocationRepository?>(null) }
+            var settingsDataStore by remember { mutableStateOf<SettingsDataStore?>(null) }
 
             LaunchedEffect(Unit) {
                 withContext(Dispatchers.IO) {
@@ -61,7 +65,9 @@ class MainActivity : ComponentActivity() {
                     stationRepository!!.ensureStationsLoaded()
 
                     alarmEngine = AlarmEngine(context)
-                    locationTrackingManager = LocationTrackingManager(context)
+                    settingsDataStore = SettingsDataStore(context)
+                    val realRepo = LocationTrackingManager(context)
+                    locationRepository = ProxyLocationRepositoryImpl(context, settingsDataStore!!, realRepo)
                     isInitialized = true
                 }
             }
@@ -78,7 +84,8 @@ class MainActivity : ComponentActivity() {
 
                 val viewModel: MapViewModel = viewModel(
                     factory = MapViewModelFactory(
-                        locationTrackingManager!!,
+                        locationRepository!!,
+                        settingsDataStore!!,
                         alarmEngine!!,
                         photonApiService,
                         osrmApiService,

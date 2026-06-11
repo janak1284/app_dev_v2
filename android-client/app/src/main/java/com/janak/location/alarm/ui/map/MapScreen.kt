@@ -323,14 +323,20 @@ fun MapContent(
         })
     }
 
-    // Auto-follow User Location
-    LaunchedEffect(userLocation, isFollowMode) {
-        if (isFollowMode && userLocation != null) {
-            mapInstance?.animateCamera(
-                CameraUpdateFactory.newLatLng(
-                    LatLng(userLocation!!.latitude, userLocation!!.longitude)
+    // Auto-follow User Location and sync MapLibre Marker
+    LaunchedEffect(userLocation, isFollowMode, mapInstance) {
+        userLocation?.let { loc ->
+            val map = mapInstance
+            if (map != null && map.locationComponent.isLocationComponentActivated) {
+                map.locationComponent.forceLocationUpdate(loc)
+            }
+            if (isFollowMode && map != null) {
+                map.animateCamera(
+                    CameraUpdateFactory.newLatLng(
+                        LatLng(loc.latitude, loc.longitude)
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -343,7 +349,9 @@ fun MapContent(
                 if (!locationComponent.isLocationComponentActivated) {
                     try {
                         locationComponent.activateLocationComponent(
-                            LocationComponentActivationOptions.builder(context, style).build()
+                            LocationComponentActivationOptions.builder(context, style)
+                                .useDefaultLocationEngine(false)
+                                .build()
                         )
                     } catch (e: Exception) {
                         AppLogger.e("MapScreen", "Error activating LocationComponent", e)
@@ -782,6 +790,16 @@ fun MapContent(
                                 }
                                 
                                 Spacer(modifier = Modifier.height(8.dp))
+                                
+                                userLocation?.let { loc ->
+                                    val speedKmh = loc.speed * 3.6f
+                                    Text(
+                                        text = String.format(java.util.Locale.US, "Speed: %.1f km/h", speedKmh),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
 
                                 if (railwayEtaStatus != null) {
                                     Text(
@@ -873,6 +891,16 @@ fun MapContent(
                                 }
 
                                 Spacer(modifier = Modifier.height(8.dp))
+
+                                userLocation?.let { loc ->
+                                    val speedKmh = loc.speed * 3.6f
+                                    Text(
+                                        text = String.format(java.util.Locale.US, "Speed: %.1f km/h", speedKmh),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
 
                                 if (railwayEtaStatus != null) {
                                     Text(

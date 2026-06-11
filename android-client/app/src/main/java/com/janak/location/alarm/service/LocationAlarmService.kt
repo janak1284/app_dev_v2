@@ -24,6 +24,9 @@ import com.janak.location.alarm.data.repository.HistoryRepository
 import com.janak.location.alarm.data.repository.RouteRepository
 import com.janak.location.alarm.domain.RouteDistanceEngine
 import com.janak.location.alarm.location.LocationTrackingManager
+import com.janak.location.alarm.location.LocationRepository
+import com.janak.location.alarm.location.ProxyLocationRepositoryImpl
+import com.janak.location.alarm.data.SettingsDataStore
 import com.janak.location.alarm.util.AppLogger
 import com.janak.location.alarm.model.JourneyLeg
 import com.janak.location.alarm.model.TransportMode
@@ -53,7 +56,7 @@ class LocationAlarmService : Service() {
 
     private var currentState = ServiceState.IDLE
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private lateinit var locationTrackingManager: LocationTrackingManager
+    private lateinit var locationRepository: LocationRepository
     private lateinit var alarmEngine: AlarmEngine
     private lateinit var routeDistanceEngine: RouteDistanceEngine
     private lateinit var routeRepository: RouteRepository
@@ -148,7 +151,8 @@ class LocationAlarmService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        locationTrackingManager = LocationTrackingManager(this)
+        val realRepo = LocationTrackingManager(this)
+        locationRepository = ProxyLocationRepositoryImpl(this, SettingsDataStore(this), realRepo)
         alarmEngine = AlarmEngine(this)
         routeDistanceEngine = RouteDistanceEngine()
         val database = AppDatabase.getDatabase(this)
@@ -378,7 +382,7 @@ class LocationAlarmService : Service() {
     private fun startLocationTracking() {
         trackingJob?.cancel()
         trackingJob = serviceScope.launch {
-            locationTrackingManager.getLocationUpdates().collect { location ->
+            locationRepository.getLocationUpdates().collect { location ->
                 processLocationUpdate(location)
             }
         }
@@ -506,7 +510,7 @@ class LocationAlarmService : Service() {
             distanceMeters > 2000 -> 5000L
             else -> 1000L // 1 second tight polling for final approach
         }
-        locationTrackingManager.updateInterval(interval, priority)
+        locationRepository.updateInterval(interval, priority)
     }
 
     private fun triggerAlarm(isTransfer: Boolean, forceMaxVolume: Boolean = false, triggerDistance: Double? = null, triggerEta: Double? = null) {

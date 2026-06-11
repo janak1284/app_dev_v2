@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.viewmodel.MapViewModel
+import androidx.compose.foundation.selection.selectableGroup
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +32,9 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
+    val demoSettings by viewModel.demoSettingsFlow.collectAsState(
+        initial = com.janak.location.alarm.data.DemoSettings(false, "555S", false)
+    )
     
     Scaffold(
         modifier = modifier,
@@ -135,6 +139,55 @@ fun SettingsScreen(
                         Icon(Icons.Default.Search, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Manage Search History")
+                    }
+                }
+            }
+
+            // --- Section: Demo Mode ---
+            SettingsSection(title = "Roadway Demo Mode", icon = Icons.Default.Info) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Enable Roadway Demo Simulation",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = demoSettings.isDemoEnabled,
+                            onCheckedChange = { viewModel.setDemoEnabled(it) }
+                        )
+                    }
+
+                    if (demoSettings.isDemoEnabled) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = "Active Route", style = MaterialTheme.typography.labelLarge)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Column(Modifier.selectableGroup()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                RadioButton(
+                                    selected = demoSettings.selectedRoute == "555S",
+                                    onClick = { viewModel.setSelectedRoute("555S") }
+                                )
+                                Text(text = "555S (Kilambakkam to VIT)", modifier = Modifier.padding(start = 8.dp))
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                RadioButton(
+                                    selected = demoSettings.selectedRoute == "55V",
+                                    onClick = { viewModel.setSelectedRoute("55V") }
+                                )
+                                Text(text = "55V (Padmavathi to Vandalur)", modifier = Modifier.padding(start = 8.dp))
+                            }
+                        }
                     }
                 }
             }
