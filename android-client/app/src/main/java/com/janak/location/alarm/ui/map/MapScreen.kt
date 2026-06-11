@@ -755,12 +755,20 @@ fun MapContent(
                                         onRefreshClick = { viewModel.manualRefresh() }
                                     )
                                 } else if (remainingEta != null) {
-                                    Text(
-                                        text = "ETA: $remainingEta min",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "ETA: $remainingEta min (Estimated)",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "Official ETA unavailable on website",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                        )
+                                    }
                                 } else {
                                     com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                                 }
@@ -822,12 +830,20 @@ fun MapContent(
                                         onRefreshClick = { viewModel.manualRefresh() }
                                     )
                                 } else if (remainingEta != null) {
-                                    Text(
-                                        text = "ETA: $remainingEta min",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "ETA: $remainingEta min (Estimated)",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.secondary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "Official ETA unavailable on website",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                        )
+                                    }
                                 } else {
                                     com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                                 }

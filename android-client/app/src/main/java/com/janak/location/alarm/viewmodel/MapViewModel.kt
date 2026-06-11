@@ -603,6 +603,7 @@ class MapViewModel(
                 _currentRouteGeoJson.value = mb.toJson(); _expectedDistance.value = totalDist; _expectedDuration.value = totalTime
                 _segmentSpeeds.value = List(stitched.size) { totalDist / (if (totalTime > 0) totalTime else 1.0) }
                 processRouteSuccess(mb.toJson(), totalDist, _isAlarmSet.value, _segmentSpeeds.value)
+                _userLocation.value?.let { checkDistance(it, force = true) }
             }
         } catch (e: Exception) { AppLogger.e("MapViewModel", "Railway routing failed", e) }
         finally { _isRouting.value = false }
@@ -667,13 +668,13 @@ class MapViewModel(
         if (!force && !needsInitialCalculation && lastCheckedLocation != null && dist > 100 && currentLocation.distanceTo(lastCheckedLocation!!) < 5) return
         lastCheckedLocation = currentLocation; needsInitialCalculation = false
 
-        // 1. Distance Calculation (Road Route vs Straight Line)
-        if (_alarmSettings.value.transportMode == TransportMode.ROAD && fullRouteLine != null) {
+        // 1. Distance Calculation (Route vs Straight Line)
+        if (fullRouteLine != null) {
             val userPoint = com.mapbox.geojson.Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
             val roadDist = routeDistanceEngine.calculateRemainingDistance(fullRouteLine!!, userPoint)
             _distanceToDestination.value = formatDistance(roadDist.toInt())
             
-            // 2. ETA Calculation (Road Mode)
+            // 2. ETA Calculation (Active Route Mode)
             routeDistanceEngine.updateAverageSpeed(currentLocation.speed.toDouble())
             val currentSegmentSpeed = routeDistanceEngine.getCurrentSegmentSpeed(fullRouteLine!!, userPoint, _segmentSpeeds.value)
             val globalExpectedSpeed = if (_expectedDuration.value > 0) _expectedDistance.value / _expectedDuration.value else 0.0
@@ -695,16 +696,21 @@ class MapViewModel(
             _distanceToDestination.value = formatDistance(dist.toInt())
             
             // Fallback: Straight-line ETA (Rough estimate at 30km/h average)
-            if (_alarmSettings.value.transportMode != TransportMode.TRAIN) {
-                val speedMps = if (currentLocation.speed > 1.0) currentLocation.speed.toDouble() else 8.33 // 30km/h fallback
-                val estimatedEtaMins = (dist / speedMps) / 60.0
-                _remainingEta.value = estimatedEtaMins.toInt()
-            }
+            val speedMps = if (currentLocation.speed > 1.0) currentLocation.speed.toDouble() else 8.33 // 30km/h fallback
+            val estimatedEtaMins = (dist / speedMps) / 60.0
+            _remainingEta.value = estimatedEtaMins.toInt()
         }
 
         if (_alarmSettings.value.transportMode == TransportMode.TRAIN) {
             val destStation = _stationSequence.value.find { it.stationCode == _destinationCode.value }
-            if (destStation != null) _railwayEtaStatus.value = "ETA: ${calculateRelativeEta(destStation.arrival ?: "Unknown")}"
+            if (destStation != null) {
+                val arr = destStation.arrival?.trim()
+                if (arr.isNullOrEmpty() || arr == "-" || arr == "NA" || arr.equals("Source", ignoreCase = true) || arr.equals("Destination", ignoreCase = true)) {
+                    _railwayEtaStatus.value = null // Scraped ETA unavailable, triggers fallback
+                } else {
+                    _railwayEtaStatus.value = "ETA: ${calculateRelativeEta(arr)}"
+                }
+            }
         }
 
         if (dist <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {

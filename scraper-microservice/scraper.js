@@ -50,9 +50,12 @@ async function scrapeTrainTelemetry(trainNumber) {
             return rows.map((row, index) => {
                 const stationNameText = row.querySelector('.rs__station-name')?.innerText.trim() || "";
                 const columns = row.querySelectorAll('div[class^="col-xs-"]');
-                const arrivalTime = columns[2]?.innerText.trim() || "Source";
-                const departureTime = columns[3]?.innerText.trim() || "Destination";
+                let arrivalTime = columns[2]?.innerText.trim() || "";
+                let departureTime = columns[3]?.innerText.trim() || "";
                 const delayStatus = row.querySelector('.rs__station-delay')?.innerText.trim() || "";
+
+                if (index === 0 && arrivalTime === "") arrivalTime = "Source";
+                if (index === rows.length - 1 && departureTime === "") departureTime = "Destination";
 
                 // Visual status detection (more reliable than text parsing)
                 // The green checkmark indicates the station has been departed
@@ -95,7 +98,7 @@ async function scrapeTrainTelemetry(trainNumber) {
         }
 
         // 3. Smart Filtering: Determine which stations have already been passed
-        // Use a cascading index to ensure all stations before a 'passed' station are also marked passed
+        // Apply the visual heuristic
         let lastDepartedIndex = -1;
         mappedSequence.forEach((station, index) => {
             if (station.state === "passed") {
