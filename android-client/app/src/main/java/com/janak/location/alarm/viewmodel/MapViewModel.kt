@@ -240,6 +240,13 @@ class MapViewModel(
         startLocationUpdates()
         checkLocationStatus()
         registerLocationStatusReceiver()
+        
+        viewModelScope.launch {
+            while (isActive) {
+                updateRailwayEtaStatus()
+                delay(30000)
+            }
+        }
     }
 
     private fun registerLocationStatusReceiver() {
@@ -755,6 +762,14 @@ class MapViewModel(
             _remainingEta.value = estimatedEtaMins.toInt()
         }
 
+        updateRailwayEtaStatus()
+
+        if (dist <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
+            hasTriggeredArrival = true; _journeyCompleted.value = true
+        }
+    }
+
+    private fun updateRailwayEtaStatus() {
         if (_alarmSettings.value.transportMode == TransportMode.TRAIN) {
             val destStation = _stationSequence.value.find { it.stationCode == _destinationCode.value }
             if (destStation != null) {
@@ -764,11 +779,15 @@ class MapViewModel(
                 } else {
                     _railwayEtaStatus.value = "ETA: ${calculateRelativeEta(arr)}"
                 }
-            }
-        }
 
-        if (dist <= 50 && !hasTriggeredArrival && (_isAlarmSet.value || _isPreviewMode.value)) {
-            hasTriggeredArrival = true; _journeyCompleted.value = true
+                if (!destStation.status.isNullOrEmpty()) {
+                    var statusText = destStation.status
+                    if (statusText.contains("right time", ignoreCase = true)) {
+                        statusText = statusText.replace("right time", "On time", ignoreCase = true)
+                    }
+                    _railwayGlobalStatus.value = statusText
+                }
+            }
         }
     }
 

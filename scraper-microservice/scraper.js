@@ -116,14 +116,16 @@ async function scrapeTrainTelemetry(trainNumber) {
 
         // Extract the Overall Live Status (ETA)
         let etaText = "Data unavailable";
-        try {
-            // Check for a global status or the first 'Current' status in the timeline
-            const statusLocator = page.locator('.rs__station-delay').first();
-            if (await statusLocator.isVisible()) {
-                etaText = await statusLocator.innerText();
+        const currentStation = rawStationData.find(s => s.state === "current");
+        if (currentStation && currentStation.status) {
+            etaText = currentStation.status;
+        } else {
+            const nextStation = rawStationData.find(s => s.state === "pending");
+            if (nextStation && nextStation.status) {
+                etaText = nextStation.status;
+            } else if (rawStationData.length > 0) {
+                etaText = rawStationData[rawStationData.length - 1].status || etaText;
             }
-        } catch (e) {
-            console.log("Global status/delay not found.");
         }
 
         // Extract Last Updated time
@@ -144,7 +146,7 @@ async function scrapeTrainTelemetry(trainNumber) {
 
         const extractedData = {
             train_number: trainNumber,
-            eta_string: etaText.replace(/\n/g, ' ').trim(),
+            eta_string: etaText.replace(/\n/g, ' ').trim().replace(/right time/ig, 'On time'),
             station_sequence: stationSequence,
             timestamp_fetched: Date.now(),
             last_updated_website_ms: lastUpdatedWebsiteMs
