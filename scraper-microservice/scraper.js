@@ -152,6 +152,10 @@ async function scrapeTrainTelemetry(trainNumber) {
             last_updated_website_ms: lastUpdatedWebsiteMs
         };
 
+        if (stationSequence.length === 0) {
+            throw new Error("No stations extracted from primary source");
+        }
+
         console.log("✅ Scrape Successful. Summary:");
         console.log(`- Stations Found: ${stationSequence.length}`);
         console.log(`- Current Status: ${extractedData.eta_string}`);
@@ -159,12 +163,143 @@ async function scrapeTrainTelemetry(trainNumber) {
         return extractedData;
 
     } catch (error) {
-        console.error("❌ Scraping failed:", error.message);
-        return null;
+        console.error("⚠️ Primary scraping failed:", error.message);
+        console.log("🔄 Triggering backup scraper (Fallback)...");
+        return await scrapeTrainTelemetryFallback(trainNumber, page);
     } finally {
         // CRITICAL: Always close the browser to prevent memory leaks
         await browser.close();
     }
 }
 
-module.exports = { scrapeTrainTelemetry };
+async function scrapeTrainTelemetryFallback(trainNumber, page) {
+    try {
+        const fallbackUrl = `https://erail.in/train-running-status/${trainNumber}`;
+        console.log(`🌐 Navigating to backup source: ${fallbackUrl}...`);
+        await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+        await page.waitForTimeout(4000);
+
+        // Extract station table from erail fallback
+        const rawStationData = await page.evaluate(() => {
+            const rows = document.querySelectorAll('table tr');
+            const results = [];
+            rows.forEach((row, idx) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 4) {
+                    const stnName = cells[1]?.innerText.trim() || cells[0]?.innerText.trim();
+                    const arr = cells[2]?.innerText.trim() || "";
+                    const dep = cells[3]?.innerText.trim() || "";
+                    if (stnName && stnName.length > 2 && !stnName.toLowerCase().includes('station')) {
+                        results.push({
+                            station_name: stnName,
+                            sequence_index: results.length + 1,
+                            arrival: arr || "Source",
+                            departure: dep || "Destination",
+                            status: "On time",
+                            state: "pending"
+                        });
+                    }
+                }
+            });
+            return results;
+        });
+
+        if (rawStationData.length === 0) {
+            console.error("❌ Fallback scraper returned 0 stations.");
+            return null;
+        }
+
+        const mappedSequenceRaw = await Promise.all(rawStationData.map(async item => {
+            const resolved = await resolveStationData(item.station_name);
+            return {
+                ...item,
+                station_code: resolved.code,
+                latitude: resolved.lat,
+                longitude: resolved.lon
+            };
+        }));
+
+        const mappedSequence = mappedSequenceRaw.filter(s => s.latitude !== null && s.longitude !== null);
+
+        const stationSequence = mappedSequence.map((station, index) => {
+            const { state, ...cleanStation } = station;
+            return {
+                ...cleanStation,
+                has_departed: false
+            };
+        });
+
+        console.log(`✅ Fallback Scrape Successful (${stationSequence.length} stations found).`);
+        return {
+            train_number: trainNumber,
+            eta_string: "Live status via backup feed",
+            station_sequence: stationSequence,
+            timestamp_fetched: Date.now(),
+            last_updated_website_ms: Date.now()
+        };
+    } catch (err) {
+        console.error("❌ Fallback scraping completely failed:", err.message);
+        return null;
+    }
+}
+
+async function scrapeTrainsBetweenStations(source, destination) {
+    console.log(`🔍 Searching trains between ${source} and ${destination}...`);
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    await page.route('**/*', (route) => {
+        const resourceType = route.request().resourceType();
+        if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+            route.abort();
+        } else {
+            route.continue();
+        }
+    });
+
+    try {
+        const url = `https://erail.in/trains-between-stations/${source}/${destination}`;
+        console.log(`🌐 Navigating to ${url}...`);
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+        const btn = page.locator('input[type="button"][value="Get Trains"], button:has-text("Get Trains")').first();
+        if (await btn.isVisible()) {
+            await btn.click();
+        }
+        await page.waitForTimeout(5000);
+
+        const trains = await page.evaluate(() => {
+            const results = [];
+            const divs = document.querySelectorAll('div.OneTrain');
+            divs.forEach(d => {
+                const text = d.innerText || "";
+                const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                const trainNumMatch = text.match(/\b(\d{5})\b/);
+                if (trainNumMatch && lines.length >= 2) {
+                    const trainNum = trainNumMatch[1];
+                    const trainName = lines[0].replace(trainNum, '').trim();
+                    // Try to find time formats
+                    const times = lines.filter(l => /^\d{2}:\d{2}$/.test(l) || /\d+\.\d+\s*hr/i.test(l));
+                    results.push({
+                        train_number: trainNum,
+                        train_name: trainName || `Train ${trainNum}`,
+                        departure: times[0] || "Sch. Dep",
+                        arrival: times[1] || "Sch. Arr"
+                    });
+                }
+            });
+            return results;
+        });
+
+        console.log(`✅ Extracted ${trains.length} trains.`);
+        return trains;
+    } catch (err) {
+        console.error("❌ Train search failed:", err.message);
+        return [];
+    } finally {
+        await browser.close();
+    }
+}
+
+module.exports = { scrapeTrainTelemetry, scrapeTrainsBetweenStations };

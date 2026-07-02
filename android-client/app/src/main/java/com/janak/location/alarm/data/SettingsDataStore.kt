@@ -15,6 +15,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class SettingsDataStore(private val context: Context) {
     companion object {
         val IS_DEMO_ENABLED = booleanPreferencesKey("is_demo_enabled")
+        val IS_RAILWAY_DEMO_ENABLED = booleanPreferencesKey("is_railway_demo_enabled")
         val SELECTED_ROUTE = stringPreferencesKey("selected_route")
         val IS_DEMO_PLAYBACK_ACTIVE = booleanPreferencesKey("is_demo_playback_active")
     }
@@ -22,9 +23,10 @@ class SettingsDataStore(private val context: Context) {
     val demoSettingsFlow: Flow<DemoSettings> = context.dataStore.data
         .map { preferences ->
             val isDemoEnabled = preferences[IS_DEMO_ENABLED] ?: false
+            val isRailwayDemoEnabled = preferences[IS_RAILWAY_DEMO_ENABLED] ?: false
             val selectedRoute = preferences[SELECTED_ROUTE] ?: "555S"
             val isDemoPlaybackActive = preferences[IS_DEMO_PLAYBACK_ACTIVE] ?: false
-            DemoSettings(isDemoEnabled, selectedRoute, isDemoPlaybackActive)
+            DemoSettings(isDemoEnabled, isRailwayDemoEnabled, selectedRoute, isDemoPlaybackActive)
         }
 
     suspend fun setDemoEnabled(isEnabled: Boolean) {
@@ -33,6 +35,12 @@ class SettingsDataStore(private val context: Context) {
             if (!isEnabled) {
                 preferences[IS_DEMO_PLAYBACK_ACTIVE] = false
             }
+        }
+    }
+
+    suspend fun setRailwayDemoEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[IS_RAILWAY_DEMO_ENABLED] = isEnabled
         }
     }
 
@@ -51,6 +59,7 @@ class SettingsDataStore(private val context: Context) {
 
 data class DemoSettings(
     val isDemoEnabled: Boolean,
+    val isRailwayDemoEnabled: Boolean = false,
     val selectedRoute: String,
     val isDemoPlaybackActive: Boolean
 )

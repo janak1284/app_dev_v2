@@ -33,7 +33,7 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val demoSettings by viewModel.demoSettingsFlow.collectAsState(
-        initial = com.janak.location.alarm.data.DemoSettings(false, "555S", false)
+        initial = com.janak.location.alarm.data.DemoSettings(isDemoEnabled = false, isRailwayDemoEnabled = false, selectedRoute = "555S", isDemoPlaybackActive = false)
     )
     
     Scaffold(
@@ -144,7 +144,7 @@ fun SettingsScreen(
             }
 
             // --- Section: Demo Mode ---
-            SettingsSection(title = "Roadway Demo Mode", icon = Icons.Default.Info) {
+            SettingsSection(title = "Demo & Simulation Modes", icon = Icons.Default.Info) {
                 Column {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -188,6 +188,29 @@ fun SettingsScreen(
                                 Text(text = "55V (Padmavathi to Vandalur)", modifier = Modifier.padding(start = 8.dp))
                             }
                         }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Enable Railway Demo Simulation",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "Simulates high-speed train approach toward chosen destination",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = demoSettings.isRailwayDemoEnabled,
+                            onCheckedChange = { viewModel.setRailwayDemoEnabled(it) }
+                        )
                     }
                 }
             }

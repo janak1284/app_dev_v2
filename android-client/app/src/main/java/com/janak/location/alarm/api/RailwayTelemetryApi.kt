@@ -32,10 +32,31 @@ data class StationSequenceItem(
     @SerialName("has_departed") val hasDeparted: Boolean = false
 )
 
+@Serializable
+data class TrainSearchItem(
+    @SerialName("train_number") val trainNumber: String,
+    @SerialName("train_name") val trainName: String,
+    @SerialName("departure") val departure: String? = null,
+    @SerialName("arrival") val arrival: String? = null
+)
+
+@Serializable
+data class TrainSearchResponse(
+    @SerialName("success") val success: Boolean,
+    @SerialName("count") val count: Int,
+    @SerialName("trains") val trains: List<TrainSearchItem>
+)
+
 interface RailwayTelemetryApi {
     companion object {
         const val BASE_URL = BuildConfig.BASE_URL
     }
+
+    @GET("api/v4/trains/search")
+    suspend fun searchTrains(
+        @Query("source") source: String,
+        @Query("destination") destination: String
+    ): Response<TrainSearchResponse>
 
     @GET("api/v4/train/track")
     suspend fun getTrainTelemetry(

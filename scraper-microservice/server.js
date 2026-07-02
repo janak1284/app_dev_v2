@@ -3,7 +3,7 @@ require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
-const { scrapeTrainTelemetry } = require('./scraper'); 
+const { scrapeTrainTelemetry, scrapeTrainsBetweenStations } = require('./scraper'); 
 
 const app = express();
 const PORT = process.env.PORT || 7860;
@@ -130,6 +130,20 @@ app.get('/api/v4/train/track', async (req, res) => {
     } catch (err) {
         console.error("Telemetry Error:", err.message);
         res.status(500).json({ error: "Internal Error" });
+    }
+});
+
+app.get('/api/v4/trains/search', async (req, res) => {
+    const { source, destination } = req.query;
+    if (!source || !destination) {
+        return res.status(400).json({ error: "Missing source or destination parameters" });
+    }
+    try {
+        const trains = await scrapeTrainsBetweenStations(source, destination);
+        res.json({ success: true, count: trains.length, trains });
+    } catch (err) {
+        console.error("Train Search Error:", err.message);
+        res.status(500).json({ error: "Failed to search trains" });
     }
 });
 

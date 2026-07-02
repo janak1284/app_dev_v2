@@ -63,3 +63,9 @@
 - **Room Migration:** Successfully migrated to KSP and updated to Room `2.7.0-rc01` for modern JVM compatibility.
 - **Retrofit Client:** Dual-service configuration for Photon (Search) and OSRM (Routing).
 - **Lifecycle Management:** Fixed memory leaks related to `BroadcastReceiver` unregistration and ensured foreground service persistence.
+
+## Interactive Railway Search & Simulation (July 2026)
+- **Interactive Train Search:** Implemented live train schedule searching (`/api/v4/trains/search`) inside `RailwaySetupDialog`. Commuters can input Source and Destination station codes/names to dynamically discover active trains via the scraper microservice.
+- **High-Speed Railway Simulation:** Added `RailwayMockLocationRepositoryImpl` and updated `ProxyLocationRepositoryImpl` to support simulated train movement at ~126 km/h (35 m/s) approaching destination stations.
+- **Developer Settings Control:** Exposed Railway Demo Mode toggle in `SettingsScreen` and `SettingsDataStore`, ensuring complete isolation from production real-world tracking.
+

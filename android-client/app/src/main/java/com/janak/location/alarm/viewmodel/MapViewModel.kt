@@ -61,6 +61,12 @@ class MapViewModel(
     private val _stationSequence = MutableStateFlow<List<StationSequenceItem>>(emptyList())
     val stationSequence: StateFlow<List<StationSequenceItem>> = _stationSequence.asStateFlow()
 
+    private val _trainSearchResults = MutableStateFlow<List<TrainSearchItem>>(emptyList())
+    val trainSearchResults: StateFlow<List<TrainSearchItem>> = _trainSearchResults.asStateFlow()
+
+    private val _isSearchingTrains = MutableStateFlow(false)
+    val isSearchingTrains: StateFlow<Boolean> = _isSearchingTrains.asStateFlow()
+
     private val _railwaySearchError = MutableStateFlow<String?>(null)
     val railwaySearchError: StateFlow<String?> = _railwaySearchError.asStateFlow()
 
@@ -68,8 +74,34 @@ class MapViewModel(
 
     fun clearRailwayData() {
         _stationSequence.value = emptyList()
+        _trainSearchResults.value = emptyList()
         _railwaySearchError.value = null
         _railwayGlobalStatus.value = null
+    }
+
+    fun searchTrainsBetweenStations(source: String, destination: String) {
+        _railwaySearchError.value = null
+        _trainSearchResults.value = emptyList()
+        _isSearchingTrains.value = true
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.railwayTelemetryApi.searchTrains(source, destination)
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    if (body.trains.isEmpty()) {
+                        _railwaySearchError.value = "No trains found between $source and $destination."
+                    } else {
+                        _trainSearchResults.value = body.trains
+                    }
+                } else {
+                    _railwaySearchError.value = "Failed to search trains."
+                }
+            } catch (e: Exception) {
+                _railwaySearchError.value = "Network error: ${e.localizedMessage}"
+            } finally {
+                _isSearchingTrains.value = false
+            }
+        }
     }
 
     fun fetchTelemetryForDropdown(trainNum: String, forceRefresh: Boolean = false, ttlMins: Int? = 1) {
@@ -945,6 +977,7 @@ class MapViewModel(
     fun refreshLocation() = startLocationUpdates()
 
     fun setDemoEnabled(isEnabled: Boolean) = viewModelScope.launch { settingsDataStore.setDemoEnabled(isEnabled) }
+    fun setRailwayDemoEnabled(isEnabled: Boolean) = viewModelScope.launch { settingsDataStore.setRailwayDemoEnabled(isEnabled) }
     fun setSelectedRoute(route: String) = viewModelScope.launch { settingsDataStore.setSelectedRoute(route) }
 }
 

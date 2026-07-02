@@ -46,33 +46,41 @@ Completed trips are committed to a local Room Database via `HistoryRepository`. 
 
 Train travel presents unique challenges: massive distances, poor connectivity, and inaccurate straight-line routing. The V4 Railway Engine was built specifically for the "already on train" commuter experience.
 
-### 1. Scraper Microservice (Bypassing Locked APIs)
-Live train telemetry APIs are often expensive or locked. To solve this, the project utilizes a custom headless **Node.js Microservice**. Using Puppeteer/Playwright, it actively scrapes real-time telemetry from `confirmtkt.com/train-running-status`. The server maps raw station names to exact coordinates via a local dictionary (`stations.json`) and streams clean JSON data back to the Android client.
+### 1. Scraper Microservice & Automatic Backup Failover
+Live train telemetry APIs are often expensive or locked. To solve this, the project utilizes a custom headless **Node.js Microservice** (`server.js` & `scraper.js`):
+- **Primary Scraper:** Uses Puppeteer/Playwright to actively scrape real-time telemetry from `confirmtkt.com/train-running-status`. The server maps raw station names to exact coordinates via a local dictionary (`stations.json`) and streams clean JSON data back to the Android client.
+- **Backup Scraper & Automatic Failover:** Implemented `scrapeTrainTelemetryFallback(trainNumber)` querying `erail.in`. If the primary scraping engine encounters errors or timeouts (e.g., anti-bot blocks or missing data), the service automatically falls back to erail running status to ensure continuous commuter telemetry without downtime.
 
-### 2. Hybrid Route Lines (Macro vs. Micro)
+### 2. Station-to-Station Train Search & Optional Train Number Entry
+The microservice exposes `scrapeTrainsBetweenStations(source, destination)` querying `erail.in` via `GET /api/v4/trains/search?source=X&destination=Y` to reliably retrieve trains operating between any station pair. The Android client connects to this via `RailwayTelemetryApi.searchTrains` and reactive `StateFlows` in `MapViewModel.kt`. 
+Inside `RailwaySetupDialog.kt`, commuters have dual search options:
+- **By Stations:** Users input Source and Destination station codes/names to scrape available trains, pick one from the results dropdown, and load live telemetry stations.
+- **Direct Train Number:** Users can directly input a Train Number (marked as optional if searching) to skip web scraping and directly query live stations.
+
+### 3. Hybrid Route Lines (Macro vs. Micro)
 Rendering a 1000km train path point-by-point will crash a mobile map. The app uses a **Hybrid Route Line** system:
 - **Macro-Routing:** Distant stations are connected with straight lines to provide a general overview.
 - **Micro-Routing (Final Approach):** For segments closest to your destination, the app queries the **OpenRailRouting (ORR) API** to fetch high-precision track geometry, seamlessly stitching it into the macro line.
 
-### 3. The "Bulletproof" Alarm Trigger
+### 4. The "Bulletproof" Alarm Trigger
 Railway alarms are critical. Regardless of user configuration, the service enforces a hardcoded **Bulletproof 2km Trigger**. If the train enters a 2km radius of the destination station, the alarm is guaranteed to fire. 
 Additionally, because train travelers often sleep with headphones, the `AlarmEngine` dynamically overrides the Android system volume to maximum and bypasses "Do Not Disturb" specifically for railway arrivals.
 
 ---
 
-## 🎮 Core Feature: High-Fidelity Simulation & Demo Mode
+## 🎮 Core Feature: High-Fidelity Simulation & Isolated Demo Mode
 
-The V4.1 update introduced a pure offline Demo Mode, allowing developers and users to simulate real-world municipal bus routes (e.g., 555S & 55v) without needing to physically travel.
+The V4.1 update introduced multi-modal offline simulation, allowing developers to simulate real-world municipal bus routes and high-speed express train routes without needing to physically travel.
 
-### 1. Native GPX Parsing & Time Compression
-The app directly ingests native `.gpx` files, bypassing generic OSRM routing to recreate exact, real-world telemetry. The simulation features playback controls, safely pausing at the start coordinate until engaged, and runs with a 30x time compression to quickly test full journey lifecycles.
+### 1. Multi-Modal Simulation (Roadway & Railway)
+- **Roadway GPX Simulation:** The app directly ingests native `.gpx` files (like municipal bus routes 555S & 55v), bypassing generic OSRM routing to recreate exact real-world telemetry at 30x time compression.
+- **Isolated Railway Demo Mode:** Added `isRailwayDemoEnabled` setting to `SettingsDataStore.kt` and a UI toggle in `SettingsScreen.kt` under "Demo & Simulation Modes". Powered by `RailwayMockLocationRepositoryImpl.kt`, it simulates a high-speed train approaching the chosen destination station at ~400m/sec compressed demonstration speed.
 
-### 2. Zero-Impact Proxy Architecture
+### 2. Complete Isolation & Proxy Architecture
 **Crucially, the simulation code is completely isolated and does not affect the production user experience.** 
-The app utilizes a Proxy Design Pattern via `ProxyLocationRepositoryImpl`. 
-- When Demo Mode is disabled in settings, the app seamlessly bypasses the simulation logic entirely and delegates location requests directly to the native `LocationTrackingManager` (real GPS). 
-- Because it uses Kotlin Flow's `flatMapLatest`, the mock repository (`GpxMockLocationRepositoryImpl`) is never instantiated or run in the background unless explicitly toggled on. 
-This guarantees **zero performance overhead** or interference with real-world tracking.
+The app utilizes a Proxy Design Pattern via `ProxyLocationRepositoryImpl.kt`:
+- When Demo Mode is disabled in settings, the app seamlessly bypasses simulation logic entirely and delegates location requests directly to the native `LocationTrackingManager` (real GPS). 
+- Mock location injection is strictly gated by `transportMode == RAILWAY` and `isRailwayDemoEnabled` (or Roadway demo settings using Kotlin Flow's `flatMapLatest`). Neither mock repository is instantiated or executed in the background unless explicitly toggled on, guaranteeing **zero performance overhead** or interference with real roadway or live GPS user experiences.
 
 ---
 

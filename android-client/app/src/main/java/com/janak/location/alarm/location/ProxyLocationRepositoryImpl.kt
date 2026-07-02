@@ -16,7 +16,12 @@ class ProxyLocationRepositoryImpl(
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getLocationUpdates(): Flow<Location> {
         return settingsDataStore.demoSettingsFlow.flatMapLatest { settings ->
-            if (settings.isDemoEnabled) {
+            val prefs = context.getSharedPreferences("service_state", Context.MODE_PRIVATE)
+            val transportMode = prefs.getString("transport_mode", "ROAD")
+
+            if (settings.isRailwayDemoEnabled && transportMode == "RAILWAY") {
+                RailwayMockLocationRepositoryImpl(context).getLocationUpdates()
+            } else if (settings.isDemoEnabled && transportMode != "RAILWAY") {
                 val fileName = if (settings.selectedRoute == "555S") {
                     "555S_variable_speed_route.gpx"
                 } else {
