@@ -84,6 +84,27 @@ The app utilizes a Proxy Design Pattern via `ProxyLocationRepositoryImpl.kt`:
 
 ---
 
+## 🧪 Core Feature: Developer Verification & Regression Testing System
+
+To guarantee enterprise-grade reliability and ensure that adding new features never breaks existing functionality, Location Alarm V4 includes a built-in, developer-exclusive **Verification & Regression Testing System**. This suite is strictly gated for developer diagnostics and is completely hidden from final users.
+
+### 1. Automated Regression Unit Suite (`src/test/java`)
+Fast, pure-JVM regression unit tests verify all core spatial algorithms and safety triggers without requiring an emulator:
+- **`RouteDistanceEngineTest.kt`:** Verifies OSRM polyline snapping (`TurfMisc.nearestPointOnLine`), dynamic curve slicing (`TurfMisc.lineSlice`), Exponential Moving Average (EMA) speed smoothing, and Performance Ratio ETA calibration under traffic slowdowns.
+- **`AlarmEngineTest.kt`:** Verifies distance boundary alarms (`distance <= distanceThreshold`), predictive ETA time alarms, and the hardcoded **Railway 2km Bulletproof Override** ensuring trains trigger reliably even when commuter alarms are toggled off.
+
+### 2. On-Device Interactive Feature Test Harness (`FeatureTestSuiteDialog.kt`)
+Developers can run end-to-end subsystem diagnostics on real hardware directly from the app:
+- Accessible via the **"🧪 Run System Regression & Feature Test Suite"** launcher inside **Settings -> Demo & Simulation Modes**.
+- Executes live, sequential diagnostic pipelines measuring millisecond execution latency across 5 subsystems:
+  1. *Roadway Routing & Spatial Math Engine*
+  2. *Alarm Engine & Override Triggers*
+  3. *Railway Search API Payload Serialization*
+  4. *Proxy Simulation & Isolation Engine*
+  5. *Local Storage & Room DB Integrity*
+
+---
+
 ## 🏗️ Project Architecture (Clean Architecture)
 The Android client is structured to separate concerns entirely:
 1. **View (UI Layer):** Jetpack Compose screens (`HomeScreen`, `MapScreen`, `SettingsScreen`) with deep dark aesthetics and dynamic routing cards.
@@ -113,6 +134,14 @@ The Android client is structured to separate concerns entirely:
 2. Run `npm install` to grab dependencies.
 3. Create a `.env` file based on environment needs.
 4. Run `npm start` (or `node server.js`) to launch the telemetry bridge.
+
+### Running Regression Tests
+To execute the automated unit regression suite from your terminal, run:
+```bash
+cd android-client
+./gradlew testDebugUnitTest
+```
+This runs all domain math, alarm evaluation, and trigger tests in seconds and generates a detailed HTML test report under `android-client/app/build/reports/tests/testDebugUnitTest/`.
 
 ---
 

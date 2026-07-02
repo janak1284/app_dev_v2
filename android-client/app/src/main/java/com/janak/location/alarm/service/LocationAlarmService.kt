@@ -200,9 +200,17 @@ class LocationAlarmService : Service() {
 
             if (!isAlarmSilenced) {
                 val isRailway = transportMode == TransportMode.TRAIN
+                val shouldTrigger = com.janak.location.alarm.alarm.AlarmEngine.shouldTriggerAlarm(
+                    distanceMeters = estimatedRemainingDistance,
+                    distanceThresholdMeters = distanceThreshold.toDouble(),
+                    isDistanceAlarmEnabled = isDistanceAlarmEnabled,
+                    etaMinutes = estimatedETA,
+                    predictiveMinutesThreshold = predictiveMinutesThreshold,
+                    isPredictiveAlarmEnabled = isPredictiveAlarmEnabled,
+                    isRailway = isRailway
+                )
 
-                if ((isDistanceAlarmEnabled && estimatedRemainingDistance <= distanceThreshold) || 
-                    (isPredictiveAlarmEnabled && estimatedETA.toInt() <= predictiveMinutesThreshold)) {
+                if (shouldTrigger) {
                     triggerAlarm(currentLegIndex < currentLegs.size - 1, forceMaxVolume = isRailway)
                 }
             }
@@ -478,11 +486,18 @@ class LocationAlarmService : Service() {
         if ((currentState == ServiceState.TRACKING || currentState == ServiceState.WAITING_FOR_CONNECTION) && !isAlarmSilenced) {
             val isRailway = transportMode == TransportMode.TRAIN
             
-            val isDistanceTriggered = isDistanceAlarmEnabled && distance <= distanceThreshold
-            val isTimeTriggered = isPredictiveAlarmEnabled && etaMinutes.toInt() <= predictiveMinutesThreshold
+            val shouldTrigger = com.janak.location.alarm.alarm.AlarmEngine.shouldTriggerAlarm(
+                distanceMeters = distance,
+                distanceThresholdMeters = distanceThreshold.toDouble(),
+                isDistanceAlarmEnabled = isDistanceAlarmEnabled,
+                etaMinutes = etaMinutes,
+                predictiveMinutesThreshold = predictiveMinutesThreshold,
+                isPredictiveAlarmEnabled = isPredictiveAlarmEnabled,
+                isRailway = isRailway
+            )
             
-            if (isDistanceTriggered || isTimeTriggered) {
-                AppLogger.d("LocationAlarmService", "Alarm Triggered! distTriggered=$isDistanceTriggered, timeTriggered=$isTimeTriggered")
+            if (shouldTrigger) {
+                AppLogger.d("LocationAlarmService", "Alarm Triggered! dist=$distance, eta=$etaMinutes, isRailway=$isRailway")
                 val isTransfer = currentLegs.isNotEmpty() && currentLegIndex < currentLegs.size - 1
                 triggerAlarm(isTransfer, forceMaxVolume = isRailway, triggerDistance = distance, triggerEta = etaMinutes)
             }

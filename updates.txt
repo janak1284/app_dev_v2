@@ -69,3 +69,8 @@
 - **High-Speed Railway Simulation:** Added `RailwayMockLocationRepositoryImpl` and updated `ProxyLocationRepositoryImpl` to support simulated train movement at ~126 km/h (35 m/s) approaching destination stations.
 - **Developer Settings Control:** Exposed Railway Demo Mode toggle in `SettingsScreen` and `SettingsDataStore`, ensuring complete isolation from production real-world tracking.
 
+## Developer Verification & Regression Testing System (July 2026)
+- **Automated Regression Suite:** Created `RouteDistanceEngineTest.kt` and `AlarmEngineTest.kt` verifying polyline snapping, slicing, EMA speed smoothing, calibrated ETA calculations, and the 2km Railway Bulletproof safety override. Executable via `./gradlew testDebugUnitTest`.
+- **On-Device Interactive Diagnostic Suite:** Created `FeatureTestSuiteDialog.kt` and added launcher button in `SettingsScreen` under Developer Settings. Runs live latency and assertion checks across Roadway Routing Math, Alarm Engine Triggers, Railway API Serialization, Proxy Isolation Engine, and Local Storage Integrity.
+
+

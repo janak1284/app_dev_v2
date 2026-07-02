@@ -11,15 +11,14 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.viewmodel.MapViewModel
 import androidx.compose.foundation.selection.selectableGroup
+import com.janak.location.alarm.ui.components.FeatureTestSuiteDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +34,7 @@ fun SettingsScreen(
     val demoSettings by viewModel.demoSettingsFlow.collectAsState(
         initial = com.janak.location.alarm.data.DemoSettings(isDemoEnabled = false, isRailwayDemoEnabled = false, selectedRoute = "555S", isDemoPlaybackActive = false)
     )
+    var showFeatureTestSuiteDialog by remember { mutableStateOf(false) }
     
     Scaffold(
         modifier = modifier,
@@ -212,6 +212,16 @@ fun SettingsScreen(
                             onCheckedChange = { viewModel.setRailwayDemoEnabled(it) }
                         )
                     }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                    Button(
+                        onClick = { showFeatureTestSuiteDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                    ) {
+                        Text("🧪 Run System Regression & Feature Test Suite")
+                    }
                 }
             }
 
@@ -237,6 +247,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showFeatureTestSuiteDialog) {
+        FeatureTestSuiteDialog(onDismiss = { showFeatureTestSuiteDialog = false })
     }
 }
 

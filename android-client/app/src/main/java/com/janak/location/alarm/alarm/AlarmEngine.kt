@@ -78,4 +78,29 @@ class AlarmEngine(private val context: Context) {
         ringtone = null
         vibrator.cancel()
     }
+
+    companion object {
+        const val RAILWAY_BULLETPROOF_THRESHOLD_METERS = 2000.0
+
+        /**
+         * Pure evaluation function to determine if an alarm should trigger.
+         */
+        fun shouldTriggerAlarm(
+            distanceMeters: Double,
+            distanceThresholdMeters: Double,
+            isDistanceAlarmEnabled: Boolean,
+            etaMinutes: Double,
+            predictiveMinutesThreshold: Int,
+            isPredictiveAlarmEnabled: Boolean,
+            isRailway: Boolean
+        ): Boolean {
+            // Bulletproof 2km safety trigger for trains regardless of user settings
+            if (isRailway && distanceMeters <= RAILWAY_BULLETPROOF_THRESHOLD_METERS) {
+                return true
+            }
+            val isDistanceTriggered = isDistanceAlarmEnabled && distanceMeters <= distanceThresholdMeters
+            val isTimeTriggered = isPredictiveAlarmEnabled && etaMinutes <= predictiveMinutesThreshold
+            return isDistanceTriggered || isTimeTriggered
+        }
+    }
 }
