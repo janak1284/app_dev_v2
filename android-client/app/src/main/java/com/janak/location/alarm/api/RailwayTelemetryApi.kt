@@ -47,10 +47,30 @@ data class TrainSearchResponse(
     @SerialName("trains") val trains: List<TrainSearchItem>
 )
 
+@Serializable
+data class StationAutocompleteItem(
+    @SerialName("name") val name: String,
+    @SerialName("code") val code: String,
+    @SerialName("lat") val lat: Double? = null,
+    @SerialName("lon") val lon: Double? = null
+)
+
+@Serializable
+data class StationAutocompleteResponse(
+    @SerialName("success") val success: Boolean,
+    @SerialName("count") val count: Int,
+    @SerialName("stations") val stations: List<StationAutocompleteItem>
+)
+
 interface RailwayTelemetryApi {
     companion object {
         const val BASE_URL = BuildConfig.BASE_URL
     }
+
+    @GET("api/v4/stations/autocomplete")
+    suspend fun autocompleteStations(
+        @Query("query") query: String
+    ): Response<StationAutocompleteResponse>
 
     @GET("api/v4/trains/search")
     suspend fun searchTrains(

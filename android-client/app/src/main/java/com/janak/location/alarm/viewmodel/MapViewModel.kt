@@ -11,6 +11,7 @@ import com.janak.location.alarm.alarm.AlarmEngine
 import com.janak.location.alarm.api.*
 import com.janak.location.alarm.location.LocationTrackingManager
 import com.janak.location.alarm.model.*
+import com.janak.location.alarm.ui.components.StationItem
 import com.janak.location.alarm.service.LocationAlarmService
 import com.janak.location.alarm.location.LocationRepository
 import com.janak.location.alarm.data.SettingsDataStore
@@ -60,6 +61,37 @@ class MapViewModel(
 
     private val _stationSequence = MutableStateFlow<List<StationSequenceItem>>(emptyList())
     val stationSequence: StateFlow<List<StationSequenceItem>> = _stationSequence.asStateFlow()
+
+    private val _cloudStationSuggestions = MutableStateFlow<List<StationItem>>(emptyList())
+    val cloudStationSuggestions: StateFlow<List<StationItem>> = _cloudStationSuggestions.asStateFlow()
+
+    private var autocompleteJob: Job? = null
+
+    fun searchStationsAutocomplete(query: String) {
+        autocompleteJob?.cancel()
+        if (query.trim().length < 2) {
+            _cloudStationSuggestions.value = emptyList()
+            return
+        }
+        autocompleteJob = viewModelScope.launch {
+            delay(250) // Debounce network calls
+            try {
+                val response = RetrofitClient.railwayTelemetryApi.autocompleteStations(query.trim())
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    _cloudStationSuggestions.value = body.stations.map {
+                        StationItem(
+                            name = it.name,
+                            code = it.code,
+                            city = "All India (${it.code})"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore network errors during typing
+            }
+        }
+    }
 
     private val _trainSearchResults = MutableStateFlow<List<TrainSearchItem>>(emptyList())
     val trainSearchResults: StateFlow<List<TrainSearchItem>> = _trainSearchResults.asStateFlow()

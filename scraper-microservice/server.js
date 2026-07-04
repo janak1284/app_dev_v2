@@ -4,6 +4,7 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
 const { scrapeTrainTelemetry, scrapeTrainsBetweenStations } = require('./scraper'); 
+const { resolveStationData, searchStations } = require('./stationMapper');
 
 const app = express();
 const PORT = process.env.PORT || 7860;
@@ -15,6 +16,16 @@ const supabase = createClient(
 );
 
 app.use(express.json());
+
+/**
+ * GET: Station Autocomplete across all 8,989 stations
+ */
+app.get('/api/v4/stations/autocomplete', (req, res) => {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ error: "Missing query parameter" });
+    const results = searchStations(query);
+    res.json({ success: true, count: results.length, stations: results });
+});
 
 /**
  * GET: Retrieve a cached segment from the cloud (Shared by all users)
@@ -139,7 +150,14 @@ app.get('/api/v4/trains/search', async (req, res) => {
         return res.status(400).json({ error: "Missing source or destination parameters" });
     }
     try {
-        const trains = await scrapeTrainsBetweenStations(source, destination);
+        // Automatically resolve normal station names (e.g. "Chennai" -> "MS", "Trichy" -> "TPJ", "New Delhi" -> "NDLS")
+        const srcData = await resolveStationData(source);
+        const dstData = await resolveStationData(destination);
+        const srcCode = (srcData && srcData.code && srcData.code !== "UNKNOWN" && srcData.code !== "HALT") ? srcData.code : source;
+        const dstCode = (dstData && dstData.code && dstData.code !== "UNKNOWN" && dstData.code !== "HALT") ? dstData.code : destination;
+
+        console.log(`🚂 Resolved search query: "${source}" -> [${srcCode}] to "${destination}" -> [${dstCode}]`);
+        const trains = await scrapeTrainsBetweenStations(srcCode, dstCode);
         res.json({ success: true, count: trains.length, trains });
     } catch (err) {
         console.error("Train Search Error:", err.message);

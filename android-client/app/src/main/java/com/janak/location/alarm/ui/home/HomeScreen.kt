@@ -28,7 +28,7 @@ import java.util.Locale
 import com.janak.location.alarm.util.AppLogger
 
 import com.janak.location.alarm.ui.components.SavedRouteCard
-import com.janak.location.alarm.ui.components.RailwaySetupDialog
+import com.janak.location.alarm.ui.components.TrainJourneyDialog
 import org.maplibre.android.geometry.LatLng
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +46,7 @@ fun HomeScreen(
     val routeToDelete by viewModel.routeToDelete.collectAsState()
     val itemToRemove by viewModel.itemToRemove.collectAsState()
     var showModeSelection by remember { mutableStateOf(false) }
-    var showRailwaySetup by remember { mutableStateOf(false) }
+    var showTrainDialog by remember { mutableStateOf(false) }
 
     if (routeToDelete != null) {
         AlertDialog(
@@ -87,22 +87,19 @@ fun HomeScreen(
             onDismissRequest = { showModeSelection = false },
             title = {
                 Text(
-                    "Choose Transport Mode",
+                    "Select Transport Mode",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
-                Text("How will you be travelling today?")
-            },
-            confirmButton = {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
                         onClick = {
-                            AppLogger.d("HomeScreen", "Selecting ROAD mode")
+                            AppLogger.d("HomeScreen", "Selecting ROADWAY mode")
                             viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.ROAD))
                             showModeSelection = false
                             onNewJourneyClick(true)
@@ -119,7 +116,7 @@ fun HomeScreen(
                             AppLogger.d("HomeScreen", "Selecting TRAIN mode")
                             viewModel.updateAlarmSettings(viewModel.alarmSettings.value.copy(transportMode = TransportMode.TRAIN))
                             showModeSelection = false
-                            showRailwaySetup = true
+                            showTrainDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -127,10 +124,11 @@ fun HomeScreen(
                     ) {
                         Icon(Icons.Default.DirectionsTransit, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Railway (Train/Subway)")
+                        Text("Train Journey")
                     }
                 }
             },
+            confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showModeSelection = false }) {
                     Text("Cancel")
@@ -140,16 +138,15 @@ fun HomeScreen(
         )
     }
 
-    if (showRailwaySetup) {
-        RailwaySetupDialog(
+    if (showTrainDialog) {
+        TrainJourneyDialog(
             viewModel = viewModel,
-            onDismiss = { showRailwaySetup = false },
+            onDismiss = { showTrainDialog = false },
             onStartTracking = { trainNumber, destName, destCode, lat, lon ->
-            AppLogger.d("HomeScreen", "Starting Railway tracking: $trainNumber to $destName ($destCode)")
-            viewModel.startRailwayJourney(trainNumber, destName, destCode, lat, lon)
-            showRailwaySetup = false
-            onNewJourneyClick(false) // Changed to false to avoid wiping the railway state we just set
-
+                AppLogger.d("HomeScreen", "Starting Train tracking: $trainNumber to $destName ($destCode)")
+                viewModel.startRailwayJourney(trainNumber, destName, destCode, lat, lon)
+                showTrainDialog = false
+                onNewJourneyClick(false)
             }
         )
     }
