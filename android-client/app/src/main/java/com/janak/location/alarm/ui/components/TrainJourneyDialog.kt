@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.janak.location.alarm.viewmodel.MapViewModel
@@ -24,6 +26,9 @@ fun TrainJourneyDialog(
     var sourceStation by remember { mutableStateOf("") }
     var destStation by remember { mutableStateOf("") }
     var trainNumber by remember { mutableStateOf("") }
+    
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     
     var isSearchingStations by remember { mutableStateOf(false) }
     var trainMenuExpanded by remember { mutableStateOf(false) }
@@ -267,6 +272,8 @@ fun TrainJourneyDialog(
                 
                 Button(
                     onClick = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
                         if (trainNumber.isNotBlank()) {
                             isSearchingStations = true
                             viewModel.fetchTelemetryForDropdown(trainNumber.trim())

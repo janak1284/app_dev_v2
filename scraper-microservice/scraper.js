@@ -261,7 +261,11 @@ async function scrapeTrainsBetweenStations(source, destination) {
     try {
         const url = `https://erail.in/trains-between-stations/${source}/${destination}`;
         console.log(`🌐 Navigating to ${url}...`);
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        try {
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        } catch (navErr) {
+            console.log("⚠️ Navigation timeout exceeded, attempting to read DOM anyway...");
+        }
 
         const btn = page.locator('input[type="button"][value="Get Trains"], button:has-text("Get Trains")').first();
         if (await btn.isVisible()) {
@@ -269,28 +273,36 @@ async function scrapeTrainsBetweenStations(source, destination) {
         }
         await page.waitForTimeout(5000);
 
-        const trains = await page.evaluate(() => {
-            const results = [];
-            const divs = document.querySelectorAll('div.OneTrain');
-            divs.forEach(d => {
-                const text = d.innerText || "";
-                const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-                const trainNumMatch = text.match(/\b(\d{5})\b/);
-                if (trainNumMatch && lines.length >= 2) {
-                    const trainNum = trainNumMatch[1];
-                    const trainName = lines[0].replace(trainNum, '').trim();
-                    // Try to find time formats
-                    const times = lines.filter(l => /^\d{2}:\d{2}$/.test(l) || /\d+\.\d+\s*hr/i.test(l));
-                    results.push({
-                        train_number: trainNum,
-                        train_name: trainName || `Train ${trainNum}`,
-                        departure: times[0] || "Sch. Dep",
-                        arrival: times[1] || "Sch. Arr"
-                    });
-                }
+        let trains = [];
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            trains = await page.evaluate(() => {
+                const results = [];
+                const divs = document.querySelectorAll('div.OneTrain');
+                divs.forEach(d => {
+                    const text = d.innerText || "";
+                    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                    const trainNumMatch = text.match(/\b(\d{5})\b/);
+                    if (trainNumMatch && lines.length >= 2) {
+                        const trainNum = trainNumMatch[1];
+                        const trainName = lines[0].replace(trainNum, '').trim();
+                        // Try to find time formats
+                        const times = lines.filter(l => /^\d{2}:\d{2}$/.test(l) || /\d+\.\d+\s*hr/i.test(l));
+                        results.push({
+                            train_number: trainNum,
+                            train_name: trainName || `Train ${trainNum}`,
+                            departure: times[0] || "Sch. Dep",
+                            arrival: times[1] || "Sch. Arr"
+                        });
+                    }
+                });
+                return results;
             });
-            return results;
-        });
+            if (trains.length > 0) break;
+            if (attempt < 3) {
+                console.log(`⏳ Attempt ${attempt} yielded 0 trains, waiting 3 seconds before retrying...`);
+                await page.waitForTimeout(3000);
+            }
+        }
 
         console.log(`✅ Extracted ${trains.length} trains.`);
         return trains;
