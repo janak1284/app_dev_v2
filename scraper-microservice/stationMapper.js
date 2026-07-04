@@ -1,4 +1,5 @@
 // stationMapper.js
+require('dotenv').config({ path: __dirname + '/.env' });
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
@@ -13,8 +14,8 @@ const supabase = createClient(
 const stationDictionary = {};
 const normalizedStationList = [];
 
-// Presentation Fallbacks for the demo (Train 12605 - MS to KKDI)
-const PRESENTATION_FALLBACKS = {
+// Station Fallbacks for common routes and demo modes
+const FALLBACKS = {
   "ms": { code: "MS", lat: 13.0827, lon: 80.2707 },
   "chennai egmore": { code: "MS", lat: 13.0827, lon: 80.2707 },
   "villupuram": { code: "VM", lat: 11.9401, lon: 79.4861 },
@@ -22,6 +23,8 @@ const PRESENTATION_FALLBACKS = {
   "trichy": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
   "tiruchirappalli": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
   "tiruchchirappalli": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
+  "tiruchchirapali": { code: "TPJ", lat: 10.7860, lon: 78.6991 },
+  "ponmlai gld rck": { code: "GOC", lat: 10.791837, lon: 78.709755 },
   "pudukkottai": { code: "PDKT", lat: 10.3725, lon: 78.8019 },
   "karaikkuidi": { code: "KKDI", lat: 10.0747, lon: 78.7854 },
   "prayagrajcheoki": { code: "PCOI", lat: 25.3770586, lon: 81.8671292 },
@@ -142,10 +145,10 @@ async function resolveStationData(rawScrapedName) {
 
     const scrapedNormal = normalizeStationName(rawScrapedName);
 
-    // Step 0: Presentation Fallbacks (High Priority for Demo)
+    // Step 0: Station Fallbacks (High Priority)
     const fallbackKey = rawScrapedName.toLowerCase().replace(/\s+/g, ' ').trim();
-    if (PRESENTATION_FALLBACKS[scrapedNormal]) return PRESENTATION_FALLBACKS[scrapedNormal];
-    if (PRESENTATION_FALLBACKS[fallbackKey]) return PRESENTATION_FALLBACKS[fallbackKey];
+    if (FALLBACKS[scrapedNormal]) return FALLBACKS[scrapedNormal];
+    if (FALLBACKS[fallbackKey]) return FALLBACKS[fallbackKey];
 
     // Step 1: Strict Normal Match
     for (const entry of normalizedStationList) {

@@ -136,12 +136,18 @@ The Android client is structured to separate concerns entirely:
 4. Run `npm start` (or `node server.js`) to launch the telemetry bridge.
 
 ### Running Regression Tests
-To execute the automated unit regression suite from your terminal, run:
+To execute the automated unit regression suite for the Android client from your terminal, run:
 ```bash
 cd android-client
 ./gradlew testDebugUnitTest
 ```
 This runs all domain math, alarm evaluation, and trigger tests in seconds and generates a detailed HTML test report under `android-client/app/build/reports/tests/testDebugUnitTest/`.
+
+To execute the automated 12-endpoint verification suite for the scraper microservice (including live scraping, Supabase cloud caching, and station mapping tests), run:
+```bash
+cd scraper-microservice
+npm test
+```
 
 ---
 
