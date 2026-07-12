@@ -11,6 +11,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,11 +30,14 @@ import java.util.Locale
 fun JourneyHistoryDetailsScreen(
     viewModel: MapViewModel,
     historyId: Long,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val breadcrumbs by viewModel.getBreadcrumbsForHistory(historyId).collectAsState(initial = emptyList())
 
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("Journey Details") },

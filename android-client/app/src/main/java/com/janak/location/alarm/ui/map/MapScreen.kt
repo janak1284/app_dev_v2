@@ -36,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DirectionsTransit
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.LocationSearching
@@ -45,6 +46,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -102,78 +104,32 @@ import org.maplibre.geojson.Point
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun MapScreen(viewModel: MapViewModel, onNavigateHome: () -> Unit) {
+fun MapScreen(
+    viewModel: MapViewModel, 
+    onNavigateHome: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     AppLogger.d("MapScreen", "MapScreen rendering")
-    var showSettings by remember { mutableStateOf(false) }
-    var showSearchHistory by remember { mutableStateOf(false) }
-    var showJourneyHistory by remember { mutableStateOf(false) }
-    var showSavedRoutes by remember { mutableStateOf(false) }
-
-    when {
-        showSearchHistory -> {
-            AppLogger.d("MapScreen", "Showing SearchHistoryScreen")
-            com.janak.location.alarm.ui.settings.SearchHistoryScreen(
-                viewModel = viewModel,
-                onBackClick = { showSearchHistory = false },
-                onItemClick = { feature ->
-                    viewModel.selectSearchResult(feature)
-                    showSearchHistory = false
-                    showSettings = false
-                }
-            )
-        }
-        showJourneyHistory -> {
-            AppLogger.d("MapScreen", "Showing JourneyHistoryScreen")
-            com.janak.location.alarm.ui.settings.JourneyHistoryScreen(
-                viewModel = viewModel,
-                onBackClick = { showJourneyHistory = false },
-                onHistoryItemClick = { history -> 
-                    AppLogger.d("MapScreen", "History item clicked, starting journey")
-                    viewModel.startJourneyFromHistory(history)
-                    showJourneyHistory = false
-                    showSettings = false
-                },
-                onReactivateClick = { showJourneyHistory = false; showSettings = false}
-            )
-        }
-        showSavedRoutes -> {
-            AppLogger.d("MapScreen", "Showing SavedRoutesScreen")
-            SavedRoutesScreen(
-                viewModel = viewModel,
-                onBackClick = { showSavedRoutes = false },
-                onEditRouteClick = { route: SavedRouteEntity ->
-                    AppLogger.d("MapScreen", "Editing route: ${route.routeId}")
-                },
-                onRouteClick = { route: SavedRouteEntity ->
-                    viewModel.startJourneyFromSavedRoute(route)
-                    showSavedRoutes = false
-                    showSettings = false
-                }
-            )
-        }
-        showSettings -> {
-            AppLogger.d("MapScreen", "Showing SettingsScreen")
-            SettingsScreen(
-                viewModel = viewModel,
-                onBackClick = { showSettings = false },
-                onNavigateToSearchHistory = { showSearchHistory = true },
-                onNavigateToJourneyHistory = { showJourneyHistory = true },
-                onNavigateToSavedRoutes = { showSavedRoutes = true }
-            )
-        }
-        else -> {
-            AppLogger.d("MapScreen", "Showing MapContent")
-            MapContent(
-                viewModel = viewModel, 
-                onOpenSettings = { showSettings = true },
-                onNavigateHome = onNavigateHome
-            )
-        }
-    }
+    
+    // MapContent is now the primary content of MapScreen.
+    // Sub-screens (Settings, etc.) are handled by the parent (MainActivity)
+    // to ensure consistent animation and persistence.
+    MapContent(
+        viewModel = viewModel, 
+        onOpenSettings = onOpenSettings,
+        onNavigateHome = onNavigateHome,
+        modifier = modifier.fillMaxSize()
+    )
 }
 
 @Composable
-fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHome: () -> Unit) {
+fun MapContent(
+    viewModel: MapViewModel, 
+    onOpenSettings: () -> Unit, 
+    onNavigateHome: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     AppLogger.d("MapScreen", "MapContent rendering")
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -182,6 +138,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val userLocation by viewModel.userLocation.collectAsState(initial = null)
     val destination by viewModel.destination.collectAsState()
     val destinationName by viewModel.destinationName.collectAsState()
+    val currentTrainNumber by viewModel.currentTrainNumber.collectAsState()
     val isAlarmSet by viewModel.isAlarmSet.collectAsState()
     val isPreviewMode by viewModel.isPreviewMode.collectAsState()
     
@@ -192,6 +149,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val distanceToDestination by viewModel.distanceToDestination.collectAsState()
     val remainingEta by viewModel.remainingEta.collectAsState()
     val railwayEtaStatus by viewModel.railwayEtaStatus.collectAsState()
+    val railwayGlobalStatus by viewModel.railwayGlobalStatus.collectAsState()
+    val railwayStaleDataWarning by viewModel.railwayStaleDataWarning.collectAsState()
     
     // --- Data Age Calculation ---
     val dataAgeAtFetchMs by viewModel.dataAgeAtFetchMs.collectAsState()
@@ -207,6 +166,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
             if (localUptimeAtFetchMs > 0) {
                 val currentAgeMs = dataAgeAtFetchMs + (SystemClock.elapsedRealtime() - localUptimeAtFetchMs)
                 val mins = (currentAgeMs / 60000).toInt()
+                viewModel.setRefreshEnabled(mins >= 3)
                 lastUpdatedText = when {
                     mins <= 0 -> "Updated: Now"
                     else -> "Updated: ${mins}m ago"
@@ -289,6 +249,18 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         }
     }
 
+    var showWarningPopup by remember { mutableStateOf(false) }
+    var warningText by remember { mutableStateOf("") }
+
+    LaunchedEffect(railwayStaleDataWarning) {
+        if (railwayStaleDataWarning != null) {
+            warningText = railwayStaleDataWarning!!
+            showWarningPopup = true
+            kotlinx.coroutines.delay(5000)
+            showWarningPopup = false
+        }
+    }
+
     // Initialize MapLibre
     remember {
         MapLibre.getInstance(context)
@@ -351,14 +323,20 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
         })
     }
 
-    // Auto-follow User Location
-    LaunchedEffect(userLocation, isFollowMode) {
-        if (isFollowMode && userLocation != null) {
-            mapInstance?.animateCamera(
-                CameraUpdateFactory.newLatLng(
-                    LatLng(userLocation!!.latitude, userLocation!!.longitude)
+    // Auto-follow User Location and sync MapLibre Marker
+    LaunchedEffect(userLocation, isFollowMode, mapInstance) {
+        userLocation?.let { loc ->
+            val map = mapInstance
+            if (map != null && map.locationComponent.isLocationComponentActivated) {
+                map.locationComponent.forceLocationUpdate(loc)
+            }
+            if (isFollowMode && map != null) {
+                map.animateCamera(
+                    CameraUpdateFactory.newLatLng(
+                        LatLng(loc.latitude, loc.longitude)
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -371,7 +349,9 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                 if (!locationComponent.isLocationComponentActivated) {
                     try {
                         locationComponent.activateLocationComponent(
-                            LocationComponentActivationOptions.builder(context, style).build()
+                            LocationComponentActivationOptions.builder(context, style)
+                                .useDefaultLocationEngine(false)
+                                .build()
                         )
                     } catch (e: Exception) {
                         AppLogger.e("MapScreen", "Error activating LocationComponent", e)
@@ -556,7 +536,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
     val isPaneVisible = destination != null && !isSearchFocused && !isMapInteracting
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
@@ -640,7 +620,49 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                     onFocusChanged = { isSearchFocused = it },
                 )
             }
+
+            // --- Rail Mode Floating Chip ---
+            AnimatedVisibility(
+                visible = alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN && (isAlarmSet || isPreviewMode) && !isSearchFocused,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                    Surface(
+                        modifier = Modifier.padding(top = 8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shape = RoundedCornerShape(16.dp),
+                        tonalElevation = 4.dp,
+                        shadowElevation = 2.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DirectionsTransit,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (currentTrainNumber != null) {
+                                    "Train $currentTrainNumber"
+                                } else {
+                                    "Railway Journey"
+                                },
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
             }
+        }
 
         // Buttons moved to Bottom UI Group below
 
@@ -768,6 +790,16 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                 }
                                 
                                 Spacer(modifier = Modifier.height(8.dp))
+                                
+                                userLocation?.let { loc ->
+                                    val speedKmh = loc.speed * 3.6f
+                                    Text(
+                                        text = String.format(java.util.Locale.US, "Speed: %.1f km/h", speedKmh),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
 
                                 if (railwayEtaStatus != null) {
                                     Text(
@@ -776,6 +808,50 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Medium
                                     )
+                                } else if (remainingEta != null) {
+                                    if (alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = "ETA: $remainingEta min (Estimated)",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "Official ETA unavailable on website",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = "ETA: $remainingEta min",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                } else {
+                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                                }
+
+                                if (railwayGlobalStatus != null && railwayEtaStatus != null) {
+                                    val statusColor = when {
+                                        railwayGlobalStatus!!.contains("On Time", ignoreCase = true) -> Color(0xFF34A853)
+                                        railwayGlobalStatus!!.contains("Delay", ignoreCase = true) -> MaterialTheme.colorScheme.error
+                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = railwayGlobalStatus!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = statusColor.copy(alpha = 0.9f),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     TelemetrySyncIndicator(
                                         lastUpdatedText = lastUpdatedText ?: "Updated: Now",
@@ -784,18 +860,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                         isRefreshEnabled = isRefreshEnabled,
                                         onRefreshClick = { viewModel.manualRefresh() }
                                     )
-                                } else if (remainingEta != null) {
-                                    Text(
-                                        text = "ETA: $remainingEta min",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                } else {
-                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                                 }
-
-                                Spacer(modifier = Modifier.height(24.dp))
+                                                               Spacer(modifier = Modifier.height(24.dp))
                                 Button(
                                     onClick = { viewModel.toggleAlarm() },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
@@ -806,6 +872,7 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("TURN OFF")
                                 }
+
                             } else if (isPreviewMode) {
                                 StatusHeader(
                                     title = "DESTINATION SET",
@@ -825,6 +892,16 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
 
                                 Spacer(modifier = Modifier.height(8.dp))
 
+                                userLocation?.let { loc ->
+                                    val speedKmh = loc.speed * 3.6f
+                                    Text(
+                                        text = String.format(java.util.Locale.US, "Speed: %.1f km/h", speedKmh),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
+
                                 if (railwayEtaStatus != null) {
                                     Text(
                                         text = railwayEtaStatus!!,
@@ -832,6 +909,45 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                         color = MaterialTheme.colorScheme.secondary,
                                         fontWeight = FontWeight.Medium
                                     )
+                                } else if (remainingEta != null) {
+                                    if (alarmSettings.transportMode == com.janak.location.alarm.model.TransportMode.TRAIN) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = "ETA: $remainingEta min (Estimated)",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.secondary,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "Official ETA unavailable on website",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = "ETA: $remainingEta min",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.secondary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                } else {
+                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
+                                }
+
+                                if (railwayGlobalStatus != null && railwayEtaStatus != null) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = railwayGlobalStatus!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+
+                                if (railwayEtaStatus != null || railwayGlobalStatus != null) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     TelemetrySyncIndicator(
                                         lastUpdatedText = lastUpdatedText ?: "Updated: Now",
@@ -840,17 +956,8 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
                                         isRefreshEnabled = isRefreshEnabled,
                                         onRefreshClick = { viewModel.manualRefresh() }
                                     )
-                                } else if (remainingEta != null) {
-                                    Text(
-                                        text = "ETA: $remainingEta min",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                } else {
-                                    com.janak.location.alarm.ui.components.SkeletonBox(width = 100.dp, height = 24.dp)
                                 }
-                                
+                                                                
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = destinationName ?: "Selected Destination",
@@ -941,6 +1048,36 @@ fun MapContent(viewModel: MapViewModel, onOpenSettings: () -> Unit, onNavigateHo
              }
          }
 
+         // --- Stale Data Warning Popup ---
+         AnimatedVisibility(
+             visible = showWarningPopup,
+             enter = slideInVertically { -it } + fadeIn(),
+             exit = slideOutVertically { -it } + fadeOut(),
+             modifier = Modifier
+                 .align(Alignment.TopCenter)
+                 .padding(top = 100.dp, start = 16.dp, end = 16.dp)
+         ) {
+             Surface(
+                 color = MaterialTheme.colorScheme.errorContainer,
+                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                 shape = RoundedCornerShape(16.dp),
+                 shadowElevation = 8.dp
+             ) {
+                 Row(
+                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                     verticalAlignment = Alignment.CenterVertically
+                 ) {
+                     Icon(Icons.Default.Warning, contentDescription = "Warning", modifier = Modifier.size(20.dp))
+                     Spacer(modifier = Modifier.width(8.dp))
+                     Text(
+                         text = warningText, 
+                         style = MaterialTheme.typography.labelMedium, 
+                         fontWeight = FontWeight.Bold
+                     )
+                 }
+             }
+         }
+
          // --- Location Disabled Alert ---
          AnimatedVisibility(
             visible = !isLocationEnabled,
@@ -1016,6 +1153,7 @@ fun ConfigSheetWrapper(
         onDismissRequest = stableOnDismiss,
         onSaveSettings = { newSettings ->
             viewModel.updateAlarmSettings(newSettings)
+            viewModel.startAlarm()
             stableOnDismiss()
         },
         scrollState = scrollState,

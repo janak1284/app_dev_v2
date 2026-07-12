@@ -2,6 +2,8 @@ package com.janak.location.alarm.api
 
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Body
 import retrofit2.http.Query
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
@@ -14,7 +16,8 @@ data class TelemetryResponse(
     @SerialName("station_sequence") val stationSequence: List<StationSequenceItem>,
     @SerialName("cache_hit") val cacheHit: Boolean,
     @SerialName("timestamp_fetched") val timestampFetched: Long? = null,
-    @SerialName("server_time") val serverTime: Long? = null
+    @SerialName("server_time") val serverTime: Long? = null,
+    @SerialName("last_updated_website_ms") val lastUpdatedWebsiteMs: Long? = null
 )
 
 @Serializable
@@ -25,7 +28,38 @@ data class StationSequenceItem(
     @SerialName("latitude") val latitude: Double? = null,
     @SerialName("longitude") val longitude: Double? = null,
     @SerialName("arrival") val arrival: String? = null,
-    @SerialName("status") val status: String? = null
+    @SerialName("status") val status: String? = null,
+    @SerialName("has_departed") val hasDeparted: Boolean = false
+)
+
+@Serializable
+data class TrainSearchItem(
+    @SerialName("train_number") val trainNumber: String,
+    @SerialName("train_name") val trainName: String,
+    @SerialName("departure") val departure: String? = null,
+    @SerialName("arrival") val arrival: String? = null
+)
+
+@Serializable
+data class TrainSearchResponse(
+    @SerialName("success") val success: Boolean,
+    @SerialName("count") val count: Int,
+    @SerialName("trains") val trains: List<TrainSearchItem>
+)
+
+@Serializable
+data class StationAutocompleteItem(
+    @SerialName("name") val name: String,
+    @SerialName("code") val code: String,
+    @SerialName("lat") val lat: Double? = null,
+    @SerialName("lon") val lon: Double? = null
+)
+
+@Serializable
+data class StationAutocompleteResponse(
+    @SerialName("success") val success: Boolean,
+    @SerialName("count") val count: Int,
+    @SerialName("stations") val stations: List<StationAutocompleteItem>
 )
 
 interface RailwayTelemetryApi {
@@ -33,9 +67,65 @@ interface RailwayTelemetryApi {
         const val BASE_URL = BuildConfig.BASE_URL
     }
 
+    @GET("api/v4/stations/autocomplete")
+    suspend fun autocompleteStations(
+        @Query("query") query: String
+    ): Response<StationAutocompleteResponse>
+
+    @GET("api/v4/trains/search")
+    suspend fun searchTrains(
+        @Query("source") source: String,
+        @Query("destination") destination: String
+    ): Response<TrainSearchResponse>
+
     @GET("api/v4/train/track")
     suspend fun getTrainTelemetry(
         @Query("train_number") trainNumber: String,
-        @Query("force_refresh") forceRefresh: Boolean = false
+        @Query("force_refresh") forceRefresh: Boolean = false,
+        @Query("ttl_mins") ttlMins: Int? = null
     ): Response<TelemetryResponse>
+
+    @GET("api/v4/train/route/cache")
+    suspend fun getGlobalRouteCache(
+        @Query("segment_key") segmentKey: String
+    ): Response<RouteResponse>
+
+    @POST("api/v4/train/route/cache")
+    suspend fun saveGlobalRouteCache(
+        @Body request: RouteCacheSaveRequest
+    ): Response<CorrectionResponse>
+
+    @POST("api/v4/stations/correct")
+    suspend fun reportCoordinateCorrection(
+        @Body correction: CoordinateCorrection
+    ): Response<CorrectionResponse>
 }
+
+@Serializable
+data class RouteCacheSaveRequest(
+    @SerialName("segment_key") val segmentKey: String,
+    @SerialName("polyline") val polyline: String,
+    @SerialName("distance") val distance: Double,
+    @SerialName("duration") val duration: Double
+)
+
+@Serializable
+data class RouteResponse(
+    @SerialName("points") val points: String,
+    @SerialName("distance") val distance: Double,
+    @SerialName("time") val time: Long,
+    @SerialName("cache_hit") val cacheHit: Boolean
+)
+
+@Serializable
+data class CoordinateCorrection(
+    @SerialName("station_code") val stationCode: String,
+    @SerialName("latitude") val latitude: Double,
+    @SerialName("longitude") val longitude: Double
+)
+
+@Serializable
+data class CorrectionResponse(
+    @SerialName("success") val success: Boolean,
+    @SerialName("message") val message: String
+)

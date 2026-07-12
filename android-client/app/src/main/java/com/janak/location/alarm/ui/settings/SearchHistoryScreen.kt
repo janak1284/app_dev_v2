@@ -23,7 +23,8 @@ import com.janak.location.alarm.viewmodel.MapViewModel
 fun SearchHistoryScreen(
     viewModel: MapViewModel,
     onBackClick: () -> Unit,
-    onItemClick: (PhotonFeature) -> Unit
+    onItemClick: (PhotonFeature) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val searchHistory by viewModel.searchHistory.collectAsState()
     var showClearAllDialog by remember { mutableStateOf(false) }
@@ -53,6 +54,8 @@ fun SearchHistoryScreen(
     }
 
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("Search History") },

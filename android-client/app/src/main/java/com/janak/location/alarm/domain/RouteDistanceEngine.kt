@@ -48,6 +48,24 @@ class RouteDistanceEngine {
     }
 
     /**
+     * Returns the sliced LineString from the user's current snapped position to the destination.
+     * 
+     * @param route The OSRM LineString representing the planned path.
+     * @param userLocation The user's current raw GPS point.
+     * @return Sliced LineString or null if slicing fails.
+     */
+    fun getSlicedRoute(route: LineString, userLocation: Point): LineString? {
+        val feature = TurfMisc.nearestPointOnLine(userLocation, route.coordinates())
+        val snappedPoint = feature.geometry() as? Point ?: return null
+        
+        return try {
+            TurfMisc.lineSlice(snappedPoint, route.coordinates().last(), route)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
      * Calculates the cross-track distance (perpendicular deviation) from a specific journey leg.
      */
     fun calculateDeviation(leg: JourneyLeg, userLocation: Point): Double {

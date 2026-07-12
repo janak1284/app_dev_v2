@@ -17,7 +17,7 @@ import com.janak.location.alarm.util.AppLogger
 
 class LocationTrackingManager(
     context: Context
-) {
+) : LocationRepository {
     private val client: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
     
     // Background thread for handling location callbacks
@@ -29,7 +29,7 @@ class LocationTrackingManager(
     private var currentLocationCallback: LocationCallback? = null
 
     @SuppressLint("MissingPermission") // Permissions are handled in UI
-    fun getLocationUpdates(): Flow<Location> = callbackFlow {
+    override fun getLocationUpdates(): Flow<Location> = callbackFlow {
         AppLogger.d("LocationTracker", "getLocationUpdates: Starting flow")
         val request = LocationRequest.Builder(currentPriority, currentInterval)
             .setMinUpdateDistanceMeters(10f)
@@ -62,7 +62,7 @@ class LocationTrackingManager(
     }
 
     @SuppressLint("MissingPermission")
-    fun updateInterval(intervalMillis: Long, priority: Int = Priority.PRIORITY_HIGH_ACCURACY) {
+    override fun updateInterval(intervalMillis: Long, priority: Int) {
         if (currentInterval == intervalMillis && currentPriority == priority) return
         currentInterval = intervalMillis
         currentPriority = priority
